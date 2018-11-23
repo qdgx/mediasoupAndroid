@@ -1,8 +1,4 @@
-package com.dingsoft.kotlintest.eventemitter
-
-import com.dingsoft.eventemitter.EventEmitterInterface
-import java.util.*
-
+package com.versatica.eventemitter
 
 /**
  * Copyright 2018-2019 ShaoBoCheng
@@ -19,22 +15,14 @@ import java.util.*
  * See the License for the specific language governing permissions and
  * limitations under the License
  *
- * EventEmitter, Node.js EvenEmitter implementation with Android Handler
+ * EventEmitterInterface,define the interface of EventEmitter
+ *
  * @author ShaoBoCheng
  */
 
-open class EventEmitter: EventEmitterInterface{
+interface EventEmitterInterface {
     // Default maxnumber of listeners
-    override var defaultMaxListeners: Int = 10
-    // HashMap store events
-    private val events: HashMap<String, LinkedList<Listener>> = HashMap()
-    /**
-     * initializer blocks
-     *
-     */
-    init {
-        //TODO
-    }
+    var defaultMaxListeners: Int
 
     /**
      * Synchronously calls each of the listeners registered for the event named eventName,
@@ -45,24 +33,7 @@ open class EventEmitter: EventEmitterInterface{
      * @return true if the event had listeners, false otherwise
      */
     @Throws(Exception::class)
-    override fun emit(eventName: String, vararg args: Any): Boolean{
-        if(events.containsKey(eventName)){
-            var removeListeners: LinkedList<Listener> = LinkedList()
-            for (listener in events.get(eventName)!!){
-                listener.listener.invoke(args)
-                if (listener.isOnce){
-                    removeListeners.add(listener)
-                }
-            }
-
-            for (eventListener in removeListeners){
-                events.get(eventName)!!.remove(eventListener)
-            }
-            return true
-        }else{
-            return false
-        }
-    }
+    fun emit(eventName: String, vararg args: Any): Boolean
 
     /**
      * Adds a one-time listener function for the event named eventName. The next time eventName is triggered, this listener is removed and then invoked.
@@ -74,9 +45,7 @@ open class EventEmitter: EventEmitterInterface{
      * @return a reference to the EventEmitter, so that calls can be chained
      */
     @Throws(Exception::class)
-    override fun on(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface {
-        return addListener(eventName, listener)
-    }
+    fun on(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface
 
     /**
      * Adds a one-time listener function for the event named eventName.
@@ -87,9 +56,7 @@ open class EventEmitter: EventEmitterInterface{
      * @return a reference to the EventEmitter, so that calls can be chained
      */
     @Throws(Exception::class)
-    override fun once(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface {
-        return addListener(eventName, listener, true)
-    }
+    fun once(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface
 
     /**
      * Alias for emitter.on(eventName, listener).
@@ -99,17 +66,11 @@ open class EventEmitter: EventEmitterInterface{
      * @param isOnce listener status loop(default) or once
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun addListener(eventName: String, listener: (args: Array<out Any>) -> Unit, isOnce: Boolean): EventEmitterInterface {
-        if(defaultMaxListeners != 0 && listenerCount(eventName) >= defaultMaxListeners){
-            //maxListeners exception
-        }else{
-            if (!events.containsKey(eventName)){
-                events[eventName] = LinkedList()
-            }
-            events[eventName]?.add(Listener(listener, isOnce))
-        }
-        return this
-    }
+    fun addListener(
+        eventName: String,
+        listener: (args: Array<out Any>) -> Unit,
+        isOnce: Boolean = false
+    ): EventEmitterInterface
 
     /**
      * Removes the specified listener from the listener array for the event named eventName.
@@ -118,20 +79,7 @@ open class EventEmitter: EventEmitterInterface{
      * @param listener The callback function
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun removeListener(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface{
-        if(events.containsKey(eventName) ){
-            var removeListeners: LinkedList<Listener> = LinkedList()
-            for (eventListener in events.get(eventName)!!){
-                if (eventListener.listener === listener){
-                    removeListeners.add(eventListener)
-                }
-            }
-            for (eventListener in removeListeners){
-                events.get(eventName)!!.remove(eventListener)
-            }
-        }
-        return this
-    }
+    fun removeListener(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface
 
     /**
      * Removes all listeners, or those of the specified eventName.
@@ -139,20 +87,14 @@ open class EventEmitter: EventEmitterInterface{
      * @param eventName The name of the event
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun removeAllListeners(eventName:String): EventEmitterInterface{
-        events.get(eventName)!!.clear()
-        return this
-    }
+    fun removeAllListeners(eventName: String): EventEmitterInterface
 
     /**
      * Removes all listeners.
      *
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun removeAllListeners(): EventEmitterInterface{
-        events.clear()
-        return this
-    }
+    fun removeAllListeners(): EventEmitterInterface
 
     /**
      * By default EventEmitters will print a warning if more than 10 listeners
@@ -165,10 +107,7 @@ open class EventEmitter: EventEmitterInterface{
      * @param n maxnumber of listeners
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun setMaxListeners(n: Int): EventEmitterInterface{
-        defaultMaxListeners = n
-        return this
-    }
+    fun setMaxListeners(n: Int): EventEmitterInterface
 
     /**
      * Get a copy of the array of listeners for the event named eventName.
@@ -176,18 +115,7 @@ open class EventEmitter: EventEmitterInterface{
      * @param eventName The name of the event
      * @return a copy of the array of listeners for the event named eventName.
      */
-    override fun listeners(eventName: String): LinkedList<(args: Array<out Any>) -> Unit>{
-        if(events.containsKey(eventName)){
-            val listeners : LinkedList<Listener> = events[eventName]!!
-            val listenersRt: LinkedList<(args: Array<out Any>) -> Unit> = LinkedList()
-            for (listener in listeners){
-                listenersRt.add(listener.listener)
-            }
-            return listenersRt
-        }else{
-            return LinkedList()
-        }
-    }
+    fun listeners(eventName: String): List<(args: Array<out Any>) -> Unit>
 
     /**
      * Get the number of listeners listening to the event named eventName
@@ -195,19 +123,5 @@ open class EventEmitter: EventEmitterInterface{
      * @param eventName The name of the event
      * @return the number of listeners listening to the event named eventName.
      */
-    override fun listenerCount(eventName: String): Int{
-        if(events.containsKey(eventName)){
-            return  events[eventName]!!.size
-        }else{
-            return 0
-        }
-    }
-
-    /**
-     * Contain lambda function and status(once,loop)
-     *
-     * @param listener lambda The callback function
-     * @param isOnce status loop(default) or once
-     */
-    data class Listener(val listener: (args: Array<out Any>) -> Unit, val isOnce: Boolean = false)
+    fun listenerCount(eventName: String): Int
 }
