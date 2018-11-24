@@ -19,7 +19,7 @@ import java.util.*
  * See the License for the specific language governing permissions and
  * limitations under the License
  *
- * EventEmitter, Node.js EvenEmitter implementation with Android Handler
+ * EventEmitter, Node.js EvenEmitter implementation for Java and Android
  * @author ShaoBoCheng
  */
 
