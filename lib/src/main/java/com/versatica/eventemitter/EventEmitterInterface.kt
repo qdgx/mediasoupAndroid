@@ -1,4 +1,4 @@
-package com.dingsoft.eventemitter
+package com.versatica.eventemitter
 
 /**
  * Copyright 2018-2019 ShaoBoCheng
@@ -45,7 +45,7 @@ interface EventEmitterInterface {
      * @return a reference to the EventEmitter, so that calls can be chained
      */
     @Throws(Exception::class)
-    fun on(eventName: String, listener: (args: Array<out Any>)-> Unit): EventEmitterInterface
+    fun on(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface
 
     /**
      * Adds a one-time listener function for the event named eventName.
@@ -56,7 +56,7 @@ interface EventEmitterInterface {
      * @return a reference to the EventEmitter, so that calls can be chained
      */
     @Throws(Exception::class)
-    fun once(eventName: String, listener: (args: Array<out Any>)-> Unit): EventEmitterInterface
+    fun once(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface
 
     /**
      * Alias for emitter.on(eventName, listener).
@@ -66,7 +66,11 @@ interface EventEmitterInterface {
      * @param isOnce listener status loop(default) or once
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    fun addListener(eventName: String, listener: (args: Array<out Any>)-> Unit, isOnce: Boolean = false): EventEmitterInterface
+    fun addListener(
+        eventName: String,
+        listener: (args: Array<out Any>) -> Unit,
+        isOnce: Boolean = false
+    ): EventEmitterInterface
 
     /**
      * Removes the specified listener from the listener array for the event named eventName.
@@ -75,7 +79,7 @@ interface EventEmitterInterface {
      * @param listener The callback function
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    fun removeListener(eventName: String, listener: (args: Array<out Any>)-> Unit): EventEmitterInterface
+    fun removeListener(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface
 
     /**
      * Removes all listeners, or those of the specified eventName.
@@ -83,7 +87,7 @@ interface EventEmitterInterface {
      * @param eventName The name of the event
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    fun removeAllListeners(eventName:String): EventEmitterInterface
+    fun removeAllListeners(eventName: String): EventEmitterInterface
 
     /**
      * Removes all listeners.
@@ -111,7 +115,7 @@ interface EventEmitterInterface {
      * @param eventName The name of the event
      * @return a copy of the array of listeners for the event named eventName.
      */
-    fun listeners(eventName: String): List<(args: Array<out Any>)-> Unit>
+    fun listeners(eventName: String): List<(args: Array<out Any>) -> Unit>
 
     /**
      * Get the number of listeners listening to the event named eventName

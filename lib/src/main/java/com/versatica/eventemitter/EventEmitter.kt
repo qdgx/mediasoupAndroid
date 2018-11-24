@@ -1,6 +1,5 @@
-package com.dingsoft.kotlintest.eventemitter
+package com.versatica.eventemitter
 
-import com.dingsoft.eventemitter.EventEmitterInterface
 import java.util.*
 
 
@@ -23,11 +22,12 @@ import java.util.*
  * @author ShaoBoCheng
  */
 
-open class EventEmitter: EventEmitterInterface{
+open class EventEmitter : EventEmitterInterface {
     // Default maxnumber of listeners
     override var defaultMaxListeners: Int = 10
     // HashMap store events
     private val events: HashMap<String, LinkedList<Listener>> = HashMap()
+
     /**
      * initializer blocks
      *
@@ -45,21 +45,21 @@ open class EventEmitter: EventEmitterInterface{
      * @return true if the event had listeners, false otherwise
      */
     @Throws(Exception::class)
-    override fun emit(eventName: String, vararg args: Any): Boolean{
-        if(events.containsKey(eventName)){
+    override fun emit(eventName: String, vararg args: Any): Boolean {
+        if (events.containsKey(eventName)) {
             var removeListeners: LinkedList<Listener> = LinkedList()
-            for (listener in events.get(eventName)!!){
+            for (listener in events.get(eventName)!!) {
                 listener.listener.invoke(args)
-                if (listener.isOnce){
+                if (listener.isOnce) {
                     removeListeners.add(listener)
                 }
             }
 
-            for (eventListener in removeListeners){
+            for (eventListener in removeListeners) {
                 events.get(eventName)!!.remove(eventListener)
             }
             return true
-        }else{
+        } else {
             return false
         }
     }
@@ -99,11 +99,15 @@ open class EventEmitter: EventEmitterInterface{
      * @param isOnce listener status loop(default) or once
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun addListener(eventName: String, listener: (args: Array<out Any>) -> Unit, isOnce: Boolean): EventEmitterInterface {
-        if(defaultMaxListeners != 0 && listenerCount(eventName) >= defaultMaxListeners){
+    override fun addListener(
+        eventName: String,
+        listener: (args: Array<out Any>) -> Unit,
+        isOnce: Boolean
+    ): EventEmitterInterface {
+        if (defaultMaxListeners != 0 && listenerCount(eventName) >= defaultMaxListeners) {
             //maxListeners exception
-        }else{
-            if (!events.containsKey(eventName)){
+        } else {
+            if (!events.containsKey(eventName)) {
                 events[eventName] = LinkedList()
             }
             events[eventName]?.add(Listener(listener, isOnce))
@@ -118,15 +122,15 @@ open class EventEmitter: EventEmitterInterface{
      * @param listener The callback function
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun removeListener(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface{
-        if(events.containsKey(eventName) ){
+    override fun removeListener(eventName: String, listener: (args: Array<out Any>) -> Unit): EventEmitterInterface {
+        if (events.containsKey(eventName)) {
             var removeListeners: LinkedList<Listener> = LinkedList()
-            for (eventListener in events.get(eventName)!!){
-                if (eventListener.listener === listener){
+            for (eventListener in events.get(eventName)!!) {
+                if (eventListener.listener === listener) {
                     removeListeners.add(eventListener)
                 }
             }
-            for (eventListener in removeListeners){
+            for (eventListener in removeListeners) {
                 events.get(eventName)!!.remove(eventListener)
             }
         }
@@ -139,7 +143,7 @@ open class EventEmitter: EventEmitterInterface{
      * @param eventName The name of the event
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun removeAllListeners(eventName:String): EventEmitterInterface{
+    override fun removeAllListeners(eventName: String): EventEmitterInterface {
         events.get(eventName)!!.clear()
         return this
     }
@@ -149,7 +153,7 @@ open class EventEmitter: EventEmitterInterface{
      *
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun removeAllListeners(): EventEmitterInterface{
+    override fun removeAllListeners(): EventEmitterInterface {
         events.clear()
         return this
     }
@@ -165,7 +169,7 @@ open class EventEmitter: EventEmitterInterface{
      * @param n maxnumber of listeners
      * @return a reference to the EventEmitter, so that calls can be chained
      */
-    override fun setMaxListeners(n: Int): EventEmitterInterface{
+    override fun setMaxListeners(n: Int): EventEmitterInterface {
         defaultMaxListeners = n
         return this
     }
@@ -176,15 +180,15 @@ open class EventEmitter: EventEmitterInterface{
      * @param eventName The name of the event
      * @return a copy of the array of listeners for the event named eventName.
      */
-    override fun listeners(eventName: String): LinkedList<(args: Array<out Any>) -> Unit>{
-        if(events.containsKey(eventName)){
-            val listeners : LinkedList<Listener> = events[eventName]!!
+    override fun listeners(eventName: String): LinkedList<(args: Array<out Any>) -> Unit> {
+        if (events.containsKey(eventName)) {
+            val listeners: LinkedList<Listener> = events[eventName]!!
             val listenersRt: LinkedList<(args: Array<out Any>) -> Unit> = LinkedList()
-            for (listener in listeners){
+            for (listener in listeners) {
                 listenersRt.add(listener.listener)
             }
             return listenersRt
-        }else{
+        } else {
             return LinkedList()
         }
     }
@@ -195,10 +199,10 @@ open class EventEmitter: EventEmitterInterface{
      * @param eventName The name of the event
      * @return the number of listeners listening to the event named eventName.
      */
-    override fun listenerCount(eventName: String): Int{
-        if(events.containsKey(eventName)){
-            return  events[eventName]!!.size
-        }else{
+    override fun listenerCount(eventName: String): Int {
+        if (events.containsKey(eventName)) {
+            return events[eventName]!!.size
+        } else {
             return 0
         }
     }
