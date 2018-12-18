@@ -1,0 +1,112 @@
+-------------------进入聊天室流程-----------------
+1：服务端：启动mediasoup服务；
+2：客户端：构建与mediasoup服务器网络连接通道，如使用socketIo，构建时携带发送roomId和PeerName
+3：服务端：接收到客户端传递roomId和PeerName后，首先判断roomId对应的room是否存在，不存在则调用 mediaServer.Room()构建
+4：客户端：调用new mediasoupClient.Room()构建Room对象
+5：客户端：调用room.join(peerName)，mediasoup SDK构建【queryRoom】消息 this._sendRequest('queryRoom'
+6：客户端：开发者通过room.on('request')监听mediasoup SDK，收到【queryRoom】消息后，通过socketIo发送【queryRoom】消息至服务端
+7：服务端：接收到客户端传递【queryRoom】消息（target=room），调用room.receiveRequest(request)处理后，将处理结果返回
+8：客户端：接收到服务端【queryRoom】回应，获取当前room相关信息（rtpCapabilities，mandatoryCodecPayloadTypes）等，保存至room中
+9：客户端：调用Device.Handler.getNativeRtpCapabilities()，关联webRtc相关，包括：
+          构建RTCPeerConnection对象； new RTCPeerConnection()
+          调用createOffer获取本地设备offer pc.createOffer()
+          调用sdpTransform类解析offer获取sdpObj数据 sdpTransform.parse(offer.sdp)
+          调用sdpCommonUtils获取设备rtpCapabilities并返回  sdpCommonUtils.extractRtpCapabilities(sdpObj)
+10：客户端：对返回的rtpCapabilities进行数据过滤，包括：
+          获取扩展的RTP能力 ortc.getExtendedRtpCapabilities
+          对比Room配置和本地RTP能力获取不支持的编码  ortc.getUnsupportedCodecs
+          检查是否支持发送音频和视频 ortc.canSend
+          为接收者生成有效的RTP功能 ortc.getRtpCapabilities
+11：客户端：调用mediasoup SDK构建【join】消息 this._sendRequest('join'
+12：客户端：开发者通过room.on('request')监听mediasoup SDK，收到【join】消息后，通过socketIo发送【join】消息至服务端
+13：服务端：接收到客户端传递【join】消息（target=room），调用room.receiveRequest(request)处理后，执行包括：
+           开发者通过peerName获取到对应Peer对象  room.getPeerByName(peerName)
+           开发者对Peer对象进行notify，newtransport，newproducer，newconsumer监听
+           处理结果返回
+14：客户端：获取服务器返回peers数组信息并进行处理，包括：
+           获取Peer名称name, 包含的媒体数据consumers, 自定义数据appData 
+           构建Peer  new Peer(name, appData)
+           循环添加consume至Peer中  peer.addConsumer(consumer)
+           发送【newpeer】消息 this.safeEmit('newpeer', peer)
+           返回room中存在的peers数组
+15：客户端：开发者获取peers数组后，首先创建发送Transport及接收Transport， room.createTransport 相关内部调用包括：
+           构建Transport对象，关联webRtc对象，绑定与Handle相关的事件监听，如connectionstatechange，needcreatetransport，needupdateproducer
+           将Transport对象存储至Hash表中
+           room设置对Transport对象事件监听（'@request'，'@notify'，'@close'），接收到后发送Request消息或者Notification消息
+           返回Transport对象
+16：客户端：开发者获取peers数组后，循环对Peer对象进行处理，包括：
+           循环处理peer中存在的所有consumer对象，通过consumer.receive(recvTransport)获取 track媒体音频/视频数据
+           监听peer对象相关事件，如close，newconsume等
+17：客户端：开发者获取设备音视频媒体信息 navigator.mediaDevices.getUserMedia
+18：客户端：开发者调用room.createProducer获取音频/视频 Producer，流程包括：
+           构建Producer对象，createProducer(track, options, appData)
+           将Produce对象存储至Hash表中
+           返回Producer对象
+18：客户端：开发者调用audioProducer.send(sendTransport) 发送音频/视频，流程包括：
+           调用transport.addProducer，调用this._handler.addProducer，webRtc相关，调用handle的addProducer(producer)，相关处理包括：
+            判断当前peerconnect中是否存在相同id的track，如有则替换（transceiver.sender.replaceTrack(track)），若无则添加（this._pc.addTransceiver(track, { direction: 'sendonly' });）
+                   创建offer pc.createOffer
+                   获取生成的offer，若设置simulcast，则调用sdpTransform.parse及sdpUnifiedPlanUtils.addPlanBSimulcast，sdpTransform.write对offer进行修改，然后设置pc本地描述 pc.setLocalDescription
+                   调用handle的setupTransport，构建需要发送的transportLocalParameters，发送【needcreatetransport】消息
+                         transport类收到该消息后，重新构建参数，发送【request】类型为createTransport
+                         room类收到后发送【createTransport】的request消息
+                         开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
+                         服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                         客户端socketIo接收后，回传数据room->transport->handle中，获取transportRemoteParameters，包含dtlsParameters，iceCandidates，iceParameters，将该服务器返回参数设置至_remoteSdp中，且设置传输状态为true
+                   使用sdpTransform解析本地sdp，用remoteSdp构建answersdp数据，然后调用pc.setRemoteDescription设置远端描述
+                   调用sdpUnifiedPlanUtils.fillRtpParametersForTrack填充rtpParameters并返回
+           transport对象_execAddProducer获取rtpParameters参数后，构建数据发送【createProducer】的request消息
+           room对象接收后发送【createProducer】的request消息
+           开发者接收后发送【createProducer】的request消息至服务端
+           服务端收到后【createProducer】的request消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+           客户端socketIo接收后，回传数据room->transport中，调用producer.setRtpParameters(producerRtpParameters)，设置rtpParameters
+
+
+-------------------新用户进入聊天室流程-----------------
+1：客户端：开发者socketIO接收服务器发送来的【newPeer】notification消息，投递至room处理
+2：客户端：调用room.receiveNotification方法，调用_handlePeerData()方法处理，包括：
+          构建Peer对象，并存储至room _peers中
+          获取该Peer中是否包含consumer，若包含则调用_handleConsumerData()处理consumer
+3：客户端：开发者socketIO接收服务器发送来的【newConsumer】notification消息，投递至room处理
+4：客户端：调用room.receiveNotification方法，从_peers中获取对应的Peer对象，调用_handleConsumerData(),包括:
+                构建Consume对象
+                Peer添加Consume对象，包括存储consume至_consumers，发送【newconsumer】消息
+5：客户端：开发者监听【newconsumer】消息 peer.on('newconsumer')，调用consumer.receive(recvTransport),包括：
+                调用transport.addConsumer，执行_execAddConsumer方法，包括：
+                    调用handler对象添加Consumer，_handler.addConsumer(consumer)，相关处理包括：
+                        获取consume对象consumerInfo参数，存储至_consumerInfos中
+                        调用_setupTransport(),处理流程包括：
+                            发送【@needcreatetransport】消息，transport接收后重新构建参数发送【createTransport】的requset消息
+                            room对象接收并转发【createTransport】的requset消息
+                            开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
+                            服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                            客户端socketIo接收后，回传数据room->transport->handle中，获取transportRemoteParameters，包含dtlsParameters，iceCandidates，iceParameters，将该服务器返回参数设置至_remoteSdp中，且设置传输状态为true
+                        使用_remoteSdp.createOfferSdp获取远端sdp数据，构建远端offer对象，然后调用pc.setRemoteDescription设置远端描述
+                        调用pc.createAnswer()方法获取本地sdp
+                        获取本地sdp后，调用pc.setLocalDescription设置
+                        调用_updateTransport()方法处理，包括：
+                            发送【@needupdatetransport】消息
+                            transport接收【@needupdatetransport】消息后，发送【updateTransport】的notify消息
+                            room接收并发送【updateTransport】的notify消息
+                            开发者接收【updateTransport】的notify消息，通过socketIo发送消息至服务端
+                            服务端接收【updateTransport】消息并处理
+                        调用pc.getTransceivers()获取接收到track
+                    构建需要传递的track数据，发送【enableConsumer】消息，transport->room->开发者
+                    开发者接收【enableConsumer】消息，通过socketIo发送消息至服务端
+                    服务器接收【enableConsumer】消息，处理结果并返回给客户端
+                    开发者->room->transport,获取response回应信息，更新consume数据，返回track
+                Transport返回track
+            room返回track给开发者
+            开发者获取track后，提取音频/视频数据分别播放
+
+                    
+                    
+                    
+                        
+
+
+  
+                
+           
+
+

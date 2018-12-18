@@ -1,0 +1,9 @@
+{
+  "role": "auto",
+  "fingerprints": [
+    {
+      "algorithm": "sha-256",
+      "value": "B4:B2:B0:08:F8:64:36:48:A0:F1:B2:1C:D2:79:F4:A3:8E:47:27:80:AB:FA:AE:4B:8B:CB:0F:E3:B4:1B:D7:AE"
+    }
+  ]
+}

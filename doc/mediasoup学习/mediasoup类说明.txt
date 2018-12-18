@@ -1,0 +1,1540 @@
+-------------------commonUtils.js handlers/sdp目录-----------------
+类说明：从sdpObj Json对象中提取需要的数据，包括Rtp能力，DTLS参数等
+导入类：sdp-transform
+公有方法：
+export function extractRtpCapabilities(sdpObj)
+    描述：从sdpObj Json对象中提取Rtp能力
+    参数：sdpObj   json类型   参见CreateOfferSdpJson示例.txt文件
+    返回值：rtp能力对象   json类型  参见rtpCapabilitiesJson示例.txt
+    流程说明：解析sdpObj对象media节点，获取codec参数数组，获取codec参数，获取每个codec的rtcpFb，获取Rtp 头扩展数据，组合这些数据返回rtpCapabilities对象
+    调用点：Handle类（Chrome70.js） getNativeRtpCapabilities()方法
+
+export function extractDtlsParameters(sdpObj)
+    描述：从sdpObj Json对象中提取Dtls参数
+    参数：sdpObj   json类型   参见CreateOfferSdpJson示例.txt文件
+    返回值：Dtls参数对象   json类型  参见DtlsParametersJson示例.txt文件
+    流程说明：解析sdpObj对象media节点，调用getFirstActiveMediaSection(sdpObj)方法获取第一个激活媒体对象，解析fingerprint字段，组合这些数据返回rtpCapabilities对象
+    调用点:Handle类（Chrome70.js） _setupTransport()方法 及 _updateTransport()方法
+
+私有方法：
+function getFirstActiveMediaSection(sdpObj)
+    描述：获取sdp对象中第一个激活的媒体片段，返回找到的Json对象
+    参数：sdpObj   json类型
+    返回值：首个激活媒体片段Json对象   json类型
+    关键代码：(sdpObj.media || []).find((m) => m.iceUfrag && m.port !== 0)
+    调用点：commonUtils类extractDtlsParameters()方法
+
+
+-------------------plainRtpUtil.js handlers/sdp目录-----------------
+类说明：从sdpObj Json对象中提取需要的数据，包括特定类型的rtp基础参数，提取rtp参数并填充指定对象等 注：该类暂未使用
+导入类：无
+公有方法：
+export function extractPlainRtpParametersByKind(sdpObj, kind)
+    描述：从sdpObj Json对象中提取特定类型的rtp基础参数
+    参数：sdpObj   json类型   参见CreateOfferSdpJson示例.txt文件
+          kind     字符串  媒体格式【audio,video】
+    返回值：rtp能力对象   json类型  示例{ip:"203.0.113.1",port：54400}
+    流程说明：解析sdpObj对象media节点，获取指定kind类型的ip及port值，构建对象返回
+    调用点：无
+
+export function fillRtpParametersForKind(rtpParameters, sdpObj, kind)
+    描述：从sdpObj Json对象中提取特定类型的rtp参数，填充至rtpParameters中
+    参数：rtpParameters  json类型  待填充的rtp参数
+          sdpObj   json类型   参见CreateOfferSdpJson示例.txt文件
+          kind     字符串  媒体格式【audio,video】
+    返回值：无
+    流程说明：解析sdpObj对象media节点，获取指定kind类型的rtcp参数（ssrc，cname），填充至rtp参数中
+    调用点：无
+
+-------------------planBUtils.js handlers/sdp目录-----------------
+类说明：用于Chrome70之前版本，Safari11及之前版本对多流模式PlanB解析，包括：根据track及sdp填充rtp参数，添加的simulcast联播参数至sdpObj参数
+导入类：无
+公有方法：
+export function fillRtpParametersForTrack(rtpParameters, sdpObj, track)
+    描述：根据track及sdp填充rtp参数
+    参数：rtpParameters  json类型  待填充的rtp参数
+          sdpObj   json类型   参见CreateOfferSdpJson示例.txt文件
+          track   对象  MediaStreamTrack webRtc产生媒体流对象
+    返回值：无
+    流程说明：解析sdpObj对象media节点，获取ssrc，ssrcGroups相关节点信息，构建simulcast联播参数，设置到rtp参数encodings中
+    调用点：Chrome55,Chrome67，Safari11类addProducer()方法中 
+
+export function addSimulcastForTrack(sdpObj, track)
+    描述：从本地track中获取需要添加的simulcast联播参数，填充至sdpObj参数中
+    参数：sdpObj   json类型   待填充simulcast联播参数的sdp 参见CreateOfferSdpJson示例.txt文件
+          track   对象  MediaStreamTrack webRtc产生媒体流对象
+    返回值：无
+    流程说明：解析sdpObj对象media节点，获取指定kind类型的rtcp参数（ssrc，rtx），填充至sdp中添加simulcast联播参数（ssrc，ssrcGroups）
+    调用点：Chrome55,Chrome67类addProducer()方法中
+
+-------------------unifiedPlanUtils.js handlers/sdp目录-----------------
+类说明：用于Chrome70及后续版本，Safari12及后续版本，Firefox版本对多流模式unifiedPlan及planB解析，包括：根据track及sdp填充rtp参数，添加的simulcast联播参数至sdpObj参数
+导入类：无
+公有方法：
+export function fillRtpParametersForTrack(
+	rtpParameters, sdpObj, track, { mid = null, planBSimulcast = false } = {}
+)
+    描述：根据发送track或者给定mid参数填充rtp参数
+    参数：rtpParameters  json类型  待填充的rtp参数
+          sdpObj   json类型   参见CreateOfferSdpJson示例.txt文件
+          track   对象  MediaStreamTrack webRtc产生媒体流对象
+          { mid = null, planBSimulcast = false }  json类型 是否支持planB联播  Chrome版本设置，firefox版本不设置
+    返回值：无
+    流程说明：解析sdpObj对象media节点，获取ssrc，ssrcGroups相关节点信息，构建simulcast联播参数，设置到rtp参数encodings中
+             注意根据传入planBSimulcast参数不同，planB及unifiedPlan解析流程不一致
+    调用点：Firefox相关类，Safari12，Chrome70类addProducer()方法中 
+
+export function addPlanBSimulcast(sdpObj, track, { mid = null } = {})
+    描述：从本地track及mid参数中获取需要添加的simulcast联播参数，填充至sdpObj参数中
+    参数：sdpObj   json类型   待填充simulcast联播参数的sdp 参见CreateOfferSdpJson示例.txt文件
+          track   对象  MediaStreamTrack webRtc产生媒体流对象
+          mid
+    返回值：无
+    流程说明：解析sdpObj对象media节点，获取指定kind类型的rtcp参数（ssrc，rtx），填充至sdp中添加simulcast联播参数（ssrc，ssrcGroups）
+    调用点：Safari12，Chrome70类addProducer()方法中
+
+私有方法：
+function findMediaSection(sdpObj, track, mid)
+    描述：从sdpObj中根据track及mid提取mediaSection对象
+    参数：sdpObj   json类型   sdp参数 参见CreateOfferSdpJson示例.txt文件
+          track   对象  MediaStreamTrack webRtc产生媒体流对象
+          mid     json类型 
+    返回值：Media对象 Json格式
+    流程说明：从sdpObj中根据track及mid提取查找的mediaSection对象并返回
+    调用点：fillRtpParametersForTrack()方法 addPlanBSimulcast()方法
+
+-------------------RemoteUnifiedPlanSdp.js handlers/sdp目录-----------------
+类说明：用于Chrome70及后续版本，Safari12及后续版本，Firefox版本对多流模式unifiedPlan及planB远端sdp对象构建
+导入类：sdpTransform，utils
+RemoteSdp类
+    类说明：远端Sdp基类
+    类成员变量：
+        rtpParametersByKind：远端发送音/视频的Rtp参数
+        transportLocalParameters：本地传输参数，包括DTLS 参数
+        transportRemoteParameters：远端传输参数，包括ICE参数，ICE候选服务器参数，DTLS参数
+        sdpGlobalFields：SDP全局参数，包括：唯一标识，版本
+    构造方法：
+        constructor(rtpParametersByKind): 构建远端Sdp基础参数
+    公共方法：
+        setTransportLocalParameters(transportLocalParameters) : 设置本地传输参数
+            调用点：Chrome70.js中SendHandler类_setupTransport()方法
+        setTransportRemoteParameters(transportRemoteParameters)：设置远端传输参数
+            调用点：Chrome70.js中SendHandler类及 RecvHandler类 _setupTransport()方法
+        updateTransportRemoteIceParameters(remoteIceParameters)：更新远端ICE参数
+            调用点：Chrome70.js中SendHandler类及 RecvHandler类restartIce()方法
+
+SendRemoteSdp类
+    类说明：发送远端Sdp类，继承RemoteSdp类
+    类成员变量：无新增，复用基类
+    类关键参数：无新增，复用基类
+    公共方法：
+        复用基类方法
+        createAnswerSdp(localSdpObj)
+            描述：根据从MediaSoup服务端接收到的远端传输参数及本地sdp参数，创建远端Answer Sdp参数
+            参数：localSdpObj   json类型  本地sdp参数 参见CreateOfferSdpJson示例.txt文件
+            返回值：生成的远端Answer sdp值，字符串类型
+            流程说明：根据从MediaSoup服务端接收到的远端传输参数及本地sdp参数，创建远端Answer Sdp,完成后调用sdpTransform.write(sdpObj)生成字符串返回
+            调用点：Handle类(SendHandler)的addProducer()，removeProducer(),restartIce()
+        调用点：Handle类(SendHandler)addProducer()removeProducer(),restartIce()
+
+RecvRemoteSdp类
+    类说明：接收远端Sdp类，继承RemoteSdp类
+    类成员变量：无新增，复用基类
+    类关键参数：无新增，复用基类
+    公共方法：
+        复用基类方法
+        createOfferSdp(consumerInfos)
+            描述：根据从MediaSoup服务端接收到的远端传输参数及Consumer参数（包含远端sdp），创建远端Offer Sdp参数
+            参数：consumerInfos   Consumer类型  远端Consumer对象，包含远端sdp参数
+            返回值：生成的远端Offer sdp值，字符串类型
+            流程说明：根据从MediaSoup服务端接收到的远端传输参数及Consumer参数（包含远端sdp），创建远端Offer Sdp,完成后调用sdpTransform.write(sdpObj)生成字符串返回
+            调用点：Handle类(RecvHandler)的addConsumer()，removeConsumer(),restartIce()
+
+-------------------RemoteUnifiedPlanSdp.js handlers/sdp目录-----------------
+类说明：用于Chrome70之前版本，Safari11版本对多流模式planB远端sdp对象构建，其他参见RemoteUnifiedPlanSdp.js说明
+
+-------------------RemotePlainRtpSdp.js handlers/sdp目录-----------------
+类说明：标准远端sdp对象构建，其他参见RemoteUnifiedPlanSdp.js说明，注：该类暂未调用
+
+-------------------Chrome70.js handlers/sdp目录-----------------
+类说明：WebRtc桥接处理类，用于桥接上层类与webRtc Api调用
+导入类：sdpTransform，EnhancedEventEmitter，utils，ortc，commonUtils，unifiedPlanUtils，RemoteUnifiedPlanSdp
+Handler类
+    类说明：WebRtc处理基类
+    继承类：EnhancedEventEmitter
+    类成员变量：
+        pc：webRtc Peer构建对象，RTCPeerConnection类型
+        rtpParametersByKind：远端发送音/视频的Rtp参数 Json对象
+        remoteSdp：远端sdp， SendRemoteSdp类型或RecvRemoteSdp类型
+        transportReady：标识通道是否已就绪 bool型
+    构造方法：
+        constructor(direction, rtpParametersByKind, settings)
+            参数：
+                direction 【send，recv】 字符串类型
+                rtpParametersByKind：远端发送音/视频的Rtp参数 Json对象
+                settings：room配置信息 Json对象
+            描述：构建RTCPeerConnection对象并添加ice网络链接状态监听， 构建RemoteUnifiedPlanSdp对象，设置类变量
+
+    公共方法：
+        close() : 关闭RTCPeerConnection连接
+            调用点：Transport类_destroy()方法
+        remoteClosed()：关闭远端transport
+            调用点：Transport类remoteClose()方法
+
+SendHandler类
+    类说明：WebRtc处理基类
+    继承类：Handler
+    类成员变量：
+        继承于Handler
+            pc：webRtc Peer构建对象，RTCPeerConnection类型
+            rtpParametersByKind：远端发送音/视频的Rtp参数 Json对象
+            remoteSdp：远端sdp， SendRemoteSdp类型或RecvRemoteSdp类型
+            transportReady：标识通道是否已就绪 bool型
+        trackIds:本地track标识集合 Map型
+
+    构造方法：
+        constructor(rtpParametersByKind, settings)
+            参数：
+                rtpParametersByKind：远端发送音/视频的Rtp参数 Json对象
+                settings：room配置信息 Json对象
+            描述：调用父类构建super('send', rtpParametersByKind, settings)，初始化transportReady为false，构建trackIds容器
+            调用点：Chrome70.js中Chrome70类构造函数 constructor(direction, extendedRtpCapabilities, settings)
+
+    公共方法：
+        addProducer(producer)
+            参数：
+                producer：待添加的producer对象，Producer类型 
+            描述：handler添加producer对象
+            流程说明：
+                    根据producer获取track对象，判断当前peerconnect中是否存在相同id的track，如有则替换（transceiver.sender.replaceTrack(track)），若无则添加（this._pc.addTransceiver(track, { direction: 'sendonly' });）
+                    创建offer pc.createOffer
+                    获取生成的offer，若设置simulcast，则调用sdpTransform.parse及sdpUnifiedPlanUtils.addPlanBSimulcast，sdpTransform.write对offer进行修改，然后设置pc本地描述 pc.setLocalDescription
+                    调用handle的setupTransport，构建需要发送的transportLocalParameters，发送【needcreatetransport】消息
+                    使用sdpTransform解析本地sdp，用remoteSdp构建answersdp数据，然后调用pc.setRemoteDescription设置远端描述
+                    调用sdpUnifiedPlanUtils.fillRtpParametersForTrack填充rtpParameters并返回
+            返回值：rtpParameters参数
+            调用点：Transport.js中_execAddProducer(producer)方法
+
+        removeProducer(producer)
+            参数：
+                producer：待移除的producer对象，Producer类型 
+            描述：handler中移除指定producer对象
+            流程说明：
+                    根据producer获取track对象，判断当前peerconnect中是否存在相同id的track，如有则继续
+                    调用pc.getSenders()获取webRtc发送数据集找到该track对应的RTCRtpSender，调用pc.removeTrack(rtpSender)移除，调用trackIds.delete(track.id)移除本地存储数据，调用pc.createOffer()创建offer
+                    获取生成的offer，然后设置pc本地描述 pc.setLocalDescription
+                    使用sdpTransform解析本地sdp，用remoteSdp构建answersdp数据，然后调用pc.setRemoteDescription设置远端描述
+            返回值：无      
+            调用点：Transport.js中_execRemoveProducer(producer)方法
+
+        replaceProducerTrack(producer, track)
+            参数：
+                producer：待替换的producer对象，Producer类型 
+                track：需替换的track，MediaStreamTrack类型
+            参数：使用新track替换producer中track
+            流程说明：
+                    根据producer获取track对象
+                    调用pc.getSenders()获取webRtc发送数据集找到该track对应的RTCRtpSender，调用rtpSender.replaceTrack(track)覆盖旧track
+                    本地trackIds更新trackId标识
+            返回值：无  
+            调用点：Transport.js中_execReplaceProducerTrack(producer, track)方法
+
+        restartIce(remoteIceParameters)
+            参数：
+                remoteIceParameters：新ice服务器参数，Json类型 
+            描述：重置远端ICE参数    
+            流程说明：
+                    remoteSdp对象更新ice参数 remoteSdp.updateTransportRemoteIceParameters(remoteIceParameters)
+                    调用pc.createOffer()创建offer
+                    获取生成的offer，然后设置pc本地描述 pc.setLocalDescription
+                    使用sdpTransform解析本地sdp，用remoteSdp构建answersdp数据，然后调用pc.setRemoteDescription设置远端描述
+            返回值：无  
+            调用点：Transport.js中_execRestartIce(remoteIceParameters)方法
+
+        setupTransport()
+            参数：无 
+            描述：构建Transport对象
+            流程说明：
+                    调用handle的setupTransport，构建需要发送的transportLocalParameters，发送【needcreatetransport】消息
+                        transport类收到该消息后，重新构建参数，发送【request】类型为createTransport
+                        room类收到后发送【createTransport】的request消息
+                        开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
+                        服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                        客户端socketIo接收后，回传数据room->transport->handle中
+                    获取transportRemoteParameters，包含dtlsParameters，iceCandidates，iceParameters，将该服务器返回参数设置至_remoteSdp中，且设置传输状态为true
+            返回值：无    
+            调用点：SendHandler类addProducer(producer)方法
+
+RecvHandler类
+    类说明：WebRtc处理基类
+    继承类：Handler
+    类成员变量：
+        继承于Handler
+            pc：webRtc Peer构建对象，RTCPeerConnection类型
+            rtpParametersByKind：远端发送音/视频的Rtp参数 Json对象
+            remoteSdp：远端sdp， SendRemoteSdp类型或RecvRemoteSdp类型
+            transportReady：标识通道是否已就绪 bool型
+        transportCreated:通道是否已创建 bool型
+        transportUpdated：通道是否已更新 bool型
+        consumerInfos：放置consumerInfo集合 Map型
+
+    构造方法：
+        constructor(rtpParametersByKind, settings)
+            参数：
+                rtpParametersByKind：远端发送音/视频的Rtp参数 Json对象
+                settings：room配置信息 Json对象
+            描述：调用父类构建super('recv', rtpParametersByKind, settings)，初始化transportCreated，transportUpdate为false，构建consumerInfos容器
+            调用点：Chrome70.js中Chrome70类构造函数 constructor(direction, extendedRtpCapabilities, settings)
+
+    公共方法：
+        addConsumer(consumer)
+            参数：
+                consumer：待添加的consumer对象，Consumer类型 
+            描述：添加cousumer对象
+            流程描述：
+                    获取consume对象consumerInfo参数，存储至_consumerInfos中
+                    调用_setupTransport(),流程详见setupTransport()函数说明
+                    使用_remoteSdp.createOfferSdp获取远端sdp数据，构建远端offer对象，然后调用pc.setRemoteDescription设置远端描述
+                    调用pc.createAnswer()方法获取本地sdp
+                    获取本地sdp后，调用pc.setLocalDescription设置
+                    调用_updateTransport()方法处理,流程详见updateTransport()函数说明
+                    调用pc.getTransceivers()获取接收到的transceiver，返回接收到的track值transceiver.receiver.track
+                           
+            返回值：接收到的track对象，MediaStreamTrack类型
+            调用点：Transport.js中_execAddConsumer(consumer)方法 
+
+        removeConsumer(consumer)
+            参数：
+                consumer：待移除的producer对象，Producer类型 
+            描述：移除指定consume对象
+            流程说明：
+                    从consumerInfos中获取该consumer对应的consumerInfo对象，设置为closed
+                    调用remoteSdp.createOfferSdp()创建远端sdp，调用pc.setRemoteDescription设置
+                    调用pc.createAnswer() 创建answer sdp
+                    获取生成的answer，然后设置pc本地描述 pc.setLocalDescription()
+            返回值：无   
+            调用点：Transport.js中_execRemoveConsumer(consumer)方法    
+
+        restartIce(remoteIceParameters)
+            参数：
+                remoteIceParameters：新ice服务器参数，Json类型 
+            描述：重置远端ICE参数
+            流程说明：
+                    remoteSdp对象更新ice参数 remoteSdp.updateTransportRemoteIceParameters(remoteIceParameters)
+                    调用remoteSdp.createOfferSdp()创建远端sdp，调用pc.setRemoteDescription设置
+                    调用pc.createAnswer()创建answer 
+                    获取生成的offer，然后设置pc本地描述 pc.setLocalDescription()
+            返回值：无  
+            调用点：Transport.js中_execRestartIce(remoteIceParameters)方法
+
+        setupTransport()
+            参数：无 
+            描述：构建Transport通道对象，通知服务端并获取服务端返回传输参数
+            流程说明：
+                    发送【@needcreatetransport】消息
+                        transport接收后重新构建参数发送【createTransport】的requset消息
+                        room对象接收并转发【createTransport】的requset消息
+                        开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
+                        服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                        客户端socketIo接收后，回传数据room->transport->handle中
+                    获取transportRemoteParameters，包含dtlsParameters，iceCandidates，iceParameters，将该服务器返回参数设置至_remoteSdp中，且设置传输状态为true
+            返回值：无    
+            调用点：RecvHandler类addConsumer(consumer)函数
+
+        updateTransport()
+            参数：无 
+            描述：更新Transport通道对象相关参数
+            流程说明：
+                    获取pc本地sdp pc.localDescription.sdp
+                    调用sdpTransform.parse()解析sdp获取json对象
+                    调用sdpCommonUtils.extractDtlsParameters提取dtls参数
+                    发送【@needupdatetransport】消息，handle->transport->room,经过socketIo传递给服务端处理
+                    transportUpdated标识设置为true
+            返回值：无    
+            调用点：RecvHandler类addConsumer(consumer)函数
+
+Chrome70类
+    类说明：对外提供接口类
+    公共方法：
+        static getNativeRtpCapabilities()
+            参数：无
+            描述：获取设备本地Rtp能力集
+            流程说明：
+                    构建RTCPeerConnection对象； new RTCPeerConnection()
+                    调用createOffer获取本地设备offer pc.createOffer()
+                    调用sdpTransform类解析offer获取sdpObj数据 sdpTransform.parse(offer.sdp)
+                    调用sdpCommonUtils获取设备rtpCapabilities并返回  sdpCommonUtils.extractRtpCapabilities(sdpObj)
+            调用点：Room类join(peerName, appData)方法
+
+    构造方法：
+        constructor(direction, extendedRtpCapabilities, settings)
+            参数：
+                direction：【send，recv】 字符串类型
+                extendedRtpCapabilities：扩展的rtp能力 Json对象
+                settings：room配置信息 Json对象
+            描述：Handler对外构造函数
+            流程说明：根据direction确定构建SendHandler/RecvHandler,通过ortc类构建rtp参数进行构造
+            调用点：Device类_detect()方法                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+
+-------------------util.js-----------------
+类说明：mediasoup通用工具类，提供随机数生成，对象克隆
+导入类：random-number 
+公有方法：
+    export function getExtendedRtpCapabilities(localCaps, remoteCaps)
+        描述：生成 10000000 至 99999999的随机数
+        参数：无
+        返回值：随机数 【10000000，99999999】
+        流程说明：调用random-number库生成随机数
+        调用点： Producer类构造方法 constructor(track, options, appData)
+                Transport类构造方法 constructor(direction, extendedRtpCapabilities, settings, appData)       
+                RemoteSdp类构造方法 constructor(rtpParametersByKind)
+
+    export function clone(obj)
+        描述：克隆对象
+        参数：obj 待克隆对象
+        返回值：克隆完成对象
+        流程说明：JSON.parse(JSON.stringify(obj))
+        调用点： Chrome70.js SendHandle类 addProducer(producer)方法
+                
+-------------------util.js-----------------
+类说明：mediasoup通用工具类，提供随机数生成，对象克隆
+导入类：random-number 
+公有方法：
+    export function getExtendedRtpCapabilities(localCaps, remoteCaps)
+        描述：生成 10000000 至 99999999的随机数
+        参数：无
+        返回值：随机数 【10000000，99999999】
+        流程说明：调用random-number库生成随机数
+        调用点： Producer类构造方法 constructor(track, options, appData)
+                Transport类构造方法 constructor(direction, extendedRtpCapabilities, settings, appData)       
+                RemoteSdp类构造方法 constructor(rtpParametersByKind)
+
+    export function clone(obj)
+        描述：克隆对象
+        参数：obj 待克隆对象
+        返回值：克隆完成对象
+        流程说明：JSON.parse(JSON.stringify(obj))
+        调用点： Chrome70.js SendHandle类 addProducer(producer)方法
+                
+-------------------Device.js-----------------
+类说明：获取设备相关信息，根据浏览器类型获取需要对接的Handle类（Chrome70，Firefox65等）
+导入类：bowser， handlers/Chrome70， handlers/Firefox65等
+类成员变量：
+        _detected：设备是否做了detect
+        _flag：设备标识
+        _name: 设备名称
+        _version：设备版本号
+        _bowser:设备bowser对象
+        _handlerClass：设备对应handler类
+
+公有方法：
+    static setHandler(handler, metadata = {})
+        描述：主动设置handle类及Device配置参数，避免自动检测
+        参数：
+            handler：webRtc设备对接类，如Chrome70，Firefox65等
+            metadata：json类型，{flag:"",name:"",version:"",bowser:{}}
+        返回值：无
+        流程说明：强制设置handler类及metadata
+        调用点： Device类setDeviceHandler(handler, metadata)
+    static _detect()
+        描述：检测并设置当前设备支持Handler类及Device配置参数
+        参数：无
+        返回值：无
+        流程说明:通过global.navigator及bowser获取当前设备标识，版本等参数，选择对应的Handler类
+        调用点：Device函数内部
+
+    static getFlag()：获取Device对象flag
+    static getName()：获取Device对象name
+    static getVersion()：获取Device对象version
+    static getBowser()：获取Device对象 bowser对象
+    static isSupported()：判断当前设备是否支持
+    static get Handler()：获取当前设备对应Handler类
+
+-------------------Logger.js-----------------
+类说明：系统日志封装类
+导入类：debug
+公有方法：
+    debug(): debug日志输出
+    warn(): warn日志输出
+    error()：error日志输出
+
+-------------------error.js-----------------
+InvalidStateError类
+    类说明：当调用对象状态无效时调用方法时产生，如Transport对象关闭时调用addProducer()
+
+TimeoutError类
+    类说明：当Promise超时导致被rejected时产生，该错误发生在Room类_sendRequest(method, data)方法中
+
+UnsupportedError类
+    类说明：当调用对象不支持某些场景时产生，该错误发生在Room类join(peerName, appData)方法中
+
+-------------------EnhancedEventEmitter.js-----------------
+类说明：EventEmitter封装类，Consumer，Producer等均继承于该类，包括：添加了错误异常捕获的普通消息，添加了错误异常捕获的Promise消息
+导入类：EventEmitter  Logger
+继承类：EventEmitter
+构造方法：
+    constructor(logger)
+        描述：事件类构造方法
+        参数：
+            logger：日志对象，Logger类型
+        流程说明：设置最大监听器个数，设置logger
+        调用点：Consumer，Producer等类构造方法中，super(logger)   
+
+公有方法：
+    safeEmit(event, ...args)
+        描述：发送emit事件，增加错误捕获
+        参数：
+            event：事件名，字符串类型
+            ...args：传递参数，可变参数
+        返回值：无
+        流程说明：调用this.emit(event, ...args)发送消息，若过程中发生错误，捕获并日志输出
+        调用点： Consumer，Producer等类中
+    
+    safeEmitAsPromise(event, ...args)
+        描述：发送emit事件，增加错误捕获
+        参数：
+            event：事件名，字符串类型
+            ...args：传递参数，可变参数
+        返回值：Promise对象
+        流程说明：构建Promise对象，该Promise中调用this.safeEmit(event, ...args, callback, errback)发送消息，callback成功回调resolve(),errback失败回调reject()
+        调用点： Room，Transport类，主要处理发送request消息处理
+
+
+-------------------CommandQueue.js-----------------
+类说明：CommandQueue消息队列，主要用于Transport类消息分发处理
+导入类：EventEmitter  Logger errors
+继承类：EventEmitter
+类成员变量：
+    closed：当前队列状态，true：关闭状态，false：正常状态
+    busy：当前队列是否正在处理中，true：当前队列正在处理中 仅支持将待处理消息插入消息队列，false：当前队列空闲中，支持消息插入队列并立即处理
+    queue：对象数组，对象包含：method（调用方法名 字符串类型），resolve（Promise 成功执行函数），reject（Promise 失败执行函数），data（传递参数）
+构造方法：
+    constructor()
+        描述：消息队列构造方法
+        参数：无
+        流程说明：设置最大监听器个数，初始化队列
+        调用点：Transport类 构造函数  
+
+公有方法：
+    close():设置队列状态为关闭
+    
+    push(method, data)
+        描述：将消息放置于消息队列中，并返回Promise对象
+        参数：
+            method：消息名（方法名），字符串类型
+            data：传递参数，object对象
+        返回值：Promise对象
+        流程说明： 
+            调用Object.assign构建需要放置入消息队列的command对象 Object.assign({ method }, data);
+            构建Promise对象，resolve及reject处理函数放置于command对象中
+            将command对象放置queue消息队列中
+            调用_handlePendingCommands()方法
+        调用点： Transport类 函数调用，如：this._commandQueue.push('addProducer', { producer });
+
+    _handlePendingCommands()
+        描述：将消息放置于消息队列中，并返回Promise对象，私有方法
+        参数：无
+        返回值：Promise对象
+        流程说明： 
+            获取队列最上层消息，若无消息则返回，若存在消息则获取
+            将队列状态busy修改为true
+            调用_handleCommand方法，详见_handleCommand(command)描述
+            执行完成后，将队列状态busy修改为false，移除最上层消息
+            继续递归执行_handlePendingCommands()方法
+        调用点：CommandQueue类push(method, data)函数调用
+
+    _handleCommand(command)
+        描述：处理消息队列中消息，并返回Promise对象，私有方法
+        参数：
+            command：待处理消息，包含：method（调用方法名 字符串类型），resolve（Promise 成功执行函数），reject（Promise 失败执行函数），data（传递参数）
+        返回值：Promise对象
+        流程说明： 
+            查看当前消息队列是否关闭，若关闭则调用command对象reject方法，并直接返回Promise.resolve()对象，若未关闭则继续
+            构建promiseHolder对象 const promiseHolder = { promise: null }
+            触发exec类型消息 this.emit('exec', command, promiseHolder)
+                Transport类触发_execCommand(command, promiseHolder)
+                根据方法类型调用指定函数处理 promise = this._execAddProducer(producer);
+                返回Promise对象，并设置入promiseHolder中保存 promiseHolder.promise = promise;
+            then() 返回Promise对象
+            then() 返回该Promise resolve结果 若当前队列已关闭，则调用command.reject(),若正常则调用command.resolve(result)
+        调用点：CommandQueue类push(method, data)函数调用
+
+-------------------Peer.js-----------------
+类说明：Room中远端通道连接
+导入类：Logger  EnhancedEventEmitter
+继承类：EnhancedEventEmitter
+类成员变量：
+    name：通道名，字符串类型
+    closed：通道状态是否关闭，bool型
+    appData：通道传递自定义参数，Any 对象
+    consumers：通道中包含消费者集合，Map类型，key为Consumer标识，value为Consumer对象
+
+构造方法：
+    constructor()
+        描述：远端通道对象构造方法
+        参数：
+            name：远端通道名称，字符串类型
+            appData：远端通道自定义参数，Any对象
+        流程说明：初始化远端通道对象
+        调用点：Room对象_handlePeerData(peerData)方法
+
+公有方法：
+    close()
+        描述：本地关闭Peer通道
+        参数：无
+        返回值：无
+        流程说明： 
+            发送【@close】消息通知 Room对象移除该Peer
+            发送【close】消息通知开发者，参数"local"
+            获取该peer中保存的所有Consumer，循环关闭 consumer.close()
+        调用点：Room对象leave(appData)退出room
+
+    remoteClose(appData)
+        描述：服务端通知远程关闭指定Peer通道
+        参数：
+            appData：object对象 传递参数
+        返回值：无
+        流程说明： 
+            发送【@close】消息通知 Room对象移除该Peer
+            发送【close】消息通知开发者，参数"remote"
+            获取该peer中保存的所有Consumer，循环远程关闭
+        调用点：Room对象remoteClose(appData)方法
+
+    getConsumerById(id)
+        描述：获取Peer中指定Consumer对象
+        参数：
+            id：Consumer标识，数字
+        返回值：Consumer对象
+        流程说明：获取Peer中指定Consumer对象
+        调用点：Room对象receiveNotification(notification) 方法consumerClosed，consumerPaused，consumerResumed，consumerPreferredProfileSet，consumerEffectiveProfileChanged，consumerStats
+    
+    addConsumer(consumer)
+        描述：Peer通道中添加关联Consumer
+        参数：
+            consumer：待添加Consumer对象，Consumer类
+        返回值：无
+        流程说明：
+            添加Consumer对象至map中
+            如果consumer状态为关闭，则移除
+            发送【newconsumer】消息通知开发者
+        调用点：Room对象_handleConsumerData(producerData, peer)
+
+事件监听：
+    【close】
+        描述：当远端Peer被关闭或离开Room时触发
+        参数：无
+        示例：peer.on(“close”, fn())
+
+    【newconsumer】
+        描述：当Peer通道中关联到媒体数据的新Consumer被创建时触发
+        参数：
+            consumer：新创建的Consumer对象 Consumer类型
+        示例：peer.on(“newconsumer”, fn(consumer))
+
+-------------------Producer.js-----------------
+类说明：标识发送到Room的音频/视频 媒体数据
+导入类：Logger  EnhancedEventEmitter errors utils
+继承类：EnhancedEventEmitter
+类成员变量：
+    id：生产者标识，数字
+    closed：生产者状态是否关闭，bool型
+    originalTrack：初始媒体轨道，MediaStreamTrack类型
+    track：媒体轨道克隆对象，MediaStreamTrack类型
+    appData：通道传递自定义参数，Any 对象
+    simulcast：媒体联播参数设置，若不支持则为false（bool型），若支持则为设置联播参数（Json）
+    transport：关联的Transport传输对象
+    rtpParameters：服务端返回的Rtcp参数，Json对象
+    locallyPaused：本地端是否关闭，bool型
+    remotelyPaused：服务端是否关闭，bool型
+    statsEnabled：是否设置定时状态检索，bool型
+    statsInterval：状态检索间隔时间，数字，单位毫秒
+
+类静态变量：
+    DEFAULT_STATS_INTERVAL = 1000  设置默认状态检索间隔时间
+    SIMULCAST_DEFAULT ={low: 100000,medium: 300000,high: 1500000} 设置默认媒体联播参数
+
+构造方法：
+    constructor(track, options, appData)
+        描述：Producer构造方法
+        参数：
+            track：媒体轨道对象，MediaStreamTrack类型
+            options：构造参数，目前主要是simulcast参数设置
+            appData：通道传递自定义参数，Any 对象
+        流程说明：初始化Producer生成者对象
+        调用点：Room对象createProducer(track, options, appData)方法
+
+公有方法：
+    close(appData)
+        描述：本地关闭Producer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            close状态置为true
+            若Stats定时检索状态，则statsEnabled置为true，调用Transport对象的disableProducerStats方法，调用Transport对象的removeProducer(this, 'local', appData)方法
+            调用destroy()方法
+            发送【@close】消息通知 Room对象移除该Producer，参数"local"
+            发送【close】消息通知开发者，参数"local"
+        调用点：Room对象leave(appData)退出room
+
+    remoteClose(appData)
+        描述：服务端通知远程关闭指定Producer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            close状态置为true
+            调用Transport对象的removeProducer(this, 'remote', appData)方法
+            调用destroy()方法
+            发送【@close】消息通知 Room对象移除该Producer,参数为"remote"
+            发送【close】消息通知开发者，参数"remote"
+        调用点：Room对象leave(appData)退出room
+
+    send(transport)
+        描述：调用Transport通道发送Producer
+        参数：
+            transport：关联发送通道，Transport对象
+        返回值：Promise对象
+        流程说明： 
+            设置对象Transport参数
+            返回值处理流程包括：
+                调用transport对象addProducer(producer)方法，详见Transport类addProducer方法
+                transport对象注册close时间once监听，发送handled消息
+                若设置了定时状态检索(statsEnabled = true),则调用transport.enableProducerStats()
+        调用点：开发者外部调用
+
+    pause(appData)
+        描述：暂停发送媒体数据
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：当前状态是否暂停 bool型
+        流程说明： 
+            本地暂停状态locallyPaused置为true
+            媒体数据track设置可用状态为false track.enabled = false
+            调用Transport对象暂停Producer this._transport.pauseProducer(this, appData)
+            发送【pause】消息通知开发者，参数"local"
+            返回paused状态
+        调用点：开发者外部调用
+
+    remotePause(appData)
+        描述：服务端通知远程暂停指定Producer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            本地暂停状态remotelyPaused置为true
+            媒体数据track设置可用状态为false track.enabled = false
+            发送【pause】消息通知开发者，参数"remote"
+        调用点：Room对象receiveNotification(notification) 方法 producerPaused 状态
+
+    resume(appData)
+        描述：恢复处于暂停状态的发送媒体数据
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：当前状态是否恢复 bool型
+        流程说明： 
+            本地暂停状态locallyPaused置为false
+            若未服务端暂停，则媒体数据track设置可用状态为true track.enabled = true
+            调用Transport对象恢复Producer this._transport.resumeProducer(this, appData)
+            发送【resume】消息通知开发者，参数"local"
+            返回恢复状态
+        调用点：开发者外部调用
+
+    remotePause(appData)
+        描述：服务端通知远程恢复指定Producer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            本地暂停状态remotelyPaused置为false
+            媒体数据track设置可用状态为true track.enabled = true
+            发送【resume】消息通知开发者，参数"remote"
+        调用点：Room对象receiveNotification(notification) 方法 producerResumed 状态
+
+    replaceTrack(track)
+        描述：用新媒体对象track替换旧媒体对象track
+        参数：
+            track：新MediaTrack对象，MediaStreamTrack类型
+        返回值：Promise对象
+        流程说明： 
+            设置clonedTrack值为track.clone()
+            返回Promise对象，相关流程包括：
+                如果已关联通道对象Transport，则调用通道对象替换track this._transport.replaceProducerTrack(this, clonedTrack)
+                then 关闭关联track媒体，将旧track设置为原始originalTrack，track设置为新track
+                调用_handleTrack()方法
+                返回track对象
+        调用点：开发者外部调用
+    
+    setRtpParameters(rtpParameters)
+        描述：设置服务端返回的Rtp参数
+        参数：
+            rtpParameters：服务端返回的Rtp参数
+        返回值：无
+        流程说明：设置Rtp参数
+        调用点：Transport对象 _handleHandler()方法@needupdateproducer处理，_execAddProducer(producer)方法
+
+    enableStats(interval = DEFAULT_STATS_INTERVAL)
+        描述：启用定期统计数据检索
+        参数：
+            interval：定期检索间隔时间 数字 单位 毫秒
+        返回值：无
+        流程说明：
+            设置对象检索间隔statsInterval
+            设置对象允许检索statsEnabled为true
+            若关联Transport，则调用this._transport.enableProducerStats(this, this._statsInterval)
+        调用点：开发者外部调用
+
+    disableStats()
+        描述：关闭定期统计数据检索
+        参数：无
+        返回值：无
+        流程说明：
+            设置对象允许检索statsEnabled为false
+            若关联Transport，则调用this._transport.disableProducerStats(this)
+        调用点：开发者外部调用
+
+    remoteStats(stats)
+        描述：接收服务端设置stats参数
+        参数：
+            stats：服务端设置状态参数，json类
+        返回值：无
+        流程说明：
+            发送【stats】消息，开发者监听处理
+        调用点：Room对象receiveNotification(notification) 中 'producerStats'状态
+
+私有方法：
+    _destroy()
+        描述：销毁Producer对象
+        参数：无
+        返回值：无
+        流程说明： 
+            transport状态置为false
+            rtpParameters参数置为空
+            关闭对应track this._track.stop()
+        调用点：Producer对象 close(appData)  remoteClose(appData)
+    
+    _handleTrack()
+        描述：监听track关闭事件，该事件一般于麦克风或者摄像头关闭或发生内部错误时调用
+        参数：无
+        返回值：无
+        流程说明： 
+            监听track关闭事件，发送【trackended】消息，开发者监听该消息做处理
+        调用点：Producer对象构造方法，replaceTrack(track)方法   
+
+事件监听：
+    【close】
+        描述：Producer被关闭时触发
+        参数：
+            originator：触发类型，字符串 【local，remote】
+            appData：Producer传递自定义参数，any
+        示例：producer.on(“close”, fn(originator, appData))
+
+    【pause】
+        描述：Producer被暂停时触发
+        参数：
+            originator：触发类型，字符串 【local，remote】
+            appData：Producer传递自定义参数，any
+        示例：producer.on(“pause”, fn(originator, appData))
+
+    【resume】
+        描述：Producer被恢复时触发
+        参数：
+            originator：触发类型，字符串 【local，remote】
+            appData：Producer传递自定义参数，any
+        示例：producer.on(“resume”, fn(originator, appData))
+
+    【trackended】
+        描述：当媒体Track停止时发出(用于检测麦克风或网络摄像头断开/故障)。生产者不会自动关闭(关闭与否取决于应用程序)
+        参数：无
+        示例：producer.on(“trackended”, fn())
+
+    【handled】
+        描述：当Transport通道关联到Producer媒体对象时触发
+        参数：无
+        示例：producer.on(“handled”, fn())
+
+    【unhandled】
+        描述：当关联到的Transport通道被关闭时触发
+        参数：无
+        示例：producer.on(“unhandled”, fn())
+
+    【stats】
+        描述：在检索RTC统计信息时触发
+        参数：
+            stats：检索到统计消息 sequence<Object>
+        示例：producer.on(“stats”, fn(stats))
+
+-------------------Consumer.js-----------------
+类说明：标识从Room接收到的音频/视频 媒体数据
+导入类：Logger  EnhancedEventEmitter errors
+继承类：EnhancedEventEmitter
+类成员变量：
+    id：标识，数字
+    closed：状态是否关闭，bool型
+    rtpParameters：服务端返回的Rtcp参数，Json类型
+    peer：关联的连接通道对象，Peer类型
+    appData：通道传递自定义参数，Any 对象
+    supported：基于本地Rtp参数判断是否设备支持接收服务端发送的音视频对象，bool型
+    transport：关联的Transport传输对象
+    track：远端媒体轨道对象，MediaStreamTrack类型
+    locallyPaused：本地端是否关闭，bool型
+    remotelyPaused：服务端是否关闭，bool型
+    statsEnabled：是否设置定时状态检索，bool型
+    statsInterval：状态检索间隔时间，数字，单位毫秒
+    preferredProfile：优先选择配置文件，字符串，默认'default'
+    effectiveProfile: 有效配置文件，字符串
+
+类静态变量：
+    DEFAULT_STATS_INTERVAL = 1000  设置默认状态检索间隔时间
+    PROFILES = new Set([ 'default', 'low', 'medium', 'high' ]) 设置Profiles配置文件
+
+构造方法：
+    constructor(id, kind, rtpParameters, peer, appData)
+        描述：Producer构造方法
+        参数：
+            id：标识，数字
+            kind：媒体类型 字符串 【audio,video】
+            rtpParameters：rtp参数，Json类型
+            peer：关联通道标识，Peer类型
+            appData：通道传递自定义参数，Any类型
+        流程说明：初始化Consumer对象
+        调用点：Room对象_handleConsumerData(producerData, peer)方法
+
+公有方法：
+    close(appData)
+        描述：本地关闭Consumer
+        参数：无
+        返回值：无
+        流程说明： 
+            close状态置为true
+            若Stats定时检索状态，则statsEnabled置为true，调用Transport对象的disableConsumerStats方法
+            发送【@close】消息通知 Peer对象移除该Consumer
+            发送【close】消息通知开发者，参数"local"
+            调用销毁方法_destroy()
+        调用点：Peer对象close()方法
+
+    remoteClose(appData)
+        描述：服务端通知远程关闭指定Consumer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            close状态置为true
+            调用Transport对象的removeConsumer(this)方法
+            调用销毁方法_destroy()
+            发送【@close】消息通知 Peer对象移除该Consumer
+            发送【close】消息通知开发者，参数"remote"
+        调用点：Room对象leave(appData)退出room
+
+    receive(transport)
+        描述：调用Transport通道接收Consumer
+        参数：
+            transport：关联接收通道，Transport对象
+        返回值：Promise对象
+        流程说明： 
+            设置对象Transport参数
+            返回值处理流程包括：
+                调用transport对象addConsumer(consumer)方法，详见Transport类addConsumer方法
+                then 返回track值，将track设置入成员变量中
+                    transport对象注册close时间once监听，发送handled消息
+                    若允许stats，则调用transport.enableConsumerStats(this, this._statsInterval)
+                    返回track对象
+        调用点：开发者外部调用 获取track对象执行后续流程
+
+    pause(appData)
+        描述：暂停接收媒体数据
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：当前状态是否暂停 bool型
+        流程说明： 
+            本地暂停状态locallyPaused置为true
+            媒体数据track设置可用状态为false track.enabled = false
+            调用Transport对象暂停Consumer this._transport.pauseConsumer(this, appData)
+            发送【pause】消息通知开发者，参数"local"
+            返回paused状态
+        调用点：开发者外部调用
+
+    remotePause(appData)
+        描述：服务端通知远程暂停指定Consumer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            本地暂停状态remotelyPaused置为true
+            媒体数据track设置可用状态为false track.enabled = false
+            发送【pause】消息通知开发者，参数"remote"
+        调用点：Room对象receiveNotification(notification) 方法 consumerPaused 状态
+
+    resume(appData)
+        描述：恢复处于暂停状态的接收媒体数据
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：当前状态是否恢复 bool型
+        流程说明： 
+            本地暂停状态locallyPaused置为false
+            若未服务端暂停，则媒体数据track设置可用状态为true track.enabled = true
+            调用Transport对象恢复Consumer this._transport.resumeConsumer(this, appData);
+            发送【resume】消息通知开发者，参数"local"
+            返回恢复状态
+        调用点：开发者外部调用
+
+    remotePause(appData)
+        描述：服务端通知远程恢复指定Consumer
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            本地暂停状态remotelyPaused置为false
+            媒体数据track设置可用状态为true track.enabled = true
+            发送【resume】消息通知开发者，参数"remote"
+        调用点：Room对象receiveNotification(notification) 方法 consumerPaused 状态
+
+    setPreferredProfile(profile)
+        描述：设置本地首选接收配置文件
+        参数：
+            profile：配置文件，Json类型
+        返回值：无
+        流程说明： 
+            设置类变量首选配置文件 this._preferredProfile = profile
+            调用Transport对象设置首选配置文件方法 this._transport.setConsumerPreferredProfile(this, this._preferredProfile)
+        调用点：开发者外部调用
+    
+    remoteSetPreferredProfile(profile)
+        描述：远端设置首选接收配置文件
+        参数：
+            profile：配置文件，Json类型
+        返回值：无
+        流程说明：
+            设置类变量首选配置文件 this._preferredProfile = profile
+        调用点：
+            Room对象receiveNotification(notification)  'consumerPreferredProfileSet'状态
+            Transport对象_execAddConsumer(consumer)方法
+
+    remoteEffectiveProfileChanged(profile)
+        描述：远端可用配置文件改变
+        参数：
+            profile：配置文件，Json类型
+        返回值：无
+        流程说明：
+            设置类变量首选配置文件 this._effectiveProfile = profile
+            发送【effectiveprofilechange】消息
+        调用点：
+            Room对象receiveNotification(notification)  'consumerEffectiveProfileChanged'状态
+            Transport对象_execAddConsumer(consumer)方法
+
+    enableStats(interval = DEFAULT_STATS_INTERVAL)
+        描述：启用定期统计数据检索
+        参数：
+            interval：定期检索间隔时间 数字 单位 毫秒
+        返回值：无
+        流程说明：
+            设置对象检索间隔statsInterval
+            设置对象允许检索statsEnabled为true
+            若关联Transport，则调用this._transport.enableConsumerStats(this, this._statsInterval)
+        调用点：开发者外部调用
+
+    disableStats()
+        描述：关闭定期统计数据检索
+        参数：无
+        返回值：无
+        流程说明：
+            设置对象允许检索statsEnabled为false
+            若关联Transport，则调用this._transport.disableConsumerStats(this)
+        调用点：开发者外部调用
+
+    remoteStats(stats)
+        描述：接收服务端设置stats参数
+        参数：
+            stats：服务端设置状态参数，json类
+        返回值：无
+        流程说明：
+            发送【stats】消息，开发者监听处理
+        调用点：Room对象receiveNotification(notification) 中producerStats
+
+    setSupported(flag)
+        描述：设置Consumer可用
+        参数：
+            flag：设备是否支持远端Media媒体
+        返回值：无
+        流程说明：
+            设置标识 this._supported = flag
+        调用点：Room对象_handleConsumerData(producerData, peer)
+
+    remoteStats(stats)
+        描述：接收服务端传递状态
+        参数：
+            stats：服务端传递状态 Json类型
+        返回值：无
+        流程说明：
+            发送【stats】消息 开发者监听处理
+        调用点：room对象receiveNotification(notification) 'consumerStats'状态
+
+私有方法：
+    _destroy()
+        描述：销毁Consumer对象
+        参数：无
+        返回值：无
+        流程说明： 
+            transport状态置为false
+            关闭对应track this._track.stop()
+            track置为null
+        调用点：Consumer对象 close() remoteClose()方法
+    
+    _handleTrack()
+        描述：监听track关闭事件，该事件一般于麦克风或者摄像头关闭或发生内部错误时调用
+        参数：无
+        返回值：无
+        流程说明： 
+            监听track关闭事件，发送【trackended】消息，开发者监听该消息做处理
+        调用点：Producer对象构造方法，replaceTrack(track)方法       
+
+事件监听：
+    【close】
+        描述：Consumer被关闭时触发
+        参数：
+            originator：触发类型，字符串 【local，remote】
+            appData：传递自定义参数，any
+        示例：consumer.on(“close”, fn(originator, appData))
+
+    【pause】
+        描述：Consumer被暂停时触发
+        参数：
+            originator：触发类型，字符串 【local，remote】
+            appData：传递自定义参数，any
+        示例：consumer.on(“pause”, fn(originator, appData))
+
+    【resume】
+        描述：Consumer被恢复时触发
+        参数：
+            originator：关闭触发类型，字符串 【local，remote】
+            appData：传递自定义参数，any
+        示例：consumer.on(“resume”, fn(originator, appData))
+
+    【effectiveprofilechange】
+        描述：可用配置参数改变时触发
+        参数：
+            profile：可用配置参数，字符串类型
+        示例：consumer.on(“effectiveprofilechange”, fn(profile))
+
+    【handled】
+        描述：当Transport通道关联到Consumer媒体对象时触发
+        参数：无
+        示例：consumer.on(“handled”, fn())
+
+    【unhandled】
+        描述：当关联到的Transport通道被关闭时触发
+        参数：无
+        示例：consumer.on(“unhandled”, fn())
+
+    【stats】
+        描述：在检索RTC统计信息时触发
+        参数：
+            stats：检索到统计消息 sequence<Object>
+        示例：consumer.on(“stats”, fn(stats))
+
+-------------------Transport.js-----------------
+类说明：标识通过ICE和DTLS协商的用于发送或接收音频/视频RTP的通道
+导入类：Logger  EnhancedEventEmitter errors utils Device  CommandQueue
+继承类：EnhancedEventEmitter
+类成员变量：
+    id：标识，数字
+    closed：状态是否关闭，bool型
+    direction：通道类型，【send,recv】,字符串类型
+    settings：room参数设置，Json类型
+    appData：传递自定义参数，Any 对象
+    statsEnabled：是否设置定时状态检索，bool型
+    commandQueue: 命令处理队列，CommandQueue类型
+    handle：关联的设备Handler类（如：Chrome70，FireFox56等）
+    connectionState：通道连接状态，字符串枚举型，【new，connectiong，connected，failed，disconnected，closed】
+
+类静态变量：
+    DEFAULT_STATS_INTERVAL = 1000  设置默认状态检索间隔时间
+    
+构造方法：
+    constructor(direction, extendedRtpCapabilities, settings, appData)
+        描述：Producer构造方法
+        参数：
+            direction：通道类型，【send,recv】,字符串类型
+            extendedRtpCapabilities：扩展的rtp能力 Json对象
+            settings：room参数设置，Json类型
+            appData：传递自定义参数，Any 对象
+        流程说明：
+            初始化Transport通道对象
+            命令处理队列commandQueue设置对【exec】事件监听处理
+            handle类增加对handle对象内部消息事件处理，详见_handleHandler()函数说明
+        调用点：Room对象createTransport(direction, appData)
+
+公有方法：
+    close(appData)
+        描述：本地关闭通道
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            close状态置为true
+            若Stats定时检索状态，则statsEnabled置为true，调用disableStats()方法
+            发送参数为closeTransport的【@notify】通知消息至Room对象
+            发送【@close】通知消息至Room对象
+            发送【close】消息通知开发者，参数"local"
+            调用destroy()方法
+        调用点：
+            Room对象leave(appData)退出room
+            开发者调用
+
+    remoteClose(appData, { destroy })
+        描述：远程关闭通道
+        参数：
+            appData：传递自定义参数，Any 对象
+            { destroy }：标识是否通道对象需要被销毁
+        返回值：无
+        流程说明： 
+            调用handler的关闭远程通道方法 this._handler.remoteClosed()
+            close状态置为true
+            发送【@close】通知消息至Room对象
+            发送【close】消息通知开发者，参数"remote"
+            调用destroy()方法
+        调用点：
+            Room对象remoteClose(appData)
+            Room对象receiveNotification(notification)
+
+    restartIce()
+        描述：重启通道ICE服务
+        参数：无
+        返回值：无
+        流程说明： 
+            发送类型为restartTransport的【@request】消息传递给room对象
+                room接收后传递【restartTransport】消息给开发者，开发者发送至服务端，服务端处理后返回数据
+                romm将服务端返回数据返回transport对象
+            接收到服务端回应后，获取iceParameters参数，调用消息队列【restarIce】消息，this._commandQueue.push('restartIce', { remoteIceParameters })
+        调用点：
+            Room对象restartIce()方法
+
+    enableStats(interval = DEFAULT_STATS_INTERVAL)
+        描述：订阅传输到通过stats事件检索的RTC统计信息
+        参数：
+            interval：检索间隔 数字 毫秒
+        返回值：无
+        流程说明： 
+            类成员变量statsEnabled置为true
+            构建传递参数data ={id: this._id,interval : interval}
+            发送类型为enableTransportStats的【@notify】消息给room对象
+                room接收后传递【enableTransportStats】通知消息给开发者，开发者发送至服务端，服务端处理后返回数据
+        调用点：
+            开发者调用
+
+    disableStats()
+        描述：关闭统计消息订阅
+        参数：无
+        返回值：无
+        流程说明： 
+            类成员变量statsEnabled置为true
+            构建传递参数data ={id: this._id,interval : interval}
+            发送类型为enableTransportStats的【@notify】消息给room对象
+                room接收后传递【enableTransportStats】通知消息给开发者，开发者发送至服务端，服务端处理后返回数据
+        调用点：
+            开发者调用
+
+    addProducer(producer)
+        描述：通道添加Producer对象
+        参数：
+            producer：待添加的producer对象，Producer类型
+        返回值：Promise对象
+        流程说明： 
+            调用命令队列发送【addProducer】消息，传递Producer对象
+        调用点：
+            Transport对象send(transport)方法
+
+    removeProducer(producer, originator, appData)
+        描述：通道中移除指定producer对象
+        参数：
+            producer：待移除的producer对象，Producer类型
+            originator：关闭类型，【local，remote】，字符串类型
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            调用命令队列发送【removeProducer】消息，传递Producer对象
+            若传递参数originator为local，则发送类型为closeProducer的【@notify】消息
+        调用点：
+            Producer对象close(appData)方法
+            Producer对象remoteClose(appData)方法
+            Producer对象send(transport)方法
+
+    pauseProducer(producer, appData)
+        描述：通道中暂停指定producer对象
+        参数：
+            producer：待暂停的producer对象，Producer类型
+            originator：关闭类型，【local，remote】，字符串类型
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+           发送类型为pauseProducer的【@notify】消息
+        调用点：
+            Producer对象pause(appData)
+
+    resumeProducer(producer, appData)
+        描述：通道中恢复指定暂停状态的producer对象
+        参数：
+            producer：待恢复的producer对象，Producer类型
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+           发送类型为resumeProducer的【@notify】消息
+        调用点：
+            Producer对象resume(appData)
+
+    replaceProducerTrack(producer, track)
+        描述：使用新track对象替换Producer中指定track
+        参数：
+            producer：待替换的producer对象，Producer类型
+            track：新媒体数据，MediaStreamTrack类型
+        返回值：无
+        流程说明： 
+           调用命令队列发送【replaceProducerTrack】消息，传递相关参数{ producer, track }
+        调用点：
+            Producer对象replaceTrack(track)
+
+    enableProducerStats(producer, interval)
+        描述：设置指定Producer对象允许定时检索并设置检索时间
+        参数：
+            producer：待设置的producer对象，Producer类型
+            interval：检索时间，数字类型，毫秒
+        返回值：无
+        流程说明： 
+           发送类型为enableProducerStats的【@notify】消息
+        调用点：
+            Producer对象send(transport)
+            Producer对象enableStats(interval = DEFAULT_STATS_INTERVAL)
+
+    disableProducerStats(producer)
+        描述：设置指定Producer对象不允许定时检索
+        参数：
+            producer：待设置的producer对象，Producer类型
+        返回值：无
+        流程说明： 
+           发送类型为enableProducerStats的【@notify】消息
+        调用点：
+            Producer对象close(appData)
+            Producer对象disableStats()
+
+    addConsumer(consumer)
+        描述：通道添加Consumer对象
+        参数：
+            consumer：待添加的consumer对象，Consumer类型
+        返回值：Promise对象
+        流程说明： 
+            调用命令队列发送【addConsumer】消息，传递Consumer对象
+        调用点：
+            Transport对象receive(transport)方法
+
+    removeConsumer(consumer)
+        描述：通道中移除指定consumer对象
+        参数：
+            consumer：待移除的consumer对象，Consumer类型
+        返回值：无
+        流程说明： 
+            调用命令队列发送【removeConsumer】消息，传递Consumer对象
+        调用点：
+            Consumer对象remoteClose()方法
+
+    pauseConsumer(consumer, appData)
+        描述：通道中暂停指定Consumer对象
+        参数：
+            consumer：待暂停的consumer对象，Consumer类型
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+           发送类型为pauseConsumer的【@notify】消息
+        调用点：
+            Consumer对象pause(appData)方法
+
+    resumeConsumer(consumer, appData)
+        描述：通道中恢复指定暂停状态的Consumer对象
+        参数：
+            consumer：待恢复的consumer对象，Consumer类型
+        返回值：无
+        流程说明： 
+           发送类型为resumeConsumer的【@notify】消息
+        调用点：
+            Consumer对象resume(appData)
+
+    setConsumerPreferredProfile(consumer, profile)
+        描述：设置Consumer对象优选配置参数
+        参数：
+            consumer：待设置的consumer对象，Consumer类型
+            profile：优选配置参数，String类型
+        返回值：无
+        流程说明： 
+           发送类型为setConsumerPreferredProfile的【@notify】消息
+        调用点：
+            Consumer对象setPreferredProfile(profile)
+
+    enableConsumerStats(consumer, interval)
+        描述：设置指定Consumer对象允许定时检索并设置检索时间
+        参数：
+            producer：待设置的consumer对象，Consumer类型
+            interval：检索时间，数字类型，毫秒
+        返回值：无
+        流程说明： 
+           发送类型为enableConsumerStats的【@notify】消息
+        调用点：
+            Consumer对象receive(transport)
+            Consumer对象enableStats(interval = DEFAULT_STATS_INTERVAL)
+
+    disableConsumerStats(consumer)
+        描述：设置指定Consumer对象不允许定时检索
+        参数：
+            consumer：待设置的Consumer对象，Consumer类型
+        返回值：无
+        流程说明： 
+           发送类型为disableConsumerStats的【@notify】消息
+        调用点：
+            Consumer对象close()
+            Consumer对象disableStats()
+
+    remoteStats(stats)
+        描述：接收服务端设置stats参数
+        参数：
+            stats：服务端设置状态参数，json类
+        返回值：无
+        流程说明：
+            发送【stats】消息，开发者监听处理
+        调用点：Room对象receiveNotification(notification) 中 'transportStats'状态
+
+私有方法：
+    _destroy()
+        描述：销毁Transport对象
+        参数：无
+        返回值：无
+        流程说明： 
+            关闭消息队列 this._commandQueue.close()
+            关闭handler this._handler.close()
+        调用点：Transport对象 close(appData)  remoteClose(appData, { destroy })方法
+
+    _handleHandler()
+        描述：handler类事件监听
+        参数：无
+        返回值：无
+        流程说明： 
+            handle类增加对handle对象内部消息事件处理，包括：
+                【@connectionstatechange】：webRtc连接状态改变时触发，返回ice通道连接状态监听
+                    设置类变量连接状态 this._connectionState = state
+                    发送【connectionstatechange】给开发者
+
+                【@needcreatetransport】：通道被创建时触发，传递本地通道参数
+                    transport接收后重新构建参数发送【createTransport】的requset消息
+                    room对象接收并转发【createTransport】的requset消息
+                    开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
+                    服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                    客户端socketIo接收后，回传数据room->transport->handle中
+
+                【@needupdatetransport】：通道被更新时触发，传递本地通道参数
+                    构建待传递的dtls参数
+                    发送类型为updateTransport的【@notify】消息，handle->transport->room,经过socketIo传递给服务端处理
+
+                【@needupdateproducer】：Producer生产者更新时触发，传递Producer对象及rtp参数 注：该消息仅ReactNative.js类使用
+                    构建待传递的rtp参数
+                    发送类型为updateProducer的【@notify】消息，handle->transport->room,经过socketIo传递给服务端处理
+        调用点：Transport对象构造方法
+
+    _execCommand(command, promiseHolder)
+        描述：根据消息类型执行消息队列不同函数处理，将Promise设置入promiseHolder中
+        参数：
+            command：需执行的命令
+            promiseHolder：保存的Promise引用，Json对象，如：{ promise: null }
+        返回值：无
+        流程说明：
+            根据消息类型执行消息队列不同函数处理，将Promise设置入promiseHolder中
+        调用点：Transport对象构造函数中设置
+
+    _execAddProducer(producer)
+        描述：执行添加Producer操作
+        参数：
+            producer：待添加入通道的Producer对象 Producer类型
+        返回值：Promise对象
+        流程说明：
+            调用SendHandler对象addProducer方法，执行相关处理
+            then 获取rtpParameters参数后，构建数据发送【createProducer】的request消息
+                room对象接收后发送【createProducer】的request消息
+                开发者接收后发送【createProducer】的request消息至服务端
+                服务端收到后【createProducer】的request消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                客户端socketIo接收后，回传数据room->transport中
+            调用producer.setRtpParameters(producerRtpParameters)，设置rtpParameters
+            返回构建Promise对象
+        调用点：Transport对象_execCommand(command, promiseHolder)方法
+
+    _execRemoveProducer(producer)
+        描述：执行移除Producer操作
+        参数：
+            producer：待从通道移除的Producer对象 Producer类型
+        返回值：Promise对象
+        流程说明：
+            调用handler对象removeProducer方法，执行相关处理
+            返回构建Promise对象
+        调用点：Transport对象_execCommand(command, promiseHolder)方法
+
+    _execReplaceProducerTrack(producer, track)
+        描述：使用指定track替换producer对象中数据
+        参数：
+            producer：待替换的Producer对象 Producer类型
+            track：新替换媒体Track对象 MediaStreamTrack类型
+        返回值：Promise对象
+        流程说明：
+            调用handler对象replaceProducerTrack(producer, track)方法，执行相关处理
+            返回构建Promise对象
+        调用点：Transport对象_execCommand(command, promiseHolder)方法
+
+    _execAddConsumer(consumer)
+        描述：执行添加Consumer操作
+        参数：
+            consumer：待添加的Consumer对象 Consumer类型
+        返回值：Promise对象
+        流程说明：
+            调用RecvHandler对象addConsumer方法，执行相关处理
+            then 获取生成的track对象，构建需要传递的track数据，发送【enableConsumer】消息
+                transport->room->开发者
+                开发者接收【enableConsumer】消息，通过socketIo发送消息至服务端
+                服务器接收【enableConsumer】消息，处理结果并返回给客户端
+                开发者->room->transport,获取response回应信息
+            then 更新consume数据，返回track
+            返回构建Promise对象
+        调用点：Transport对象_execCommand(command, promiseHolder)方法
+
+    _execRemoveConsumer(consumer)
+        描述：执行移除Consumer操作
+        参数：
+            consumer：待移除的Consumer对象 Consumer类型
+        返回值：Promise对象
+        流程说明：
+            调用handler对象removeConsumer方法，执行相关处理
+            返回构建Promise对象
+        调用点：Transport对象_execCommand(command, promiseHolder)方法
+
+    _execRestartIce(remoteIceParameters)
+        描述：重启ICE连接
+        参数：
+            remoteIceParameters：待设置的ICE参数，Json类型
+        返回值：Promise对象
+        流程说明：
+            调用handler对象restartIce方法，执行相关处理
+            返回构建Promise对象
+        调用点：Transport对象_execCommand(command, promiseHolder)方法
+
+事件监听：
+    【close】
+        描述：Transport被关闭时触发
+        参数：
+            originator：触发类型，字符串 【local，remote】
+            appData：传递自定义参数，any
+        示例：transport.on(“close”, fn(originator, appData))
+
+    【connectionstatechange】
+        描述：Transport连接状态改变时触发
+        参数：
+            connectionstate：通道连接状态，字符串枚举型，【new，connectiong，connected，failed，disconnected，closed】
+        示例：transport.on(“connectionstatechange”, fn(connectionstate))
+
+    【stats】
+        描述：在检索RTC统计信息时触发
+        参数：
+            stats：检索到统计消息 sequence<Object>
+        示例：transport.on(“stats”, fn(stats))

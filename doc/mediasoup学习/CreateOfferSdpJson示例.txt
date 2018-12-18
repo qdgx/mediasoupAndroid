@@ -1,0 +1,580 @@
+{
+  "version": 0,
+  "origin": {
+    "username": "-",
+    "sessionId": "6397002747613319549",
+    "sessionVersion": 2,
+    "netType": "IN",
+    "ipVer": 4,
+    "address": "127.0.0.1"
+  },
+  "name": "-",
+  "timing": {
+    "start": 0,
+    "stop": 0
+  },
+  "groups": [
+    {
+      "type": "BUNDLE",
+      "mids": "01"
+    }
+  ],
+  "msidSemantic": {
+    "semantic": "",
+    "token": "WMS"
+  },
+  "media": [
+    {
+      "rtp": [
+        {
+          "payload": 111,
+          "codec": "opus",
+          "rate": 48000,
+          "encoding": 2
+        },
+        {
+          "payload": 103,
+          "codec": "ISAC",
+          "rate": 16000
+        },
+        {
+          "payload": 104,
+          "codec": "ISAC",
+          "rate": 32000
+        },
+        {
+          "payload": 9,
+          "codec": "G722",
+          "rate": 8000
+        },
+        {
+          "payload": 0,
+          "codec": "PCMU",
+          "rate": 8000
+        },
+        {
+          "payload": 8,
+          "codec": "PCMA",
+          "rate": 8000
+        },
+        {
+          "payload": 106,
+          "codec": "CN",
+          "rate": 32000
+        },
+        {
+          "payload": 105,
+          "codec": "CN",
+          "rate": 16000
+        },
+        {
+          "payload": 13,
+          "codec": "CN",
+          "rate": 8000
+        },
+        {
+          "payload": 110,
+          "codec": "telephone-event",
+          "rate": 48000
+        },
+        {
+          "payload": 112,
+          "codec": "telephone-event",
+          "rate": 32000
+        },
+        {
+          "payload": 113,
+          "codec": "telephone-event",
+          "rate": 16000
+        },
+        {
+          "payload": 126,
+          "codec": "telephone-event",
+          "rate": 8000
+        }
+      ],
+      "fmtp": [
+        {
+          "payload": 111,
+          "config": "minptime=10;useinbandfec=1"
+        }
+      ],
+      "type": "audio",
+      "port": 9,
+      "protocol": "UDP/TLS/RTP/SAVPF",
+      "payloads": "11110310490810610513110112113126",
+      "connection": {
+        "version": 4,
+        "ip": "0.0.0.0"
+      },
+      "rtcp": {
+        "port": 9,
+        "netType": "IN",
+        "ipVer": 4,
+        "address": "0.0.0.0"
+      },
+      "iceUfrag": "08sq",
+      "icePwd": "W3C2Nn4v0Sy0P5JQ+Gl3lwCC",
+      "iceOptions": "trickle",
+      "fingerprint": {
+        "type": "sha-256",
+        "hash": "90: 7F: 4A: 55: C8: 9C: 33: D7: 97: E0: E3: AB: 49: 6A: 88: C6: 38: 07: 0E: C7: 50: 1A: B7: 02: B3: D2: 35: E1: 8B: 03: 55: F7"
+      },
+      "setup": "actpass",
+      "mid": 0,
+      "ext": [
+        {
+          "value": 1,
+          "uri": "urn: ietf: params: rtp-hdrext: ssrc-audio-level"
+        },
+        {
+          "value": 9,
+          "uri": "urn: ietf: params: rtp-hdrext: sdes: mid"
+        },
+        {
+          "value": 14,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "urn: ietf: params: rtp-hdrext: ssrc-audio-level"
+        },
+        {
+          "value": 13,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "urn: ietf: params: rtp-hdrext: sdes: mid"
+        }
+      ],
+      "direction": "sendrecv",
+      "msid": "-559f38b8-6c47-4326-8584-6688e3e013ae",
+      "rtcpMux": "rtcp-mux",
+      "rtcpFb": [
+        {
+          "payload": 111,
+          "type": "transport-cc"
+        }
+      ],
+      "ssrcs": [
+        {
+          "id": 4009428258,
+          "attribute": "cname",
+          "value": "R4PifCYS4Z95JoDo"
+        },
+        {
+          "id": 4009428258,
+          "attribute": "msid",
+          "value": "559f38b8-6c47-4326-8584-6688e3e013ae"
+        },
+        {
+          "id": 4009428258,
+          "attribute": "mslabel",
+          "value": ""
+        },
+        {
+          "id": 4009428258,
+          "attribute": "label",
+          "value": "559f38b8-6c47-4326-8584-6688e3e013ae"
+        }
+      ]
+    },
+    {
+      "rtp": [
+        {
+          "payload": 96,
+          "codec": "VP8",
+          "rate": 90000
+        },
+        {
+          "payload": 97,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 98,
+          "codec": "VP9",
+          "rate": 90000
+        },
+        {
+          "payload": 99,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 100,
+          "codec": "H264",
+          "rate": 90000
+        },
+        {
+          "payload": 101,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 102,
+          "codec": "H264",
+          "rate": 90000
+        },
+        {
+          "payload": 123,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 127,
+          "codec": "H264",
+          "rate": 90000
+        },
+        {
+          "payload": 122,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 125,
+          "codec": "H264",
+          "rate": 90000
+        },
+        {
+          "payload": 107,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 108,
+          "codec": "red",
+          "rate": 90000
+        },
+        {
+          "payload": 109,
+          "codec": "rtx",
+          "rate": 90000
+        },
+        {
+          "payload": 124,
+          "codec": "ulpfec",
+          "rate": 90000
+        }
+      ],
+      "fmtp": [
+        {
+          "payload": 97,
+          "config": "apt=96"
+        },
+        {
+          "payload": 98,
+          "config": "x-google-profile-id=0"
+        },
+        {
+          "payload": 99,
+          "config": "apt=98"
+        },
+        {
+          "payload": 100,
+          "config": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f"
+        },
+        {
+          "payload": 101,
+          "config": "apt=100"
+        },
+        {
+          "payload": 102,
+          "config": "level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42001f"
+        },
+        {
+          "payload": 123,
+          "config": "apt=102"
+        },
+        {
+          "payload": 127,
+          "config": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f"
+        },
+        {
+          "payload": 122,
+          "config": "apt=127"
+        },
+        {
+          "payload": 125,
+          "config": "level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f"
+        },
+        {
+          "payload": 107,
+          "config": "apt=125"
+        },
+        {
+          "payload": 109,
+          "config": "apt=108"
+        }
+      ],
+      "type": "video",
+      "port": 9,
+      "protocol": "UDP/TLS/RTP/SAVPF",
+      "payloads": "96979899100101102123127122125107108109124",
+      "connection": {
+        "version": 4,
+        "ip": "0.0.0.0"
+      },
+      "rtcp": {
+        "port": 9,
+        "netType": "IN",
+        "ipVer": 4,
+        "address": "0.0.0.0"
+      },
+      "iceUfrag": "08sq",
+      "icePwd": "W3C2Nn4v0Sy0P5JQ+Gl3lwCC",
+      "iceOptions": "trickle",
+      "fingerprint": {
+        "type": "sha-256",
+        "hash": "90: 7F: 4A: 55: C8: 9C: 33: D7: 97: E0: E3: AB: 49: 6A: 88: C6: 38: 07: 0E: C7: 50: 1A: B7: 02: B3: D2: 35: E1: 8B: 03: 55: F7"
+      },
+      "setup": "actpass",
+      "mid": 1,
+      "ext": [
+        {
+          "value": 2,
+          "uri": "urn: ietf: params: rtp-hdrext: toffset"
+        },
+        {
+          "value": 3,
+          "uri": "http: //www.webrtc.org/experiments/rtp-hdrext/abs-send-time"
+        },
+        {
+          "value": 4,
+          "uri": "urn: 3gpp: video-orientation"
+        },
+        {
+          "value": 5,
+          "uri": "http: //www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+        },
+        {
+          "value": 6,
+          "uri": "http: //www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+        },
+        {
+          "value": 7,
+          "uri": "http: //www.webrtc.org/experiments/rtp-hdrext/video-content-type"
+        },
+        {
+          "value": 8,
+          "uri": "http: //www.webrtc.org/experiments/rtp-hdrext/video-timing"
+        },
+        {
+          "value": 9,
+          "uri": "urn: ietf: params: rtp-hdrext: sdes: mid"
+        },
+        {
+          "value": 12,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "urn: ietf: params: rtp-hdrext: toffset"
+        },
+        {
+          "value": 11,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "urn: 3gpp: video-orientation"
+        },
+        {
+          "value": 10,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "http: //www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+        },
+        {
+          "value": 0,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "http: //www.webrtc.org/experiments/rtp-hdrext/playout-delay"
+        },
+        {
+          "value": 0,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "http: //www.webrtc.org/experiments/rtp-hdrext/video-content-type"
+        },
+        {
+          "value": 13,
+          "uri": "urn: ietf: params: rtp-hdrext: encrypt",
+          "config": "urn: ietf: params: rtp-hdrext: sdes: mid"
+        }
+      ],
+      "direction": "sendrecv",
+      "msid": "-50d87f3f-02a4-4164-8b8b-140f35293142",
+      "rtcpMux": "rtcp-mux",
+      "rtcpRsize": "rtcp-rsize",
+      "rtcpFb": [
+        {
+          "payload": 96,
+          "type": "goog-remb"
+        },
+        {
+          "payload": 96,
+          "type": "transport-cc"
+        },
+        {
+          "payload": 96,
+          "type": "ccm",
+          "subtype": "fir"
+        },
+        {
+          "payload": 96,
+          "type": "nack"
+        },
+        {
+          "payload": 96,
+          "type": "nack",
+          "subtype": "pli"
+        },
+        {
+          "payload": 98,
+          "type": "goog-remb"
+        },
+        {
+          "payload": 98,
+          "type": "transport-cc"
+        },
+        {
+          "payload": 98,
+          "type": "ccm",
+          "subtype": "fir"
+        },
+        {
+          "payload": 98,
+          "type": "nack"
+        },
+        {
+          "payload": 98,
+          "type": "nack",
+          "subtype": "pli"
+        },
+        {
+          "payload": 100,
+          "type": "goog-remb"
+        },
+        {
+          "payload": 100,
+          "type": "transport-cc"
+        },
+        {
+          "payload": 100,
+          "type": "ccm",
+          "subtype": "fir"
+        },
+        {
+          "payload": 100,
+          "type": "nack"
+        },
+        {
+          "payload": 100,
+          "type": "nack",
+          "subtype": "pli"
+        },
+        {
+          "payload": 102,
+          "type": "goog-remb"
+        },
+        {
+          "payload": 102,
+          "type": "transport-cc"
+        },
+        {
+          "payload": 102,
+          "type": "ccm",
+          "subtype": "fir"
+        },
+        {
+          "payload": 102,
+          "type": "nack"
+        },
+        {
+          "payload": 102,
+          "type": "nack",
+          "subtype": "pli"
+        },
+        {
+          "payload": 127,
+          "type": "goog-remb"
+        },
+        {
+          "payload": 127,
+          "type": "transport-cc"
+        },
+        {
+          "payload": 127,
+          "type": "ccm",
+          "subtype": "fir"
+        },
+        {
+          "payload": 127,
+          "type": "nack"
+        },
+        {
+          "payload": 127,
+          "type": "nack",
+          "subtype": "pli"
+        },
+        {
+          "payload": 125,
+          "type": "goog-remb"
+        },
+        {
+          "payload": 125,
+          "type": "transport-cc"
+        },
+        {
+          "payload": 125,
+          "type": "ccm",
+          "subtype": "fir"
+        },
+        {
+          "payload": 125,
+          "type": "nack"
+        },
+        {
+          "payload": 125,
+          "type": "nack",
+          "subtype": "pli"
+        }
+      ],
+      "ssrcGroups": [
+        {
+          "semantics": "FID",
+          "ssrcs": "33153327842129282406"
+        }
+      ],
+      "ssrcs": [
+        {
+          "id": 3315332784,
+          "attribute": "cname",
+          "value": "R4PifCYS4Z95JoDo"
+        },
+        {
+          "id": 3315332784,
+          "attribute": "msid",
+          "value": "50d87f3f-02a4-4164-8b8b-140f35293142"
+        },
+        {
+          "id": 3315332784,
+          "attribute": "mslabel",
+          "value": ""
+        },
+        {
+          "id": 3315332784,
+          "attribute": "label",
+          "value": "50d87f3f-02a4-4164-8b8b-140f35293142"
+        },
+        {
+          "id": 2129282406,
+          "attribute": "cname",
+          "value": "R4PifCYS4Z95JoDo"
+        },
+        {
+          "id": 2129282406,
+          "attribute": "msid",
+          "value": "50d87f3f-02a4-4164-8b8b-140f35293142"
+        },
+        {
+          "id": 2129282406,
+          "attribute": "mslabel",
+          "value": ""
+        },
+        {
+          "id": 2129282406,
+          "attribute": "label",
+          "value": "50d87f3f-02a4-4164-8b8b-140f35293142"
+        }
+      ]
+    }
+  ]
+}
