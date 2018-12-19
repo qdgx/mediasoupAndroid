@@ -1538,3 +1538,312 @@ UnsupportedError类
         参数：
             stats：检索到统计消息 sequence<Object>
         示例：transport.on(“stats”, fn(stats))
+
+-------------------Room.js-----------------
+类说明：服务端Room的本地标识，包含房间内本地Peer及远端Peers集
+导入类：Logger  EnhancedEventEmitter errors ortc Device Transport Producer Peer Consumer
+继承类：EnhancedEventEmitter
+类成员变量：
+    settings：Room标识，Json对象，包括：
+        requestTimeout：请求发送超时时间，单位毫秒 ，数字类型，默认10000 (10 seconds)
+        transportOptions：通道参数设置，Json类型，定义如下
+            udp：提供UDP类型ICE candidate  bool型 默认true
+            tcp：提供TCP类型ICE candidate  bool型 默认true
+            preferIPv4:优先选择IPv4，bool型 默认false
+            preferIPv6:优先选择IPv6，bool型 默认false
+            preferUdp:优先选择Udp，bool型 默认false
+            preferTcp:优先选择Tcp，bool型 默认false
+        turnServers：数组类型，数组成员为Json对象，定义如下：
+            urls：stun或turn服务器url地址，字符串数组
+            username：turn服务器用户名，字符串
+            credential：turn服务器密码，若校验类型为oauth时为json，若校验类型为password时为json
+            credentialType：服务器校验类型，字符串 【oauth，password】
+            示例：
+            [
+                {urls: 'stun:stun1.example.net'},
+                {urls: ['turns:turn.example.org', 'turn:turn.example.net'],
+                    username: 'user',
+                    credential: 'myPassword',
+                    credentialType: 'password'},
+                {urls: 'turns:turn2.example.net',
+                    username: '22BIjxU93h/IgwEb',
+                    credential: {
+                    macKey: 'WmtzanB3ZW9peFhtdm42NzUzNG0=',
+                    accessToken: 'AAwg3kPHWPfvk9bDFL936wYvkoctMADzQ5VhNDgeMR3+ZlZ35byg972fW8QjpEl7bx91YLBPFsIhsxloWcXPhA=='
+                    },
+                    credentialType: 'oauth'}
+            ];
+        iceTransportPolicy：ICE传输策略，字符串类型，默认“all”
+        spy：是否加入房间后对其他Peer隐藏，bool型，默认false
+    state：Room房间状态，字符串类型，【'new','joining','joined','closed'】
+    peerName:本地通道Peer名称，字符串类型
+    transports：保存Room中Transport通道对象合集，Map类型
+    producers：保存Room中Producer通道对象合集，Map类型
+    peers：保存Room中Peer通道对象合集，Map类型
+    extendedRtpCapabilities ：扩展的Rtp能力，Json对象
+    canSendByKind：是否可以基于计算扩展RTP发送音频/视频，Json对象 {audio : false,video : false}
+
+类静态变量：
+    RoomState={new: 'new',joining: 'joining',joined: 'joined',closed : 'closed'}  Room房间状态枚举
+    
+构造方法：
+    constructor(direction, extendedRtpCapabilities, settings, appData)
+        描述：Producer构造方法
+        参数：
+            direction：通道类型，【send,recv】,字符串类型
+            extendedRtpCapabilities：扩展的rtp能力 Json对象
+            settings：room参数设置，Json类型
+            appData：传递自定义参数，Any 对象
+        流程说明：
+            初始化Transport通道对象
+            命令处理队列commandQueue设置对【exec】事件监听处理
+            handle类增加对handle对象内部消息事件处理，详见_handleHandler()函数说明
+        调用点：Room对象createTransport(direction, appData)
+
+公有方法：
+    join(peerName, appData)
+        描述：加入服务端Room
+        参数：
+            peer：本地Peer通道名，字符串类型
+            appData：传递自定义参数，Any 对象
+        返回值：Promise对象
+        流程说明： 
+            设置Room对象本地Peer通道名，peerName
+            设置Room对象状态为加入中【joining】
+            构建返回Promise对象，执行流程包括:
+                调用_sendRequest发送【queryRoom】类型，并传递参数，发送【queryRoom】类型的message消息
+                    开发者通过room.on('request')监听mediasoup SDK，收到【queryRoom】消息后，通过socketIo发送【queryRoom】消息至服务端
+                    服务端：接收到客户端传递【queryRoom】消息（target=room），调用room.receiveRequest(request)处理后，获取room设置信息并返回
+                then 接收到服务端【queryRoom】回应，保存至roomSettings中
+                then 获取本地设备Rtp能力参数并返回 
+                then 对返回的rtpCapabilities进行数据过滤，包括：
+                    获取扩展的RTP能力 ortc.getExtendedRtpCapabilities
+                    对比Room配置和本地RTP能力获取不支持的编码  ortc.getUnsupportedCodecs
+                    检查是否支持发送音频和视频 ortc.canSend
+                    为接收者生成有效的RTP功能 ortc.getRtpCapabilities
+                    调用mediasoup SDK构建【join】消息 this._sendRequest('join'),执行后续操作
+                then 获取服务端返回room中其他peers对象
+                    循环调用_handlePeerData(peerData)处理Peer中存在Consumer数据
+                    Room对象状态置为已加入【joined】
+                    返回peers数组给开发者
+        调用点：
+            开发者调用
+
+    leave(appData)
+        描述：退出服务端Room
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            发送【leave】的通知给开发者 _sendNotification('leave', { appData })
+            Room状态设置为关闭【closed】
+            发送【close】的消息给开发者，参数为'local'
+            获取通道对象集合transports，循环关闭
+            获取生产者对象集合roducers，循环关闭
+            获取Peer通道对象集合peers，循环关闭
+        调用点：
+            开发者调用
+
+    remoteClose(appData)
+        描述：接收到远端服务器关闭通知时调用
+        参数：
+            appData：传递自定义参数，Any 对象
+        返回值：无
+        流程说明： 
+            Room状态设置为关闭【closed】
+            发送【close】的消息给开发者，参数为'remote'
+            获取通道对象集合transports，循环关闭
+            获取生产者对象集合roducers，循环关闭
+            获取Peer通道对象集合peers，循环关闭
+        调用点：
+            Room对象receiveNotification(notification) 'close'状态
+
+    createTransport(direction, appData)
+        描述：创建指定类型发送或接收通道
+        参数：
+            direction：通道类型，字符串类型，【send，recv】
+            appData：传递自定义参数，Any 对象
+        返回值: Transport对象
+        流程说明： 
+            根据通道类型及参数构建Transport对象
+            存储该通道对象至transports中
+            Transport对象增加对【@request】 【@notify】 【@close】 监听
+            返回Transport对象
+        调用点：
+            开发者调用
+
+    createProducer(track, options, appData)
+        描述：创建Producer对象
+        参数：
+            track：媒体类型， MediaStreamTrack对象
+            options：配置参数，Json类型
+            appData：传递自定义参数，Any 对象
+        返回值: Producer对象
+        流程说明： 
+            根据媒体及其他参数构建Producer对象
+            存储该通道对象至producers中
+            Transport对象增加对【@close】 监听
+            返回Producer对象
+        调用点：
+            开发者调用
+
+    restartIce()
+        描述：重启Room内所有Transport通道ICE
+        参数：
+            track：媒体类型， MediaStreamTrack对象
+            options：配置参数，Json类型
+            appData：传递自定义参数，Any 对象
+        返回值: 无
+        流程说明： 
+            获取transports通道集中所有通道对象，调用transport.restartIce()重启ICE连接
+        调用点：
+            开发者调用
+
+    receiveNotification(notification)
+        描述：接收到服务端通知消息后转发给Room对象处理
+        参数：
+            notification：服务端生成的通知消息，Json类型
+        返回值: Promise对象
+        流程说明： 
+            从通知消息中提取method方法名，根据方法名走不同流程处理
+                closed：远端Room关闭
+                    调用room对象远端关闭方法this.remoteClose(appData)
+
+                transportClosed:远端通道关闭
+                    从通道集中获取指定Transport对象
+                    调用Transport对象远端关闭 transport.remoteClose(appData, { destroy: false }
+                
+                transportStats：通道状态检索
+                    从通道集中获取指定Transport对象
+                    调用Transport对象远端检索 transport.remoteStats(stats)
+                
+                newPeer：新Peer用户加入
+                    从通道集中获取指定Transport对象
+                    调用Room对象this._handlePeerData(peerData)方法处理新Peer对象   
+
+
+                peerClosed：服务端关闭指定Peer
+                    从Peer集中获取指定Peer对象
+                    调用Peer对象远端关闭方法peer.remoteClose(appData)
+
+                producerPaused:远端Producer暂停
+                    从Producer集获取指定Producer对象
+                    调用Producer对象远端暂停 producer.remotePause(appData)
+                
+                producerResumed：远端Producer恢复
+                    从Producer集获取指定Producer对象
+                    调用Producer对象远端暂停 producer.remoteResume(appData)
+                
+                producerClosed：远端Producer关闭
+                    从Producer集获取指定Producer对象
+                    调用Producer对象远端关闭 producer.remoteClose(appData)     
+
+                producerStats：远端Producer检索
+                    从Producer集获取指定Producer对象
+                    调用Producer对象远端检索 producer.remoteStats(appData)                                  
+                newConsumer：新增Consumer对象
+                    从Peer集获取指定Peer对象
+                    调用 _handleConsumerData(consumerData, peer)方法给指定Peer添加Consumer
+
+                consumerClosed：远端关闭Consumer
+                    从Peer集获取指定Peer对象
+                    从Peer中获取指定Consumer对象
+                    调用Consumer对象远端关闭 consumer.remoteClose(appData)
+
+                consumerPaused：远端暂停Consumer
+                    从Peer集获取指定Peer对象
+                    从Peer中获取指定Consumer对象
+                    调用Consumer对象远端暂停 consumer.remotePause(appData)
+
+                consumerResumed：远端恢复Consumer
+                    从Peer集获取指定Peer对象
+                    从Peer中获取指定Consumer对象
+                    调用Consumer对象远端恢复 consumer.remoteResume(appData)             
+
+                consumerPreferredProfileSet：远端设置Consumer优先配置参数
+                    从Peer集获取指定Peer对象
+                    从Peer中获取指定Consumer对象
+                    调用Consumer对象优先参数配置 consumer.remoteSetPreferredProfile(profile)    
+
+                consumerEffectiveProfileChanged：远端设置Consumer可用配置参数
+                    从Peer集获取指定Peer对象
+                    从Peer中获取指定Consumer对象
+                    调用Consumer对象可用参数配置 consumer.remoteEffectiveProfileChanged(profile) 
+
+                consumerStats：远端设置Consumer定时检索
+                    从Peer集获取指定Peer对象
+                    从Peer中获取指定Consumer对象
+                    调用Consumer对象执行定时检索 consumer.remoteStats(stats) 
+
+        调用点：
+            开发者调用 接收到服务端返回notify消息时
+
+私有方法：
+    _sendRequest(method, data)
+        描述：触发发送Message消息
+        参数：
+            method：消息类型，字符串类型
+            data：传递参数，Json类型
+        返回值：Promise对象
+        流程说明： 
+            根据method及data构建待发送的消息（target为peer） Object.assign({ method, target: 'peer' }, data) 
+            构建返回Promise对象，执行流程包括:
+                根据requestTimeout设置发送超时定时器setTimeout
+                    若超时则调用reject函数返回超时错误 reject(new TimeoutError('timeout'))
+                设置成功回调函数 callback，该回调函数执行包括：
+                    清除超时定时器
+                    若room已关闭，则调用reject函数返回超时错误 reject(new Error('Room closed'))
+                    若room开启状态，则调用resolve返回回应消息 resolve(response)
+                设置失败回调函数 errback，该回调函数执行包括：
+                    清除超时定时器
+                    若room已关闭，则调用reject函数返回超时错误 reject(new Error('Room closed'))
+                    若room开启状态，eject函数返回错误 reject(error)                     
+
+                发送【request】消息，携带request参数，callback成功回调，errback失败回调
+                开发者监听消息处理
+        调用点：
+            Room对象join(peerName, appData)函数
+            Room对象createTransport(direction, appData)函数
+
+    _sendNotification(method, data)
+        描述：触发发送Notify消息
+        参数：
+            method：消息类型，字符串类型
+            data：传递参数，Json类型
+        返回值：无
+        流程说明： 
+            根据method及data构建待发送的通知（target为peer）Object.assign({ method, target: 'peer', notification: true }, data);
+            发送【notify】消息，携带notification参数
+            开发者监听消息处理
+        调用点：
+            Room对象leave(appData)函数
+            Room对象createTransport(direction, appData)函数
+
+    _handlePeerData(peerData)
+        描述：根据服务端传入Peer数据构建Peer对象并做相关处理
+        参数：
+            peerData：传递参数，Json类型
+        返回值：无
+        流程说明： 
+            构建Peer对象 
+            存储Peer对象至Peers集合中
+            Peer增加【close】事件监听
+            获取Peer数据中包含的consumer数据，循环调用_handleConsumerData(consumerData, peer)关联Peer及Consumer
+            发送【newpeer】消息通知开发者
+        调用点：
+            Room对象join(peerName, appData)函数
+            Room对象receiveNotification(notification)中 'newPeer'状态
+
+    _handleConsumerData(consumerData, peer)
+        描述：根据传入Consumer对象及Peer进行关联处理
+        参数：
+            consumerData：Consumer数据，Json对象
+            peer：Peer对象
+        返回值：无
+        流程说明： 
+            构建Consumer对象
+            获取本地设备是否支持该consumer ortc.canReceive
+            Peer对象添加Consumer peer.addConsumer(consumer)
+        调用点：
+            Room对象_handlePeerData(peerData)函数
+            Room对象receiveNotification(notification)中 'newConsumer'状态
