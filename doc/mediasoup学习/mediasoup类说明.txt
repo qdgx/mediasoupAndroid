@@ -1847,3 +1847,45 @@ UnsupportedError类
         调用点：
             Room对象_handlePeerData(peerData)函数
             Room对象receiveNotification(notification)中 'newConsumer'状态
+
+-------------------mediasoupClient.js-----------------
+类说明：由mediasoup-client库导出的顶级模块
+导入类：internals
+继承类：无
+公有方法：
+    setDeviceHandler(handler, metadata)
+        描述：主动设置handle类及Device配置参数，避免自动检测
+        参数：
+            handler：webRtc设备对接类，如Chrome70，Firefox65等
+            metadata：json类型，{flag:"",name:"",version:"",bowser:{}}
+        返回值：无
+        流程说明：强制设置handler类及metadata
+        调用点：
+            开发者调用
+
+    isDeviceSupported()
+        描述：判断当前设备或浏览器是否支持mediasoup库
+        参数：无
+        返回值：bool型 true：支持 false：不支持
+        流程说明：判断当前设备或浏览器是否支持mediasoup库
+        调用点：
+            开发者调用
+
+    getDeviceInfo()
+        描述：返回当前设备或浏览器信息
+        参数：无
+        返回值：metadata：json类型，{flag:"",name:"",version:"",bowser:{}}
+        流程说明：返回当前设备或浏览器信息
+        调用点：
+            开发者调用
+
+    checkCapabilitiesForRoom(roomRtpCapabilities)
+        描述：根据远程房间的RTP功能检查当前设备/浏览器的音频/视频功能
+        参数：
+            roomRtpCapabilities：远端room参数，json格式
+        返回值：Promise
+        流程说明：
+            检查当前设备/浏览器对远程房间的音频/视频功能，返回Promise，Promise将解析到一个具有音频和视频布尔值的对象，指示一旦加入该房间，是否可以发送和接收音频/视频
+            在应用程序希望在加入房间前请求具有麦克风或者摄像头权限的用户时，此方法可用于使用。如果用户的浏览器不支持房间的视频编解码器，应用程序可以避免向用户请求摄像头权限
+        调用点：
+            开发者调用
