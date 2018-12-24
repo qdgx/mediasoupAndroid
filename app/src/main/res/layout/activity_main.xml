@@ -21,8 +21,22 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="2dp"/>
             <Button
-                    android:id="@+id/safeEmitAsPromise"
-                    android:text="safeEmitAsPromise"
+                    android:id="@+id/safeEmitAsPromiseTimmer"
+                    android:text="safeEmitAsPromiseTimmer"
+                    android:textAllCaps="false"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"/>
+            <Button
+                    android:id="@+id/safeEmitAsPromiseThread"
+                    android:text="safeEmitAsPromiseThread"
+                    android:textAllCaps="false"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"/>
+            <Button
+                    android:id="@+id/safeEmitAsPromiseMultiple"
+                    android:text="safeEmitAsPromiseMultiple"
                     android:textAllCaps="false"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

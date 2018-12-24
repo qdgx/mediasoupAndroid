@@ -31,28 +31,93 @@ class MainActivity : AppCompatActivity() {
             eventEmitterImpl.safeEmit("key","hello world",101,102.3f,"end")
         }
 
-        safeEmitAsPromise.setOnClickListener {
+        safeEmitAsPromiseTimmer.setOnClickListener {
             val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
-            eventEmitterImpl.on("key"){ args ->
-
+            eventEmitterImpl.on("@request"){ args ->
+                var timer: Timer? = Timer()
+                timer!!.schedule(object : TimerTask() {
+                    override fun run() {
+                        var length = args.size
+                        if (length > 0){
+                            var result = args.get(1) as  Int
+                            //success callBack
+                            var successCallBack = args.get(length - 2) as Function1<Any, Unit>
+                            successCallBack.invoke("Result $result")
+                        }
+                    }
+                }, 2000)
             }
-            eventEmitterImpl.safeEmit("key",101)
 
             Observable.just(123)
-                .flatMap(addFlatMap())
+                .flatMap(addFlatMapTimer())
                 .flatMap(eventEmitterImpl.testPromise())
+                .subscribe {
+                    logger.debug(it as String)
+                }
+        }
+
+        safeEmitAsPromiseThread.setOnClickListener {
+            val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
+            eventEmitterImpl.on("@request"){ args ->
+                Thread(object : Runnable{
+                    override fun run() {
+                        var length = args.size
+                        if (length > 0){
+                            var result = args.get(1) as  Int
+                            //success callBack
+                            var successCallBack = args.get(length - 2) as Function1<Any, Unit>
+                            successCallBack.invoke("Result $result")
+                        }
+                    }
+                }).start()
+            }
+
+            Observable.just(123)
+                .flatMap(addFlatMapThread())
+                .flatMap(eventEmitterImpl.testPromiseThread())
+                .subscribe {
+                    logger.debug(it as String)
+                }
+
+        }
+
+
+        safeEmitAsPromiseMultiple.setOnClickListener {
+            val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
+            eventEmitterImpl.on("@request"){ args ->
+                var length = args.size
+                if (length > 0){
+                    var result = args.get(1) as  Int
+                    var successCallBack = args.get(length - 2) as Function1<Any, Unit>
+                    Observable.just(result)
+                        .flatMap(addFlatMapTimer())
+                        .subscribe {
+                            //success callBack
+                            successCallBack.invoke("Result $it")
+                        }
+                }
+            }
+
+            Observable.just(123)
+                .flatMap(addFlatMapThread())
+                .flatMap(eventEmitterImpl.testPromiseThread())
+                .subscribe {
+                    logger.debug(it as String)
+                }
 
         }
     }
 
     private fun addFlatMap(): Function<Int, Observable<Int>> {
-//        return Function { input ->
-//            Observable.create(ObservableOnSubscribe<Int> {
-//                val result = input + input
-//                log("calculating $input + $input...")
-//                it.onNext(result)
-//            }).subscribeOn(Schedulers.io())
-//        }
+        return Function { input ->
+            Observable.create(ObservableOnSubscribe<Int> {
+                val result = input + input
+                it.onNext(result)
+            }).subscribeOn(Schedulers.io())
+        }
+    }
+
+    private fun addFlatMapTimer(): Function<Int, Observable<Int>> {
         return Function { input ->
             Observable.create(ObservableOnSubscribe<Int> {
                 var timer: Timer? = Timer()
@@ -66,4 +131,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun addFlatMapThread(): Function<Int, Observable<Int>> {
+        return Function { input ->
+            Observable.create(ObservableOnSubscribe<Int> {
+                Thread(object : Runnable{
+                    override fun run() {
+                        val result = input + input
+                        it.onNext(result)
+                    }
+                }).start()
+            })
+        }
+    }
 }
