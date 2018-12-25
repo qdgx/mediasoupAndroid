@@ -16,7 +16,7 @@ class EventEmitterImpl: EnhancedEventEmitter() {
             Observable.create(ObservableOnSubscribe<Any> {
                 if (input is Int){
                     val result = input + input
-                    safeEmitAsPromise(it,"@request","enableConsumer",result)
+                    safeEmitAsPromise(it,"@request","enableConsumer",result).subscribe()
                 }
             })
         }
@@ -29,7 +29,7 @@ class EventEmitterImpl: EnhancedEventEmitter() {
                     override fun run() {
                         if (input is Int){
                             val result = input + input
-                            safeEmitAsPromise(it,"@request","enableConsumer",result)
+                            safeEmitAsPromise(it,"@request","enableConsumer",result).subscribe()
                         }
                     }
                 }).start()
