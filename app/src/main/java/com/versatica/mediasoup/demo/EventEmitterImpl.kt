@@ -13,18 +13,18 @@ class EventEmitterImpl: EnhancedEventEmitter() {
 
     public fun testPromise(): Function<Any, Observable<Any>> {
         return Function { input ->
-            Observable.create(ObservableOnSubscribe<Any> {
+            Observable.create{
                 if (input is Int){
                     val result = input + input
                     safeEmitAsPromise(it,"@request","enableConsumer",result).subscribe()
                 }
-            })
+            }
         }
     }
 
     public fun testPromiseThread(): Function<Any, Observable<Any>> {
         return Function { input ->
-            Observable.create(ObservableOnSubscribe<Any> {
+            Observable.create{
                 Thread(object : Runnable{
                     override fun run() {
                         if (input is Int){
@@ -33,7 +33,7 @@ class EventEmitterImpl: EnhancedEventEmitter() {
                         }
                     }
                 }).start()
-            })
+            }
         }
     }
 }

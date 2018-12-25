@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun addFlatMapTimer(): Function<Int, Observable<Int>> {
         return Function { input ->
-            Observable.create(ObservableOnSubscribe<Int> {
+            Observable.create{
                 var timer: Timer? = Timer()
                 timer!!.schedule(object : TimerTask() {
                     override fun run() {
@@ -127,20 +127,20 @@ class MainActivity : AppCompatActivity() {
                         it.onNext(result)
                     }
                 }, 1000)
-            })
+            }
         }
     }
 
     private fun addFlatMapThread(): Function<Int, Observable<Int>> {
         return Function { input ->
-            Observable.create(ObservableOnSubscribe<Int> {
+            Observable.create{
                 Thread(object : Runnable{
                     override fun run() {
                         val result = input + input
                         it.onNext(result)
                     }
                 }).start()
-            })
+            }
         }
     }
 }

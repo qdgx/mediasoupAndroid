@@ -33,17 +33,15 @@ class CommandQueue : EventEmitter() {
     public fun push(method: String, data: Any): Observable<Any> {
         var command = Command(method, data, null)
         logger.debug("'push() [method:$method]")
-        return Observable.just("").flatMap(Function {
-            Observable.create(ObservableOnSubscribe<Any> {
-                command.observableEmitter = it
-                // Append command to the queue.
-                queue.add(command)
-                this._handlePendingCommands()
-            })
-        })
+        return Observable.create {
+            command.observableEmitter = it
+            // Append command to the queue.
+            queue.add(command)
+            this._handlePendingCommands()
+        }
     }
 
-    private fun _handlePendingCommands(){
+    private fun _handlePendingCommands() {
         if (this.busy)
             return
 
@@ -52,19 +50,18 @@ class CommandQueue : EventEmitter() {
         this.busy = true
 
         //Execute it.
-        this._handleCommand(command).flatMap(Function {
-                Observable.create(ObservableOnSubscribe<String> {
+        this._handleCommand(command)
+            .flatMap {
+                Observable.create(ObservableOnSubscribe<Any> {
                     this.busy = false
                     // Remove the first command (the completed one) from the queue.
                     queue.removeAt(0)
 
                     // And continue.
                     this._handlePendingCommands()
-                    it.onNext("")
                 })
             }
-        ).subscribe()
-
+            .subscribe()
     }
 
     private fun _handleCommand(command: Command): Observable<String> {
@@ -78,25 +75,25 @@ class CommandQueue : EventEmitter() {
         var promiseHolder = PromiseHolder(null)
         this.emit("exec", command, promiseHolder)
 
-        return Observable.just("").flatMap(
-            Function {
+        return Observable.just("")
+            .flatMap {
                 promiseHolder.promise
             }
-           ).flatMap(
-            Function{ result:String ->
+            .flatMap { result: Any ->
                 Observable.create(ObservableOnSubscribe<String> {
                     logger.debug("_handleCommand() | command succeeded [method:$command.method]")
 
-                    if (this.closed)
-                    {
+                    if (this.closed) {
                         command.observableEmitter!!.onError(Throwable("closed"))
-                    }else{
+                    } else {
                         // Resolve the command with the given result (if any).
                         command.observableEmitter!!.onNext(result)
                     }
+
+                    //next
+                    it.onNext("")
                 })
             }
-        )
     }
 
     /**

@@ -23,20 +23,22 @@ open class EnhancedEventEmitter : EventEmitter() {
         }
     }
 
-    public fun safeEmitAsPromise(observableEmitter: ObservableEmitter<Any>, event: String, vararg args: Any): Observable<Any> {
-        return Observable.just("").flatMap(Function {
-            Observable.create(ObservableOnSubscribe<Any> {
-                //success callback
-                var callback = { result: Any ->
-                    observableEmitter.onNext(result)
-                }
-                //error callback
-                var errback = { error: String ->
-                    logger.error(error)
-                    observableEmitter.onError(Throwable(error))
-                }
-                safeEmit(event, *args, callback, errback)
-            })
-        })
+    public fun safeEmitAsPromise(
+        observableEmitter: ObservableEmitter<Any>,
+        event: String,
+        vararg args: Any
+    ): Observable<Any> {
+        return Observable.create {
+            //success callback
+            var callback = { result: Any ->
+                observableEmitter.onNext(result)
+            }
+            //error callback
+            var errback = { error: String ->
+                logger.error(error)
+                observableEmitter.onError(Throwable(error))
+            }
+            safeEmit(event, *args, callback, errback)
+        }
     }
 }
