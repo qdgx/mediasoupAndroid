@@ -106,6 +106,34 @@ class MainActivity : AppCompatActivity() {
                 }
 
         }
+
+
+        commandQueueTest.setOnClickListener {
+            val eventEmitterImpl = EventEmitterImpl()
+            eventEmitterImpl.on("@request"){ args ->
+                var timer: Timer? = Timer()
+                timer!!.schedule(object : TimerTask() {
+                    override fun run() {
+                        var length = args.size
+                        if (length > 0){
+                            var method = args.get(0) as String
+                            var data = args.get(1) as  String
+                            //success callBack
+                            var successCallBack = args.get(length - 2) as Function1<Any, Unit>
+                            successCallBack.invoke("Result $data")
+                        }
+                    }
+                }, 2000)
+            }
+
+            Observable.just("Add Producer")
+                .flatMap{
+                    eventEmitterImpl.addProducer(it)
+                }
+                .subscribe {
+                    logger.debug(it as String)
+                }
+        }
     }
 
     private fun addFlatMap(): Function<Int, Observable<Int>> {

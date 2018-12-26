@@ -26,11 +26,11 @@ class CommandQueue : EventEmitter() {
         this.setMaxListeners(Int.MAX_VALUE)
     }
 
-    public fun close() {
+    fun close() {
         this.closed = true
     }
 
-    public fun push(method: String, data: Any): Observable<Any> {
+    fun push(method: String, data: Any): Observable<Any> {
         var command = Command(method, data, null)
         logger.debug("'push() [method:$method]")
         return Observable.create {
@@ -110,5 +110,5 @@ class CommandQueue : EventEmitter() {
      *
      * @param promise  Observable<Any> holder
      */
-    public data class PromiseHolder(var promise: Observable<Any>?)
+    data class PromiseHolder(var promise: Observable<Any>?)
 }

@@ -8,18 +8,19 @@ import io.reactivex.ObservableOnSubscribe
 import io.reactivex.functions.Function
 import java.lang.Exception
 
-open class EnhancedEventEmitter : EventEmitter() {
-    private var logger: Logger = Logger("EnhancedEventEmitter")
+open class EnhancedEventEmitter(logger: Logger): EventEmitter() {
+    private var _logger: Logger = Logger("EnhancedEventEmitter")
 
     init {
         this.setMaxListeners(Int.MAX_VALUE)
+        this._logger = logger
     }
 
     public fun safeEmit(event: String, vararg args: Any) {
         try {
             this.emit(event, *args)
         } catch (error: Exception) {
-            logger.error(error.toString())
+            _logger.error(error.toString())
         }
     }
 
@@ -35,7 +36,7 @@ open class EnhancedEventEmitter : EventEmitter() {
             }
             //error callback
             var errback = { error: String ->
-                logger.error(error)
+                _logger.error(error)
                 observableEmitter.onError(Throwable(error))
             }
             safeEmit(event, *args, callback, errback)
