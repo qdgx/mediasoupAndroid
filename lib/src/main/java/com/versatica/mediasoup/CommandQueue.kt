@@ -4,7 +4,6 @@ import com.versatica.eventemitter.EventEmitter
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.functions.Function
 
 class CommandQueue : EventEmitter() {
     private var logger: Logger = Logger("CommandQueue")

@@ -7,6 +7,7 @@ class Logger(prefix: String) {
     private val APP_NAME: String = "mediasoup-client"
     // constructor
     private val logPrefix: String = prefix
+
     init {
 
     }
@@ -16,12 +17,12 @@ class Logger(prefix: String) {
      *
      * @param message Message for log
      */
-    public fun debug(message: String){
+    public fun debug(message: String) {
         if (!isDebuggable())
             return
         var tag = String()
         tag = tag.plus(APP_NAME).plus(":").plus(logPrefix)
-        Log.d(tag,message)
+        Log.d(tag, message)
     }
 
     /**
@@ -29,12 +30,12 @@ class Logger(prefix: String) {
      *
      * @param message Message for log
      */
-    public fun warn(message: String){
+    public fun warn(message: String) {
         if (!isDebuggable())
             return
         var tag = String()
         tag = tag.plus(APP_NAME).plus(":WARN:").plus(logPrefix)
-        Log.w(tag,message)
+        Log.w(tag, message)
     }
 
     /**
@@ -42,12 +43,12 @@ class Logger(prefix: String) {
      *
      * @param message Message for log
      */
-    public fun error(message: String){
+    public fun error(message: String) {
         if (!isDebuggable())
             return
         var tag = String()
         tag = tag.plus(APP_NAME).plus(":ERROR:").plus(logPrefix)
-        Log.e(tag,message)
+        Log.e(tag, message)
     }
 
     /**
@@ -55,7 +56,7 @@ class Logger(prefix: String) {
      *
      * @return If build config is debug,return True, else return False
      */
-    private fun isDebuggable(): Boolean{
+    private fun isDebuggable(): Boolean {
         return BuildConfig.DEBUG
     }
 }
