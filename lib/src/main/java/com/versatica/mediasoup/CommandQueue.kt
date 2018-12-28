@@ -31,7 +31,7 @@ class CommandQueue : EventEmitter() {
 
     fun push(method: String, data: Any): Observable<Any> {
         var command = Command(method, data, null)
-        logger.debug("'push() [method:$method]")
+        logger.debug("push() [method:$method]")
         return Observable.create {
             command.observableEmitter = it
             // Append command to the queue.
@@ -45,6 +45,8 @@ class CommandQueue : EventEmitter() {
             return
 
         // Take the first command.
+        if (queue.isEmpty())
+            return
         var command = queue[0] as Command
         this.busy = true
 
@@ -88,9 +90,8 @@ class CommandQueue : EventEmitter() {
                         // Resolve the command with the given result (if any).
                         command.observableEmitter!!.onNext(result)
                     }
-
                     //next
-                    it.onNext("")
+                    it.onNext(result as String)
                 })
             }
     }

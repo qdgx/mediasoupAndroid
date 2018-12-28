@@ -400,7 +400,7 @@ Chrome70类
 类说明：mediasoup通用工具类，提供随机数生成，对象克隆
 导入类：random-number 
 公有方法：
-    export function getExtendedRtpCapabilities(localCaps, remoteCaps)
+    export function randomNumber()
         描述：生成 10000000 至 99999999的随机数
         参数：无
         返回值：随机数 【10000000，99999999】

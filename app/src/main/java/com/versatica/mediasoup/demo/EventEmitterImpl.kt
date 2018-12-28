@@ -93,7 +93,7 @@ class EventEmitterImpl : EnhancedEventEmitter(logger) {
             }.flatMap { data: Any ->
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    it.onNext("")
+                    it.onNext(data)
                 })
             }
     }

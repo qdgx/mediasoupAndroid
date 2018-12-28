@@ -3,6 +3,7 @@ package com.versatica.mediasoup
 import com.versatica.eventemitter.EventEmitter
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
+import java.lang.Exception
 
 open class EnhancedEventEmitter(logger: Logger) : EventEmitter() {
     private var _logger: Logger = Logger("EnhancedEventEmitter")
