@@ -364,6 +364,7 @@ Chrome70类
                     调用createOffer获取本地设备offer pc.createOffer()
                     调用sdpTransform类解析offer获取sdpObj数据 sdpTransform.parse(offer.sdp)
                     调用sdpCommonUtils获取设备rtpCapabilities并返回  sdpCommonUtils.extractRtpCapabilities(sdpObj)
+            返回值：rtp能力对象   json类型  参见rtpCapabilitiesJson示例.txt
             调用点：Room类join(peerName, appData)方法
 
     构造方法：
