@@ -1,0 +1,196 @@
+package com.versatica.mediasoup.sdp
+
+import com.dingsoft.sdptransform.SdpTransform
+import com.dingsoft.sdptransform.SessionDescription
+
+/**
+ * @author wolfhan
+ */
+
+
+fun extractRtpCapabilities(sdpObj: SessionDescription): RTCRtpCapabilities {
+    val codecsMap = HashMap<Any, RTCRtpCodecCapability>()
+    val headerExtensions = arrayListOf<RTCRtpHeaderExtensionCapability>()
+    var gotAudio = false
+    var gotVideo = false
+
+    loop@ for (m in sdpObj.media) {
+        val kind = m.type
+
+        when (kind) {
+            "audio" -> {
+                if (gotAudio)
+                    continue@loop
+                gotAudio = true
+            }
+            "video" -> {
+                if (gotVideo)
+                    continue@loop
+                gotVideo = true
+            }
+            else -> {
+                continue@loop
+            }
+        }
+
+        // Get codecs.
+        val rtpList = m.rtp
+        if (rtpList != null && rtpList.isNotEmpty()) {
+            for (rtp in rtpList) {
+                val codec = RTCRtpCodecCapability(
+                    mimeType = "$kind/${rtp.codec}",
+                    clockRate = rtp.rate,
+                    channels = rtp.encoding?.toIntOrNull()
+                )
+                codec.name = rtp.codec
+                codec.kind = kind
+                codec.preferredPayloadType = rtp.payload
+
+                if (codec.kind !== "audio")
+                    codec.channels = null
+                else if (codec.channels == null)
+                    codec.channels = 1
+
+                codecsMap[codec.preferredPayloadType] = codec
+            }
+        }
+
+        // Get codec parameters.
+        val fmtpList = m.fmtp
+        if (fmtpList != null && fmtpList.isNotEmpty()) {
+            for (fmtp in fmtpList) {
+                val parameters = SdpTransform().parseParams(fmtp.config)
+                val codec = codecsMap[fmtp.payload] ?: continue
+                codec.parameters = parameters
+            }
+        }
+
+        // Get RTCP feedback for each codec.
+        val fbList = m.rtcpFb
+        if (fbList != null && fbList.isNotEmpty()) {
+            for (fb in fbList) {
+                val codec = codecsMap[fb.payload] ?: continue
+                val feedback = RtcpFeedback(
+                    type = fb.type,
+                    parameter = fb.subtype
+                )
+                codec.rtcpFeedback?.add(feedback)
+            }
+        }
+
+        // Get RTP header extensions.
+        val extList = m.ext
+        if (extList != null && extList.isNotEmpty()) {
+            for (ext in extList) {
+                val headerExtension = RTCRtpHeaderExtensionCapability(
+                    uri = ext.uri
+                )
+                headerExtension.kind = kind
+                headerExtension.preferredId = ext.value
+                headerExtensions.add(headerExtension)
+            }
+        }
+    }
+
+    return RTCRtpCapabilities(codecsMap.values, headerExtensions)
+}
+
+fun extractDtlsParameters(sdpObj: SessionDescription): RTCDtlsParameters {
+    val media = getFirstActiveMediaSection(sdpObj)
+    val fingerprint = media?.fingerprint ?: sdpObj.fingerprint
+
+    val role = when (media?.setup) {
+        "active" -> RTCDtlsRole.CLIENT
+        "passive" -> RTCDtlsRole.SERVER
+        "actpass" -> RTCDtlsRole.AUTO
+        else -> RTCDtlsRole.AUTO
+    }
+
+    val dtlsParameters = RTCDtlsParameters(role = role)
+    val fingerprintObj = RTCDtlsFingerprint(algorithm = fingerprint?.type, value = fingerprint?.hash)
+    val fingerprints = arrayListOf<RTCDtlsFingerprint>()
+    fingerprints.add(fingerprintObj)
+    dtlsParameters.fingerprints = fingerprints
+    return dtlsParameters
+}
+
+fun getFirstActiveMediaSection(sdpObj: SessionDescription): SessionDescription.Media? {
+    val mediaList = sdpObj.media
+    if (mediaList.isNotEmpty()) {
+        return mediaList.find {
+            it.iceUfrag != null && it.port != 0
+        }
+    }
+    return null
+}
+
+//data class Codec(
+//    var name: String,
+//    var mimeType: String,
+//    var kind: String,
+//    var clockRate: Int? = null,
+//    var preferredPayloadType: Int,
+//    var channels: String? = null,
+//    var rtcpFeedback: ArrayList<RtcpFeedback>? = null,
+//    var parameters: Any? = null
+//)
+
+data class RtcpFeedback(
+    val type: String,
+    val parameter: String? = null
+)
+
+//data class HeaderExtension(
+//    var kind: String,
+//    var uri: String,
+//    var preferredId: Int
+//)
+
+var codecName: String? = null
+var RTCRtpCodecCapability.name: String?
+    get() = codecName
+    set(value) {
+        codecName = value
+    }
+
+var codecKind: String? = null
+var RTCRtpCodecCapability.kind: String?
+    get() = codecKind
+    set(value) {
+        codecKind = value
+    }
+
+var codecPreferredPayloadType: Int = 0
+var RTCRtpCodecCapability.preferredPayloadType: Int
+    get() = codecPreferredPayloadType
+    set(value) {
+        codecPreferredPayloadType = value
+    }
+
+var codecParameters: Map<String, Any>? = null
+var RTCRtpCodecCapability.parameters: Map<String, Any>?
+    get() = codecParameters
+    set(value) {
+        codecParameters = value
+    }
+
+var codecRtcpFeedback: MutableCollection<RtcpFeedback>? = null
+var RTCRtpCodecCapability.rtcpFeedback: MutableCollection<RtcpFeedback>?
+    get() = codecRtcpFeedback
+    set(value) {
+        codecRtcpFeedback = value
+    }
+
+var rtpHeaderExtensionKind: String? = null
+var RTCRtpHeaderExtensionCapability.kind: String?
+    get() = rtpHeaderExtensionKind
+    set(value) {
+        rtpHeaderExtensionKind = value
+    }
+
+var rtpHeaderExtensionPreferredId: Int? = null
+var RTCRtpHeaderExtensionCapability.preferredId: Int?
+    get() = rtpHeaderExtensionPreferredId
+    set(value) {
+        rtpHeaderExtensionPreferredId = value
+    }
