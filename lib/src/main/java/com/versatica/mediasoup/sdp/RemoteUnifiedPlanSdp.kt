@@ -1,8 +1,7 @@
 package com.versatica.mediasoup.sdp
 
-import com.dingsoft.sdptransform.*
 import com.versatica.mediasoup.Logger
-import com.versatica.mediasoup.randomNumber
+import com.versatica.mediasoup.Utils
 
 /**
  * @author wolfhan
@@ -30,7 +29,7 @@ open class RemoteSdp(rtpParametersByKind: MutableMap<String, RTCRtpParameters>) 
     var sdpGlobalFields = SdpGlobalFields()
 
     class SdpGlobalFields {
-        var id = randomNumber()
+        var id = Utils.randomNumber()
         var version = 0
     }
 
