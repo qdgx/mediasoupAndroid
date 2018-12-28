@@ -249,10 +249,10 @@ data class RTCRtpCodecCapability(
 )
 
 class RTCRtpCodecParameters {
-    var channels: Number? = null
+    var channels: Int? = null
     lateinit var clockRate: Number
     lateinit var mimeType: String
-    lateinit var payloadType: Number
+    var payloadType: Int = 0
     var sdpFmtpLine: String? = null
 }
 
@@ -298,8 +298,8 @@ data class RTCRtpHeaderExtensionCapability(
 
 class RTCRtpHeaderExtensionParameters {
     var encrypted: Boolean? = null
-    lateinit var id: Number
-    lateinit var uri: String
+    var id: Int = 0
+    var uri: String = ""
 }
 
 open class RTCRtpParameters {
