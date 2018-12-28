@@ -4,8 +4,6 @@ import com.versatica.eventemitter.EventEmitter
 import com.versatica.mediasoup.Logger
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.functions.Function
 import java.lang.Exception
 
 open class EnhancedEventEmitter(logger: Logger): EventEmitter() {

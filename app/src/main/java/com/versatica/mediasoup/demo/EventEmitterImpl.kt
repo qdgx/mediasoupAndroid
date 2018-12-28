@@ -89,7 +89,8 @@ class EventEmitterImpl : EnhancedEventEmitter(logger) {
             }.flatMap {str: String->
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it,"@request","createProducer","_execAddProducer step2 $str").subscribe()
+                    this.safeEmitAsPromise(it,"@request","createProducer","_execAddProducer step2 $str")
+                        .subscribe()
                 })
             }.flatMap {data: Any->
                 Observable.create(ObservableOnSubscribe<Any> {
