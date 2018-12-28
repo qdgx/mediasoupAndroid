@@ -1,12 +1,11 @@
 package com.versatica.mediasoup.demo
 
-import com.versatica.EnhancedEventEmitter
 import com.versatica.mediasoup.CommandQueue
+import com.versatica.mediasoup.EnhancedEventEmitter
 import com.versatica.mediasoup.Logger
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.functions.Function
-import io.reactivex.schedulers.Schedulers
 
 val logger = Logger("EventEmitterImpl")
 
@@ -45,9 +44,9 @@ class EventEmitterImpl : EnhancedEventEmitter(logger) {
         }
     }
 
-    fun addProducer(producer:String): Observable<Any>{
+    fun addProducer(producer: String): Observable<Any> {
         logger.debug("addProducer() producer")
-        return this.commandQueue.push("addProducer",producer)
+        return this.commandQueue.push("addProducer", producer)
     }
 
     private fun _execCommand(command: CommandQueue.Command, promiseHolder: CommandQueue.PromiseHolder) {
@@ -77,21 +76,21 @@ class EventEmitterImpl : EnhancedEventEmitter(logger) {
         promiseHolder.promise = promise
     }
 
-    private fun _execAddProducer(data:Any):Observable<Any>?{
+    private fun _execAddProducer(data: Any): Observable<Any>? {
         logger.debug("_execAddProducer()")
         // Call the handler.
         return Observable.just(data as String)
-            .flatMap { str: String->
+            .flatMap { str: String ->
                 Observable.create(ObservableOnSubscribe<String> {
                     //next
                     it.onNext("_execAddProducer step1 $str")
                 })
-            }.flatMap {str: String->
+            }.flatMap { str: String ->
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it,"@request","createProducer","_execAddProducer step2 $str").subscribe()
+                    this.safeEmitAsPromise(it, "@request", "createProducer", "_execAddProducer step2 $str").subscribe()
                 })
-            }.flatMap {data: Any->
+            }.flatMap { data: Any ->
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
                     it.onNext("")

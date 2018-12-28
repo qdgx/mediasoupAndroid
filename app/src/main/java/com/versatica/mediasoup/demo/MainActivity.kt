@@ -3,12 +3,11 @@ package com.versatica.mediasoup.demo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.versatica.mediasoup.Logger
-import kotlinx.android.synthetic.main.activity_main.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Function
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -19,27 +18,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         safeEmit.setOnClickListener {
             val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
-            eventEmitterImpl.on("key"){ args ->
+            eventEmitterImpl.on("key") { args ->
                 var sb: String = String()
-                for (arg in args){
+                for (arg in args) {
                     sb += (" " + arg)
                 }
                 logger.debug("key: $sb")
             }
-            eventEmitterImpl.safeEmit("key",101)
-            eventEmitterImpl.safeEmit("key","hello world")
-            eventEmitterImpl.safeEmit("key","hello world",101,102.3f,"end")
+            eventEmitterImpl.safeEmit("key", 101)
+            eventEmitterImpl.safeEmit("key", "hello world")
+            eventEmitterImpl.safeEmit("key", "hello world", 101, 102.3f, "end")
         }
 
         safeEmitAsPromiseTimmer.setOnClickListener {
             val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
-            eventEmitterImpl.on("@request"){ args ->
+            eventEmitterImpl.on("@request") { args ->
                 var timer: Timer? = Timer()
                 timer!!.schedule(object : TimerTask() {
                     override fun run() {
                         var length = args.size
-                        if (length > 0){
-                            var result = args.get(1) as  Int
+                        if (length > 0) {
+                            var result = args.get(1) as Int
                             //success callBack
                             var successCallBack = args.get(length - 2) as Function1<Any, Unit>
                             successCallBack.invoke("Result $result")
@@ -58,12 +57,12 @@ class MainActivity : AppCompatActivity() {
 
         safeEmitAsPromiseThread.setOnClickListener {
             val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
-            eventEmitterImpl.on("@request"){ args ->
-                Thread(object : Runnable{
+            eventEmitterImpl.on("@request") { args ->
+                Thread(object : Runnable {
                     override fun run() {
                         var length = args.size
-                        if (length > 0){
-                            var result = args.get(1) as  Int
+                        if (length > 0) {
+                            var result = args.get(1) as Int
                             //success callBack
                             var successCallBack = args.get(length - 2) as Function1<Any, Unit>
                             successCallBack.invoke("Result $result")
@@ -84,10 +83,10 @@ class MainActivity : AppCompatActivity() {
 
         safeEmitAsPromiseMultiple.setOnClickListener {
             val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
-            eventEmitterImpl.on("@request"){ args ->
+            eventEmitterImpl.on("@request") { args ->
                 var length = args.size
-                if (length > 0){
-                    var result = args.get(1) as  Int
+                if (length > 0) {
+                    var result = args.get(1) as Int
                     var successCallBack = args.get(length - 2) as Function1<Any, Unit>
                     Observable.just(result)
                         .flatMap(addFlatMapTimer())
@@ -110,14 +109,14 @@ class MainActivity : AppCompatActivity() {
 
         commandQueueTest.setOnClickListener {
             val eventEmitterImpl = EventEmitterImpl()
-            eventEmitterImpl.on("@request"){ args ->
+            eventEmitterImpl.on("@request") { args ->
                 var timer: Timer? = Timer()
                 timer!!.schedule(object : TimerTask() {
                     override fun run() {
                         var length = args.size
-                        if (length > 0){
+                        if (length > 0) {
                             var method = args.get(0) as String
-                            var data = args.get(1) as  String
+                            var data = args.get(1) as String
                             //success callBack
                             var successCallBack = args.get(length - 2) as Function1<Any, Unit>
                             successCallBack.invoke("Result $data")
@@ -127,7 +126,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             Observable.just("Add Producer")
-                .flatMap{
+                .flatMap {
                     eventEmitterImpl.addProducer(it)
                 }
                 .subscribe {
@@ -147,7 +146,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun addFlatMapTimer(): Function<Int, Observable<Int>> {
         return Function { input ->
-            Observable.create{
+            Observable.create {
                 var timer: Timer? = Timer()
                 timer!!.schedule(object : TimerTask() {
                     override fun run() {
@@ -161,8 +160,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun addFlatMapThread(): Function<Int, Observable<Int>> {
         return Function { input ->
-            Observable.create{
-                Thread(object : Runnable{
+            Observable.create {
+                Thread(object : Runnable {
                     override fun run() {
                         val result = input + input
                         it.onNext(result)
