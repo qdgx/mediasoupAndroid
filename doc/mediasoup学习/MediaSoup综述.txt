@@ -1,0 +1,8 @@
+mediasoup的原理
+假设三个Client (browser或者客户端)同时加入一个房间，每个app同时发布一路视频和一路音频，并且接受来自其他app的音视频流
+
+1：每个Client创建两个Peerconnection分别用于发送和接受媒体流，发送端用于发送承载本地videoTrack和audioTrack的localStream，接收端接受来自其他Client的remoteStream
+2：Room会为每个Client创建一个Peer，Peer管理两个Transport用于接受Client的媒体流和向Client发送媒体流
+3：Peer为对应的Client发送的videoTrack和audioTrack分别创建一个Producer（共2个）
+4：Peer为其他两个Client发送的videoTrack和audioTrack分别创建2个Consumer（共2个）
+5：Producer将媒体数据发送给每一个订阅者Consumer

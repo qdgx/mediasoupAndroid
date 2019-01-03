@@ -20,9 +20,11 @@ android {
         }
     }
 
+    // WebRTC requires Java 8 features
+    // https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/discuss-webrtc/V1h2uQMDCkA/RA-uzncVAAAJ
     compileOptions {
-        targetCompatibility 1.8
-        sourceCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
 }
