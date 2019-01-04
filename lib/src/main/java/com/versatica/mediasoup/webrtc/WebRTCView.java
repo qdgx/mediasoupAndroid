@@ -44,8 +44,7 @@ public class WebRTCView extends ViewGroup {
      */
     private static final Method IS_IN_LAYOUT;
 
-    //csb
-    private static final String TAG = "";//WebRTCModule.TAG;
+    private static final String TAG = WebRTCModule.TAG;
 
     static {
         // IS_IN_LAYOUT
@@ -159,9 +158,11 @@ public class WebRTCView extends ViewGroup {
      */
     private VideoTrack videoTrack;
 
-    public WebRTCView(Context context) {
-        super(context);
+    private final WebRTCModule webRTCModule;
 
+    public WebRTCView(Context context,WebRTCModule webRTCModule) {
+        super(context);
+        this.webRTCModule = webRTCModule;
         surfaceViewRenderer = new SurfaceViewRenderer(context);
         addView(surfaceViewRenderer);
 
@@ -208,7 +209,7 @@ public class WebRTCView extends ViewGroup {
 //            WebRTCModule module
 //                = reactContext.getNativeModule(WebRTCModule.class);
 //            MediaStream stream = module.getStreamForReactTag(streamURL);
-            MediaStream stream = null;
+            MediaStream stream = webRTCModule.getStreamForReactTag(streamURL);
             if (stream != null) {
                 List<VideoTrack> videoTracks = stream.videoTracks;
 
@@ -278,11 +279,10 @@ public class WebRTCView extends ViewGroup {
      * rendered) shines through.
      */
     private void onFirstFrameRendered() {
-        //csb
-//        post(() -> {
-//            Log.d(TAG, "First frame rendered.");
-//            surfaceViewRenderer.setBackgroundColor(Color.TRANSPARENT);
-//        });
+        post(() -> {
+            Log.d(TAG, "First frame rendered.");
+            surfaceViewRenderer.setBackgroundColor(Color.TRANSPARENT);
+        });
     }
 
     /**
@@ -584,9 +584,7 @@ public class WebRTCView extends ViewGroup {
                 // methods (e.g. addRenderer, removeRenderer) on videoTrack.
                 && (videoTrack = getVideoTrack()) != null
                 && ViewCompat.isAttachedToWindow(this)) {
-            //csb
-            //EglBase.Context sharedContext = EglUtils.getRootEglBaseContext();
-            EglBase.Context sharedContext = null;
+            EglBase.Context sharedContext = EglUtils.getRootEglBaseContext();
             if (sharedContext == null) {
                 // If SurfaceViewRenderer#init() is invoked, it will throw a
                 // RuntimeException which will very likely kill the application.

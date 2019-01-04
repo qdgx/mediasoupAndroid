@@ -7,8 +7,7 @@ class CameraEventsHandler implements CameraVideoCapturer.CameraEventsHandler {
     /**
      * The {@link Log} tag with which {@code CameraEventsHandler} is to log.
      */
-    //csb
-    private final static String TAG = "";//WebRTCModule.TAG;
+    private final static String TAG = WebRTCModule.TAG;
 
     // Callback invoked when camera closed.
     @Override

@@ -12,8 +12,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 class PeerConnectionObserver implements PeerConnection.Observer {
-    //csb
-    private final static String TAG = ""; //WebRTCModule.TAG;
+    private final static String TAG = WebRTCModule.TAG;
 
     private final SparseArray<DataChannel> dataChannels
         = new SparseArray<DataChannel>();
@@ -23,8 +22,7 @@ class PeerConnectionObserver implements PeerConnection.Observer {
     final Map<String, MediaStream> remoteStreams;
     final Map<String, MediaStreamTrack> remoteTracks;
     private final VideoTrackAdapter videoTrackAdapters;
-    //csb
-    //private final WebRTCModule webRTCModule;
+    private final WebRTCModule webRTCModule;
 
     /**
      * The <tt>StringBuilder</tt> cache utilized by {@link #statsToJSON} in
@@ -35,27 +33,14 @@ class PeerConnectionObserver implements PeerConnection.Observer {
     private SoftReference<StringBuilder> statsToJSONStringBuilder
         = new SoftReference<>(null);
 
-    //csb
-//    PeerConnectionObserver(WebRTCModule webRTCModule,
-//                           int id) {
-//        this.webRTCModule = webRTCModule;
-//        this.id = id;
-//        this.localStreams = new ArrayList<MediaStream>();
-//        this.remoteStreams = new HashMap<String, MediaStream>();
-//        this.remoteTracks = new HashMap<String, MediaStreamTrack>();
-//        this.videoTrackAdapters = new VideoTrackAdapter(webRTCModule, id);
-//    }
-
-    PeerConnectionObserver(//WebRTCModule webRTCModule,
+    PeerConnectionObserver(WebRTCModule webRTCModule,
                            int id) {
-        //this.webRTCModule = webRTCModule;
+        this.webRTCModule = webRTCModule;
         this.id = id;
         this.localStreams = new ArrayList<MediaStream>();
         this.remoteStreams = new HashMap<String, MediaStream>();
         this.remoteTracks = new HashMap<String, MediaStreamTrack>();
-        //csb
-        //this.videoTrackAdapters = new VideoTrackAdapter(webRTCModule, id);
-        this.videoTrackAdapters = new VideoTrackAdapter(id);
+        this.videoTrackAdapters = new VideoTrackAdapter(webRTCModule, id);
     }
     /**
      * Adds a specific local <tt>MediaStream</tt> to the associated
@@ -252,6 +237,25 @@ class PeerConnectionObserver implements PeerConnection.Observer {
 //        }
 //    }
 
+    void getStats(String trackId, final Callback cb) {
+        MediaStreamTrack track = null;
+        if (trackId == null
+                || trackId.isEmpty()
+                || (track = webRTCModule.getLocalTrack(trackId)) != null
+                || (track = remoteTracks.get(trackId)) != null) {
+            peerConnection.getStats(
+                    new StatsObserver() {
+                        @Override
+                        public void onComplete(StatsReport[] reports) {
+                            cb.invoke(true, statsToJSON(reports));
+                        }
+                    },
+                    track);
+        } else {
+            Log.e(TAG, "peerConnectionGetStats() MediaStreamTrack not found for id: " + trackId);
+            cb.invoke(false, "Track not found");
+        }
+    }
     /**
      * Constructs a JSON <tt>String</tt> representation of a specific array of
      * <tt>StatsReport</tt>s (produced by {@link PeerConnection#getStats}).
@@ -336,8 +340,7 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         candidateParams.put("candidate", candidate.sdp);
         params.put("candidate", candidateParams);
 
-        //csb
-        //webRTCModule.sendEvent("peerConnectionGotICECandidate", params);
+        webRTCModule.sendEvent("peerConnectionGotICECandidate", params);
     }
 
     @Override
@@ -360,8 +363,7 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         params.put("id", id);
         params.put("iceConnectionState", iceConnectionStateString(iceConnectionState));
 
-        //csb
-        //webRTCModule.sendEvent("peerConnectionIceConnectionChanged", params);
+        webRTCModule.sendEvent("peerConnectionIceConnectionChanged", params);
     }
 
     @Override
@@ -384,8 +386,8 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         HashMap params = new HashMap();
         params.put("id", id);
         params.put("iceGatheringState", iceGatheringStateString(iceGatheringState));
-        //csb
-        //webRTCModule.sendEvent("peerConnectionIceGatheringChanged", params);
+
+        webRTCModule.sendEvent("peerConnectionIceGatheringChanged", params);
     }
 
     private String getReactTagForStream(MediaStream mediaStream) {
@@ -530,8 +532,7 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         }
         params.put("tracks", tracks);
 
-        //csb
-        //webRTCModule.sendEvent("peerConnectionAddedStream", params);
+        webRTCModule.sendEvent("peerConnectionAddedStream", params);
     }
 
 //    @Override
@@ -583,8 +584,8 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         HashMap params = new HashMap();
         params.put("id", id);
         params.put("streamId", streamReactTag);
-        //csb
-        //webRTCModule.sendEvent("peerConnectionRemovedStream", params);
+
+        webRTCModule.sendEvent("peerConnectionRemovedStream", params);
     }
 
     //csb
@@ -624,21 +625,15 @@ class PeerConnectionObserver implements PeerConnection.Observer {
 
         dataChannels.put(dataChannelId, dataChannel);
         registerDataChannelObserver(dataChannelId, dataChannel);
-
-        //csb
-        //webRTCModule.sendEvent("peerConnectionDidOpenDataChannel", params);
+        webRTCModule.sendEvent("peerConnectionDidOpenDataChannel", params);
     }
 
     private void registerDataChannelObserver(int dcId, DataChannel dataChannel) {
         // DataChannel.registerObserver implementation does not allow to
         // unregister, so the observer is registered here and is never
         // unregistered
-        //csb
-//        dataChannel.registerObserver(
-//            new DataChannelObserver(webRTCModule, id, dcId, dataChannel));
         dataChannel.registerObserver(
-                new DataChannelObserver(//webRTCModule,
-                        id, dcId, dataChannel));
+            new DataChannelObserver(webRTCModule, id, dcId, dataChannel));
     }
 
     //csb
@@ -653,8 +648,8 @@ class PeerConnectionObserver implements PeerConnection.Observer {
     public void onRenegotiationNeeded() {
         HashMap params = new HashMap();
         params.put("id", id);
-        //csb
-        //webRTCModule.sendEvent("peerConnectionOnRenegotiationNeeded", params);
+
+        webRTCModule.sendEvent("peerConnectionOnRenegotiationNeeded", params);
     }
 
     //csb
@@ -671,8 +666,8 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         HashMap params = new HashMap();
         params.put("id", id);
         params.put("signalingState", signalingStateString(signalingState));
-        //csb
-        //webRTCModule.sendEvent("peerConnectionSignalingStateChanged", params);
+
+        webRTCModule.sendEvent("peerConnectionSignalingStateChanged", params);
     }
 
     @Override

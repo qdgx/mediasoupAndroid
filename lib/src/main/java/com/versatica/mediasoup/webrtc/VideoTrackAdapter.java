@@ -26,19 +26,12 @@ public class VideoTrackAdapter {
     private Timer timer = new Timer("VideoTrackMutedTimer");
 
     private final int peerConnectionId;
-    //csb
-    // private final WebRTCModule webRTCModule;
 
-    //csb
-//    public VideoTrackAdapter(WebRTCModule webRTCModule, int peerConnectionId) {
-//        this.peerConnectionId = peerConnectionId;
-//        this.webRTCModule = webRTCModule;
-//    }
+    private final WebRTCModule webRTCModule;
 
-    public VideoTrackAdapter(//WebRTCModule webRTCModule,
-                             int peerConnectionId) {
+    public VideoTrackAdapter(WebRTCModule webRTCModule, int peerConnectionId) {
         this.peerConnectionId = peerConnectionId;
-        //this.webRTCModule = webRTCModule;
+        this.webRTCModule = webRTCModule;
     }
 
     public void addAdapter(String streamReactTag, VideoTrack videoTrack) {
@@ -151,9 +144,8 @@ public class VideoTrackAdapter {
                             + " streamTag: " + streamReactTag
                             + " trackId: " + trackId);
 
-            //csb
-//            VideoTrackAdapter.this.webRTCModule.sendEvent(
-//                    "mediaStreamTrackMuteChanged", params);
+            VideoTrackAdapter.this.webRTCModule.sendEvent(
+                    "mediaStreamTrackMuteChanged", params);
         }
 
         void dispose() {

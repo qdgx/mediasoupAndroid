@@ -74,7 +74,7 @@ public class VideoCaptureController {
 //        }
 //    }
 
-    //csb all fun
+    //csb
     public VideoCaptureController(CameraEnumerator cameraEnumerator,
                                   HashMap constraints) {
         HashMap videoConstraintsMandatory = null;
@@ -233,21 +233,6 @@ public class VideoCaptureController {
         return null;
     }
 
-    //csb
-//    /**
-//     * Retrieves "facingMode" constraint value.
-//     *
-//     * @param mediaConstraints a {@code ReadableMap} which represents "GUM"
-//     * constraints argument.
-//     * @return String value of "facingMode" constraints in "GUM" or
-//     * {@code null} if not specified.
-//     */
-//    private String getFacingMode(ReadableMap mediaConstraints) {
-//        return
-//                mediaConstraints == null
-//                        ? null
-//                        : ReactBridgeUtil.getMapStrValue(mediaConstraints, "facingMode");
-//    }
 
     /**
      * Retrieves "facingMode" constraint value.
@@ -257,6 +242,13 @@ public class VideoCaptureController {
      * @return String value of "facingMode" constraints in "GUM" or
      * {@code null} if not specified.
      */
+    //csb
+//    private String getFacingMode(ReadableMap mediaConstraints) {
+//        return
+//                mediaConstraints == null
+//                        ? null
+//                        : ReactBridgeUtil.getMapStrValue(mediaConstraints, "facingMode");
+//    }
     private String getFacingMode(HashMap mediaConstraints) {
         return
             mediaConstraints == null
@@ -265,14 +257,14 @@ public class VideoCaptureController {
     }
 
     //csb
-//    /**
-//     * Retrieves "sourceId" constraint value.
-//     *
-//     * @param mediaConstraints a {@code ReadableMap} which represents "GUM"
-//     * constraints argument
-//     * @return String value of "sourceId" optional "GUM" constraint or
-//     * {@code null} if not specified.
-//     */
+    /**
+     * Retrieves "sourceId" constraint value.
+     *
+     * @param mediaConstraints a {@code ReadableMap} which represents "GUM"
+     * constraints argument
+     * @return String value of "sourceId" optional "GUM" constraint or
+     * {@code null} if not specified.
+     */
 //    private String getSourceIdConstraint(ReadableMap mediaConstraints) {
 //        if (mediaConstraints != null
 //                && mediaConstraints.hasKey("optional")
@@ -295,14 +287,6 @@ public class VideoCaptureController {
 //        return null;
 //    }
 
-    /**
-     * Retrieves "sourceId" constraint value.
-     *
-     * @param mediaConstraints a {@code ReadableMap} which represents "GUM"
-     * constraints argument
-     * @return String value of "sourceId" optional "GUM" constraint or
-     * {@code null} if not specified.
-     */
     private String getSourceIdConstraint(HashMap mediaConstraints) {
         if (mediaConstraints != null
                 && mediaConstraints.containsKey("optional")

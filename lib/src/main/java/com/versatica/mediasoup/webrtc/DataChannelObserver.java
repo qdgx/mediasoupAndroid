@@ -12,27 +12,15 @@ class DataChannelObserver implements DataChannel.Observer {
     private final int mId;
     private final DataChannel mDataChannel;
     private final int peerConnectionId;
-    //csb
-    //private final WebRTCModule webRTCModule;
+    private final WebRTCModule webRTCModule;
 
     //csb
-//    DataChannelObserver(
-//            WebRTCModule webRTCModule,
-//            int peerConnectionId,
-//            int id,
-//            DataChannel dataChannel) {
-//        this.webRTCModule = webRTCModule;
-//        this.peerConnectionId = peerConnectionId;
-//        mId = id;
-//        mDataChannel = dataChannel;
-//    }
-
     DataChannelObserver(
-            //WebRTCModule webRTCModule,
+            WebRTCModule webRTCModule,
             int peerConnectionId,
             int id,
             DataChannel dataChannel) {
-        //this.webRTCModule = webRTCModule;
+        this.webRTCModule = webRTCModule;
         this.peerConnectionId = peerConnectionId;
         mId = id;
         mDataChannel = dataChannel;
@@ -113,8 +101,7 @@ class DataChannelObserver implements DataChannel.Observer {
         params.put("type", type);
         params.put("data", data);
 
-        //csb
-        //webRTCModule.sendEvent("dataChannelReceiveMessage", params);
+        webRTCModule.sendEvent("dataChannelReceiveMessage", params);
     }
 
     //csb
@@ -133,7 +120,6 @@ class DataChannelObserver implements DataChannel.Observer {
         params.put("id", mId);
         params.put("peerConnectionId", peerConnectionId);
         params.put("state", dataChannelStateString(mDataChannel.state()));
-        //csb
-        //webRTCModule.sendEvent("dataChannelStateChanged", params);
+        webRTCModule.sendEvent("dataChannelStateChanged", params);
     }
 }
