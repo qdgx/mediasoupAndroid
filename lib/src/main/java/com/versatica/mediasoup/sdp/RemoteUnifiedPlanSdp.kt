@@ -12,15 +12,15 @@ val logger = Logger("RemoteUnifiedPlanSdp")
 
 open class RemoteSdp(rtpParametersByKind: MutableMap<String, RTCRtpParameters>) {
 
-    // Transport local parameters, including DTLS parameteres.
-    var transportLocalParameters: Any? = null
+    // Transport local parameters, including DTLS parameters.
+    var transportLocalParameters: TransportRemoteIceParameters? = null
         set(value) {
             logger.debug("setTransportLocalParameters() [transportLocalParameters:$value]")
             field = value
         }
 
     // Transport remote parameters, including ICE parameters, ICE candidates and DTLS parameteres.
-    var transportRemoteParameters: Any? = null
+    var transportRemoteParameters: TransportRemoteIceParameters? = null
         set(value) {
             logger.debug("setTransportRemoteParameters() [transportRemoteParameters:$value]")
             field = value
@@ -34,15 +34,10 @@ open class RemoteSdp(rtpParametersByKind: MutableMap<String, RTCRtpParameters>) 
         var version = 0
     }
 
-//    updateTransportRemoteIceParameters(remoteIceParameters)
-//    {
-//        logger.debug(
-//            'updateTransportRemoteIceParameters() [remoteIceParameters:%o]',
-//            remoteIceParameters
-//        );
-//
-//        this.transportRemoteParameters.iceParameters = remoteIceParameters;
-//    }
+    fun updateTransportRemoteIceParameters(remoteIceParameters: RTCIceParameters) {
+        logger.debug("updateTransportRemoteIceParameters() [remoteIceParameters:$remoteIceParameters]")
+        this.transportRemoteParameters?.iceParameters = remoteIceParameters
+    }
 }
 
 class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
@@ -55,9 +50,9 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
         else if (this.transportRemoteParameters == null)
             throw Exception("no transport remote parameters")
 
-        val remoteIceParameters = this.transportRemoteParameters.iceParameters
-        val remoteIceCandidates = this.transportRemoteParameters.iceCandidates
-        val remoteDtlsParameters = this.transportRemoteParameters.dtlsParameters
+        val remoteIceParameters = this.transportRemoteParameters?.iceParameters
+        val remoteIceCandidates = this.transportRemoteParameters?.iceCandidates
+        val remoteDtlsParameters = this.transportRemoteParameters?.dtlsParameters
         val sdpObj = SessionDescription()
         val bundleMids = localSdpObj.media
             .filter {
@@ -80,8 +75,8 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
         )
         sdpObj.name = "-"
         sdpObj.timing = SessionDescription.Timing(start = 0, stop = 0)
-        sdpObj.icelite = if (remoteIceParameters.iceLite != null) "ice-lite" else null
-        sdpObj.msidSemantic = MediaAttributes.MsidSemantic(
+        sdpObj.icelite = if (remoteIceParameters?.iceLite != null) "ice-lite" else null
+        sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
             semantic = "WMS",
             token = "*"
         )
@@ -97,11 +92,13 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
         sdpObj.media = arrayListOf()
 
         // NOTE: We take the latest fingerprint.
-        val numFingerprints = remoteDtlsParameters.fingerprints.length
-        sdpObj.fingerprint = SharedAttributes.Fingerprint(
-            type = remoteDtlsParameters.fingerprints[numFingerprints - 1].algorithm,
-            hash = remoteDtlsParameters.fingerprints[numFingerprints - 1].value
-        )
+        val numFingerprints = remoteDtlsParameters?.fingerprints?.size
+        if (numFingerprints != null) {
+            sdpObj.fingerprint = SharedAttributes.Fingerprint(
+                type = remoteDtlsParameters.fingerprints?.get(numFingerprints - 1)?.algorithm ?: "",
+                hash = remoteDtlsParameters.fingerprints?.get(numFingerprints - 1)?.value ?: ""
+            )
+        }
 
         for (localMediaObj in localSdpObj.media) {
             val closed = localMediaObj.direction == "inactive"
@@ -114,25 +111,25 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
             remoteMediaObj.protocol = "RTP/SAVPF"
             remoteMediaObj.connection = SharedDescriptionFields.Connection(ip = "127.0.0.1", version = 4)
             remoteMediaObj.mid = localMediaObj.mid
-            remoteMediaObj.iceUfrag = remoteIceParameters.usernameFragment
-            remoteMediaObj.icePwd = remoteIceParameters.password
+            remoteMediaObj.iceUfrag = remoteIceParameters?.usernameFragment
+            remoteMediaObj.icePwd = remoteIceParameters?.password
             remoteMediaObj.candidates = arrayListOf()
 
-            for (candidate in remoteIceCandidates) {
-                // mediasoup does not support non rtcp-mux so candidates component is always RTP (1).
-                val candidateObj = MediaAttributes.Candidate(
-                    component = 1,
-                    foundation = candidate.foundation,
-                    ip = candidate.ip,
-                    port = candidate.port,
-                    priority = candidate.priority,
-                    transport = candidate.protocol,
-                    type = candidate.type,
-                    tcptype = candidate.tcpType
-//                    transport="",
-//                    priority=0
-                )
-                remoteMediaObj.candidates.add(candidateObj)
+            if (remoteIceCandidates != null) {
+                for (candidate in remoteIceCandidates) {
+                    // mediasoup does not support non rtcp-mux so candidates component is always RTP (1).
+                    val candidateObj = MediaAttributes.Candidate(
+                        component = 1,
+                        foundation = candidate.foundation ?: "",
+                        ip = candidate.ip ?: "",
+                        port = candidate.port ?: 0,
+                        priority = candidate.priority ?: 0,
+                        transport = candidate.protocol?.v ?: "",
+                        type = candidate.type?.v ?: "",
+                        tcptype = candidate.tcpType?.v ?: ""
+                    )
+                    remoteMediaObj.candidates.add(candidateObj)
+                }
             }
             remoteMediaObj.endOfCandidates = "end-of-candidates"
 
@@ -140,9 +137,9 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
             // https://tools.ietf.org/html/draft-thatcher-ice-renomination
             remoteMediaObj.iceOptions = "renomination"
 
-            when (remoteDtlsParameters.role) {
-                "client" -> remoteMediaObj.setup = "active"
-                "server" -> remoteMediaObj.setup = "passive"
+            when (remoteDtlsParameters?.role) {
+                RTCDtlsRole.CLIENT -> remoteMediaObj.setup = "active"
+                RTCDtlsRole.SERVER -> remoteMediaObj.setup = "passive"
             }
 
             when (localMediaObj.direction) {
@@ -232,10 +229,9 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
             // Simulcast.
             if (localMediaObj.simulcast_03 != null) {
                 // eslint-disable-next-line camelcase
-                remoteMediaObj.simulcast_03 = MediaAttributes.Simulcast_03
-                (
-                        value : localMediaObj.simulcast_03.value.replace("/send/g", "recv")
-                )
+                val oldValue = localMediaObj.simulcast_03?.value
+                val newValue = Regex("send").replace(oldValue ?: "", "recv")
+                remoteMediaObj.simulcast_03 = MediaAttributes.Simulcast_03(value = newValue)
 
                 remoteMediaObj.rids = arrayListOf()
 
@@ -259,11 +255,264 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
             // Push it.
             sdpObj.media.add(remoteMediaObj)
         }
-
         return SdpTransform().write(sdpObj)
     }
 
 }
+
+class RecvRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
+
+    /**
+     * @param {Array<Object>} consumerInfo - Consumer informations.
+     * @return {String}
+     */
+    fun createOfferSdp(consumerInfo: MutableList<ConsumerInfo>): String {
+        logger.debug("createOfferSdp()")
+
+        if (this.transportRemoteParameters == null)
+            throw Exception("no transport remote parameters")
+
+        val remoteIceParameters = this.transportRemoteParameters?.iceParameters
+        val remoteIceCandidates = this.transportRemoteParameters?.iceCandidates
+        val remoteDtlsParameters = this.transportRemoteParameters?.dtlsParameters
+        val sdpObj = SessionDescription()
+        val mids = consumerInfo.map {
+            it.mid
+        }
+
+        // Increase our SDP version.
+        this.sdpGlobalFields.version++
+
+        sdpObj.version = "0"
+        sdpObj.origin = SessionDescription.Origin(
+            address = "0.0.0.0",
+            ipVer = 4,
+            netType = "IN",
+            sessionId = this.sdpGlobalFields.id,
+            sessionVersion = this.sdpGlobalFields.version,
+            username = "mediasoup-client"
+        )
+        sdpObj.name = "-"
+        sdpObj.timing = SessionDescription.Timing(start = 0, stop = 0)
+        sdpObj.icelite = if (remoteIceParameters?.iceLite != null) "ice-lite" else null
+        sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
+            semantic = "WMS",
+            token = "*"
+        )
+
+        if (mids.isNotEmpty()) {
+            sdpObj.groups = arrayListOf(
+                SessionAttributes.Group(
+                    type = "BUNDLE",
+                    mids = mids.joinToString(" ")
+                )
+            )
+        }
+
+        sdpObj.media = arrayListOf()
+
+        // NOTE: We take the latest fingerprint.
+        val numFingerprints = remoteDtlsParameters?.fingerprints?.size
+        if (numFingerprints != null) {
+            sdpObj.fingerprint = SharedAttributes.Fingerprint(
+                type = remoteDtlsParameters.fingerprints?.get(numFingerprints - 1)?.algorithm ?: "",
+                hash = remoteDtlsParameters.fingerprints?.get(numFingerprints - 1)?.value ?: ""
+            )
+        }
+
+        for (info in consumerInfo) {
+            val closed = info.closed
+            val kind = info.kind
+            var codecs: MutableCollection<RTCRtpCodecParameters>? = null
+            var headerExtensions: MutableCollection<RTCRtpHeaderExtensionParameters>? = null
+
+            if (info.kind !== "application") {
+                codecs = this.rtpParametersByKind[kind]?.codecs
+                headerExtensions = this.rtpParametersByKind[kind]?.headerExtensions
+            }
+
+            val remoteMediaObj = SessionDescription.Media()
+            if (info.kind !== "application") {
+                remoteMediaObj.type = kind
+                remoteMediaObj.port = 7
+                remoteMediaObj.protocol = "RTP/SAVPF"
+                remoteMediaObj.connection = SharedDescriptionFields.Connection(ip = "127.0.0.1", version = 4)
+                remoteMediaObj.mid = info.mid
+                remoteMediaObj.msid = "${info.streamId} ${info.trackId}"
+            } else {
+                remoteMediaObj.type = kind
+                remoteMediaObj.port = 9
+                remoteMediaObj.protocol = "DTLS/SCTP"
+                remoteMediaObj.connection = SharedDescriptionFields.Connection(ip = "127.0.0.1", version = 4)
+                remoteMediaObj.mid = info.mid
+            }
+
+            remoteMediaObj.iceUfrag = remoteIceParameters?.usernameFragment
+            remoteMediaObj.icePwd = remoteIceParameters?.password
+            remoteMediaObj.candidates = arrayListOf()
+
+            if (remoteIceCandidates != null) {
+                for (candidate in remoteIceCandidates) {
+                    // mediasoup does not support non rtcp-mux so candidates component is always RTP (1).
+                    val candidateObj = MediaAttributes.Candidate(
+                        component = 1,
+                        foundation = candidate.foundation ?: "",
+                        ip = candidate.ip ?: "",
+                        port = candidate.port ?: 0,
+                        priority = candidate.priority ?: 0,
+                        transport = candidate.protocol?.v ?: "",
+                        type = candidate.type?.v ?: "",
+                        tcptype = candidate.tcpType?.v ?: ""
+                    )
+                    remoteMediaObj.candidates.add(candidateObj)
+                }
+            }
+
+            remoteMediaObj.endOfCandidates = "end-of-candidates"
+
+            // Announce support for ICE renomination.
+            // https://tools.ietf.org/html/draft-thatcher-ice-renomination
+            remoteMediaObj.iceOptions = "renomination"
+            remoteMediaObj.setup = "actpass"
+
+            if (info.kind !== "application") {
+                if (!closed)
+                    remoteMediaObj.direction = "sendonly"
+                else
+                    remoteMediaObj.direction = "inactive"
+
+                remoteMediaObj.rtp = arrayListOf()
+                remoteMediaObj.rtcpFb = arrayListOf()
+                remoteMediaObj.fmtp = arrayListOf()
+
+                if (codecs != null) {
+                    for (codec in codecs) {
+                        val rtp = MediaAttributes.Rtp(
+                            payload = codec.payloadType,
+                            codec = codec.name,
+                            rate = codec.clockRate.toInt()
+                        )
+
+                        if (codec.channels != null && codec.channels!! > 1)
+                            rtp.encoding = codec.channels.toString()
+
+                        remoteMediaObj.rtp?.add(rtp)
+
+                        if (codec.parameters != null) {
+                            val paramFmtp = MediaAttributes.Fmtp(
+                                payload = codec.payloadType,
+                                config = ""
+                            )
+
+                            val keys = codec.parameters?.keys
+                            if (keys != null) {
+                                for (key in keys) {
+                                    if (paramFmtp.config.isNotEmpty())
+                                        paramFmtp.config += ";"
+                                    paramFmtp.config += "$key=${codec.parameters?.get(key)}"
+                                }
+                            }
+
+                            if (paramFmtp.config.isNotEmpty())
+                                remoteMediaObj.fmtp?.add(paramFmtp)
+                        }
+
+                        if (codec.rtcpFeedback != null && codec.rtcpFeedback!!.isNotEmpty()) {
+                            for (fb in codec.rtcpFeedback!!) {
+                                remoteMediaObj.rtcpFb?.add(
+                                    MediaAttributes.RtcpFb(
+                                        payload = codec.payloadType.toString(),
+                                        type = fb.type,
+                                        subtype = fb.parameter
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                remoteMediaObj.payloads = codecs
+                    ?.map {
+                        it.payloadType
+                    }
+                    ?.joinToString(" ")
+
+                // NOTE: Firefox does not like a=extmap lines if a=inactive.
+                if (!closed) {
+                    remoteMediaObj.ext = arrayListOf()
+                    if (headerExtensions != null) {
+                        for (ext in headerExtensions) {
+                            // Ignore MID RTP extension for receiving media.
+                            if (ext.uri === "urn:ietf:params:rtp-hdrext:sdes:mid")
+                                continue
+
+                            remoteMediaObj.ext?.add(
+                                SharedAttributes.Ext(
+                                    uri = ext.uri,
+                                    value = ext.id
+                                )
+                            )
+                        }
+                    }
+                }
+
+                remoteMediaObj.rtcpMux = "rtcp-mux"
+                remoteMediaObj.rtcpRsize = "rtcp-rsize"
+
+                if (!closed) {
+                    remoteMediaObj.ssrcs = arrayListOf()
+                    remoteMediaObj.ssrcGroups = arrayListOf()
+
+                    remoteMediaObj.ssrcs?.add(
+                        MediaAttributes.Ssrc(
+                            id = info.ssrc,
+                            attribute = "cname",
+                            value = info.cname
+                        )
+                    )
+
+                    if (info.rtxSsrc != null) {
+                        remoteMediaObj.ssrcs?.add(
+                            MediaAttributes.Ssrc(
+                                id = info.rtxSsrc!!,
+                                attribute = "cname",
+                                value = info.cname
+                            )
+                        )
+
+                        // Associate original and retransmission SSRC.
+                        remoteMediaObj.ssrcGroups?.add(
+                            MediaAttributes.SsrcGroup(
+                                semantics = "FID",
+                                ssrcs = "${info.ssrc} ${info.rtxSsrc}"
+                            )
+                        )
+                    }
+                }
+            } else {
+                remoteMediaObj.payloads = "5000"
+                remoteMediaObj.sctpmap =
+                        MediaAttributes.Sctpmap(
+                            app = "webrtc-datachannel",
+                            maxMessageSize = 256,
+                            sctpmapNumber = 5000
+                        )
+            }
+
+            // Push it.
+            sdpObj.media.add(remoteMediaObj)
+        }
+
+        return SdpTransform().write(sdpObj)
+    }
+}
+
+fun createRemoteUnifiedPlanSdp(direction: String, rtpParametersByKind: MutableMap<String, RTCRtpParameters>) =
+    when (direction) {
+        "send" -> SendRemoteSdp(rtpParametersByKind)
+        "recv" -> RecvRemoteSdp(rtpParametersByKind)
+        else -> null
+    }
 
 var rtpCodecName: String = ""
 var RTCRtpCodecParameters.name: String
@@ -285,3 +534,34 @@ var RTCRtpCodecParameters.rtcpFeedback: List<RtcpFeedback>?
     set(value) {
         rtpCodecRtcpFeedback = value
     }
+
+data class TransportRemoteIceParameters(
+    var iceParameters: RTCIceParameters,
+    var iceCandidates: MutableList<RTCIceCandidateDictionary>,
+    var dtlsParameters: RTCDtlsParameters
+)
+
+var rtcIceParametersIceLite: Boolean? = null
+var RTCIceParameters.iceLite: Boolean?
+    get() = rtcIceParametersIceLite
+    set(value) {
+        rtcIceParametersIceLite = value
+    }
+
+var rtcIceCandidateDictionaryFamily: String = ""
+var RTCIceCandidateDictionary.family: String
+    get() = rtcIceCandidateDictionaryFamily
+    set(value) {
+        rtcIceCandidateDictionaryFamily = value
+    }
+
+data class ConsumerInfo(
+    var kind: String,
+    var streamId: String,
+    var trackId: String,
+    var ssrc: Int,
+    var cname: String,
+    var mid: String,
+    var closed: Boolean,
+    var rtxSsrc: Int?
+)

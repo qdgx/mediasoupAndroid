@@ -124,27 +124,10 @@ fun getFirstActiveMediaSection(sdpObj: SessionDescription): SessionDescription.M
     return null
 }
 
-//data class Codec(
-//    var name: String,
-//    var mimeType: String,
-//    var kind: String,
-//    var clockRate: Int? = null,
-//    var preferredPayloadType: Int,
-//    var channels: String? = null,
-//    var rtcpFeedback: ArrayList<RtcpFeedback>? = null,
-//    var parameters: Any? = null
-//)
-
 data class RtcpFeedback(
     val type: String,
     val parameter: String? = null
 )
-
-//data class HeaderExtension(
-//    var kind: String,
-//    var uri: String,
-//    var preferredId: Int
-//)
 
 var codecName: String? = null
 var RTCRtpCodecCapability.name: String?
