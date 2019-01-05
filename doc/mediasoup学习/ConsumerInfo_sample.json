@@ -1,0 +1,17 @@
+[
+  {
+    "kind": "audio",
+    "streamId": "recv-stream-54120460",
+    "trackId": "consumer-audio-54120460",
+    "ssrc": 54986748,
+    "cname": "42/oj6l1BIGx/ecB"
+  },
+  {
+    "kind": "video",
+    "streamId": "recv-stream-70699425",
+    "trackId": "consumer-video-70699425",
+    "ssrc": 15625453,
+    "cname": "42/oj6l1BIGx/ecB",
+    "rtxSsrc": 45986630
+  }
+]

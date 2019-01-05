@@ -28,7 +28,7 @@ fun fillRtpParametersForTrack(
     val ssrcCnameLine = section?.ssrcs?.find {
         it.attribute === "cname"
     } ?: throw Exception("CNAME value not found")
-    rtpParameters.rtcp.cname = ssrcCnameLine.value
+    rtpParameters.rtcp?.cname = ssrcCnameLine.value
 
     // Standard simylcast based on a=simulcast and RID.
     if (!planBSimulcast) {
@@ -337,12 +337,6 @@ fun findMediaSection(sdpObj: SessionDescription, track: MediaStreamTrack, mid: S
     return null
 }
 
-data class Rtcp(
-    var cname: String?,
-    var reducedSize: Boolean?,
-    var mux: Boolean?
-)
-
 data class SimulcastStream(
     var rid: String,
     var profile: String
@@ -354,20 +348,6 @@ data class RtpEncoding(
     var ssrc: Int? = null,
     var rtx: MutableMap<Int, Int>? = null
 )
-
-var rtpParametersMuxId: String? = null
-var RTCRtpParameters.muxId: String?
-    get() = rtpParametersMuxId
-    set(value) {
-        rtpParametersMuxId = value
-    }
-
-var rtpParametersEncodings: MutableCollection<RtpEncoding>? = null
-var RTCRtpParameters.encodings: MutableCollection<RtpEncoding>?
-    get() = rtpParametersEncodings
-    set(value) {
-        rtpParametersEncodings = value
-    }
 
 var rtcpParametersMux: Boolean? = null
 var RTCRtcpParameters.mux: Boolean?

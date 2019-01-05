@@ -14,7 +14,7 @@ class RTCCertificateExpiration {
 class RTCConfiguration {
     var bundlePolicy: RTCBundlePolicy? = null
     var certificates: MutableCollection<RTCCertificate>? = null
-    var iceCandidatePoolSize: Number? = null
+    var iceCandidatePoolSize: Int? = null
     var iceServers: MutableCollection<RTCIceServer>? = null
     var iceTransportPolicy: RTCIceTransportPolicy? = null
     var peerIdentity: String? = null
@@ -52,7 +52,7 @@ data class RTCDtlsFingerprint(
 )
 
 data class RTCDtlsParameters(
-    var fingerprints: MutableCollection<RTCDtlsFingerprint>? = null,
+    var fingerprints: MutableList<RTCDtlsFingerprint>? = null,
     var role: RTCDtlsRole? = null
 )
 
@@ -63,12 +63,12 @@ class RTCErrorEventInit : EventInit() {
 
 class RTCError : Error() {
     var errorDetail: String? = null
-    var httpRequestStatusCode: Number? = null
+    var httpRequestStatusCode: Int? = null
     //    var message: String? = null
     var name: String? = null
     var receivedAlert: Number? = null
-    var sctpCauseCode: Number? = null
-    var sdpLineNumber: Number? = null
+    var sctpCauseCode: Int? = null
+    var sdpLineNumber: Int? = null
     var sentAlert: Number? = null
 }
 
@@ -76,8 +76,8 @@ class RTCIceCandidateAttributes : RTCStats() {
     var addressSourceUrl: String? = null
     var candidateType: RTCStatsIceCandidateType? = null
     var ipAddress: String? = null
-    var portNumber: Number? = null
-    var priority: Number? = null
+    var portNumber: Int? = null
+    var priority: Int? = null
     var transport: String? = null
 }
 
@@ -88,18 +88,18 @@ class RTCIceCandidateDictionary {
     var foundation: String? = null
     var ip: String? = null
     var msMTurnSessionId: String? = null
-    var port: Number? = null
-    var priority: Number? = null
+    var port: Int? = null
+    var priority: Int? = null
     var protocol: RTCIceProtocol? = null
     var relatedAddress: String? = null
-    var relatedPort: Number? = null
+    var relatedPort: Int? = null
     var tcpType: RTCIceTcpCandidateType? = null
     var type: RTCIceCandidateType? = null
 }
 
 class RTCIceCandidateInit {
     var candidate: String? = null
-    var sdpMLineIndex: Number? = null
+    var sdpMLineIndex: Int? = null
     var sdpMid: String? = null
     var usernameFragment: String? = null
 }
@@ -114,14 +114,14 @@ class RTCIceCandidatePair {
 class RTCIceCandidatePairStats : RTCStats() {
     var availableIncomingBitrate: Number? = null
     var availableOutgoingBitrate: Number? = null
-    var bytesReceived: Number? = null
-    var bytesSent: Number? = null
+    var bytesReceived: Int? = null
+    var bytesSent: Int? = null
     var localCandidateId: String? = null
     var nominated: Boolean? = null
-    var priority: Number? = null
+    var priority: Int? = null
     var readable: Boolean? = null
     var remoteCandidateId: String? = null
-    var roundTripTime: Number? = null
+    var roundTripTime: Int? = null
     var state: RTCStatsIceCandidatePairState? = null
     var transportId: String? = null
     var writable: Boolean? = null
@@ -153,11 +153,11 @@ class RTCIdentityProviderOptions {
 }
 
 class RTCInboundRTPStreamStats : RTCRTPStreamStats() {
-    var bytesReceived: Number? = null
+    var bytesReceived: Int? = null
     var fractionLost: Number? = null
     var jitter: Number? = null
-    var packetsLost: Number? = null
-    var packetsReceived: Number? = null
+    var packetsLost: Int? = null
+    var packetsReceived: Int? = null
 }
 
 class RTCMediaStreamTrackStats : RTCStats() {
@@ -193,9 +193,9 @@ class RTCOfferOptions : RTCOfferAnswerOptions() {
 }
 
 class RTCOutboundRTPStreamStats : RTCRTPStreamStats() {
-    var bytesSent: Number? = null
-    var packetsSent: Number? = null
-    var roundTripTime: Number? = null
+    var bytesSent: Int? = null
+    var packetsSent: Int? = null
+    var roundTripTime: Int? = null
     var targetBitrate: Number? = null
 }
 
@@ -215,13 +215,13 @@ class RTCPeerConnectionIceEventInit : EventInit() {
 open class RTCRTPStreamStats : RTCStats() {
     var associateStatsId: String? = null
     var codecId: String? = null
-    var firCount: Number? = null
+    var firCount: Int? = null
     var isRemote: Boolean? = null
     var mediaTrackId: String? = null
     var mediaType: String? = null
-    var nackCount: Number? = null
-    var pliCount: Number? = null
-    var sliCount: Number? = null
+    var nackCount: Int? = null
+    var pliCount: Int? = null
+    var sliCount: Int? = null
     var ssrc: String? = null
     var transportId: String? = null
 }
@@ -238,23 +238,32 @@ data class RTCRtcpParameters(
 
 data class RTCRtpCapabilities(
     var codecs: MutableCollection<RTCRtpCodecCapability>,
-    var headerExtensions: MutableCollection<RTCRtpHeaderExtensionCapability>
+    var headerExtensions: MutableCollection<RTCRtpHeaderExtensionCapability>,
+    var fecMechanisms: MutableList<Any>? = null
 )
 
-data class RTCRtpCodecCapability(
-    var channels: Number?,
+open class RTCRtpCodecCapability(
+    var channels: Int? = null,
     var clockRate: Number?,
     var mimeType: String,
-    var sdpFmtpLine: String? = null
+    var sdpFmtpLine: String? = null,
+    var name: String? = null,
+    var kind: String? = null,
+    var preferredPayloadType: Int? = null,
+    var parameters: Map<String, Any>? = null,
+    var rtcpFeedback: MutableCollection<RtcpFeedback>? = null
 )
 
-class RTCRtpCodecParameters {
-    var channels: Number? = null
-    lateinit var clockRate: Number
-    lateinit var mimeType: String
-    lateinit var payloadType: Number
-    var sdpFmtpLine: String? = null
-}
+class RTCRtpCodecParameters(
+    var channels: Int? = null,
+    var clockRate: Number? = null,
+    var mimeType: String,
+    var payloadType: Int = 0,
+    var sdpFmtpLine: String? = null,
+    var name: String? = null,
+    var parameters: Map<String, Any>? = null,
+    var rtcpFeedback: List<RtcpFeedback>? = null
+)
 
 open class RTCRtpCodingParameters {
     var rid: String? = null
@@ -266,8 +275,7 @@ open class RTCRtpContributingSource {
     lateinit var timestamp: Number
 }
 
-class RTCRtpDecodingParameters : RTCRtpCodingParameters() {
-}
+class RTCRtpDecodingParameters : RTCRtpCodingParameters()
 
 class RTCRtpEncodingParameters : RTCRtpCodingParameters() {
     var active: Boolean? = null
@@ -294,33 +302,43 @@ class RTCRtpHeaderExtension {
 
 data class RTCRtpHeaderExtensionCapability(
     var uri: String? = null
+) {
+    var kind: String? = null
+    var preferredId: Int? = null
+
+    constructor(uri: String?, kind: String?, preferredId: Int?) : this(uri) {
+        this.kind = kind
+        this.preferredId = preferredId
+    }
+}
+
+class RTCRtpHeaderExtensionParameters(
+    var encrypted: Boolean? = null,
+    var id: Int = 0,
+    var uri: String = ""
 )
 
-class RTCRtpHeaderExtensionParameters {
-    var encrypted: Boolean? = null
-    lateinit var id: Number
-    lateinit var uri: String
-}
+open class RTCRtpParameters(
+    var codecs: MutableList<RTCRtpCodecParameters> = arrayListOf(),
+    var headerExtensions: MutableList<RTCRtpHeaderExtensionParameters> = arrayListOf(),
+    var rtcp: RTCRtcpParameters? = null,
+    var muxId: String? = null,
+    var encodings: MutableList<RtpEncoding>? = null
+)
 
-open class RTCRtpParameters {
-    lateinit var codecs: MutableCollection<RTCRtpCodecParameters>
-    lateinit var headerExtensions: MutableCollection<RTCRtpHeaderExtensionParameters>
-    lateinit var rtcp: RTCRtcpParameters
-}
-
-class RTCRtpReceiveParameters : RTCRtpParameters() {
-    lateinit var encodings: MutableCollection<RTCRtpDecodingParameters>
-}
+//class RTCRtpReceiveParameters : RTCRtpParameters() {
+//     override lateinit var encodings: MutableList<RTCRtpDecodingParameters>
+//}
 
 class RTCRtpRtxParameters {
     var ssrc: Number? = null
 }
 
-class RTCRtpSendParameters : RTCRtpParameters() {
-    var degradationPreference: RTCDegradationPreference? = null
-    lateinit var encodings: MutableCollection<RTCRtpEncodingParameters>
-    lateinit var transactionId: String
-}
+//class RTCRtpSendParameters : RTCRtpParameters() {
+//    var degradationPreference: RTCDegradationPreference? = null
+//    lateinit var encodings: MutableCollection<RTCRtpEncodingParameters>
+//    lateinit var transactionId: String
+//}
 
 class RTCRtpSynchronizationSource : RTCRtpContributingSource() {
     var voiceActivityFlag: Boolean? = null
@@ -387,8 +405,8 @@ class RTCTrackEventInit : EventInit() {
 
 class RTCTransportStats : RTCStats() {
     var activeConnection: Boolean? = null
-    var bytesReceived: Number? = null
-    var bytesSent: Number? = null
+    var bytesReceived: Int? = null
+    var bytesSent: Int? = null
     var localCertificateId: String? = null
     var remoteCertificateId: String? = null
     var rtcpTransportStatsId: String? = null
