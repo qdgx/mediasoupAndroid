@@ -23,12 +23,33 @@ public class WebRTCModule {
      */
     private GetUserMediaImpl getUserMediaImpl;
 
-    public WebRTCModule(Context reactContext) {
+    //csb single instance
+    private static WebRTCModule instance;
+
+//    public WebRTCModule(ReactApplicationContext reactContext) {
+//        super(reactContext);
+//
+//        mPeerConnectionObservers = new SparseArray<>();
+//        localStreams = new HashMap<>();
+//
+//        ThreadUtils.runOnExecutor(() -> initAsync());
+//    }
+
+    public static WebRTCModule getInstance(Context context){
+        if (instance == null){
+            instance = new WebRTCModule(context);
+        }
+        return instance;
+    }
+
+    //csb single instance
+    private WebRTCModule(Context reactContext) {
         mPeerConnectionObservers = new SparseArray<>();
         localStreams = new HashMap<>();
 
         ThreadUtils.runOnExecutor(() -> initAsync(reactContext));
     }
+
 
     /**
      * Invoked asynchronously to initialize this {@code WebRTCModule} instance.
