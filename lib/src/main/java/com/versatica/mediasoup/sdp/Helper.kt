@@ -238,23 +238,32 @@ data class RTCRtcpParameters(
 
 data class RTCRtpCapabilities(
     var codecs: MutableCollection<RTCRtpCodecCapability>,
-    var headerExtensions: MutableCollection<RTCRtpHeaderExtensionCapability>
+    var headerExtensions: MutableCollection<RTCRtpHeaderExtensionCapability>,
+    var fecMechanisms: MutableList<Any>? = null
 )
 
-data class RTCRtpCodecCapability(
-    var channels: Int?,
+open class RTCRtpCodecCapability(
+    var channels: Int? = null,
     var clockRate: Number?,
     var mimeType: String,
-    var sdpFmtpLine: String? = null
+    var sdpFmtpLine: String? = null,
+    var name: String? = null,
+    var kind: String? = null,
+    var preferredPayloadType: Int? = null,
+    var parameters: Map<String, Any>? = null,
+    var rtcpFeedback: MutableCollection<RtcpFeedback>? = null
 )
 
-class RTCRtpCodecParameters {
-    var channels: Int? = null
-    lateinit var clockRate: Number
-    lateinit var mimeType: String
-    var payloadType: Int = 0
-    var sdpFmtpLine: String? = null
-}
+class RTCRtpCodecParameters(
+    var channels: Int? = null,
+    var clockRate: Number? = null,
+    var mimeType: String,
+    var payloadType: Int = 0,
+    var sdpFmtpLine: String? = null,
+    var name: String? = null,
+    var parameters: Map<String, Any>? = null,
+    var rtcpFeedback: List<RtcpFeedback>? = null
+)
 
 open class RTCRtpCodingParameters {
     var rid: String? = null
@@ -266,8 +275,7 @@ open class RTCRtpContributingSource {
     lateinit var timestamp: Number
 }
 
-class RTCRtpDecodingParameters : RTCRtpCodingParameters() {
-}
+class RTCRtpDecodingParameters : RTCRtpCodingParameters()
 
 class RTCRtpEncodingParameters : RTCRtpCodingParameters() {
     var active: Boolean? = null
@@ -294,33 +302,43 @@ class RTCRtpHeaderExtension {
 
 data class RTCRtpHeaderExtensionCapability(
     var uri: String? = null
+) {
+    var kind: String? = null
+    var preferredId: Int? = null
+
+    constructor(uri: String?, kind: String?, preferredId: Int?) : this(uri) {
+        this.kind = kind
+        this.preferredId = preferredId
+    }
+}
+
+class RTCRtpHeaderExtensionParameters(
+    var encrypted: Boolean? = null,
+    var id: Int = 0,
+    var uri: String = ""
 )
 
-class RTCRtpHeaderExtensionParameters {
-    var encrypted: Boolean? = null
-    var id: Int = 0
-    var uri: String = ""
-}
+open class RTCRtpParameters(
+    var codecs: MutableList<RTCRtpCodecParameters> = arrayListOf(),
+    var headerExtensions: MutableList<RTCRtpHeaderExtensionParameters> = arrayListOf(),
+    var rtcp: RTCRtcpParameters? = null,
+    var muxId: String? = null,
+    var encodings: MutableList<RtpEncoding>? = null
+)
 
-open class RTCRtpParameters {
-    lateinit var codecs: MutableCollection<RTCRtpCodecParameters>
-    lateinit var headerExtensions: MutableCollection<RTCRtpHeaderExtensionParameters>
-    lateinit var rtcp: RTCRtcpParameters
-}
-
-class RTCRtpReceiveParameters : RTCRtpParameters() {
-    lateinit var encodings: MutableCollection<RTCRtpDecodingParameters>
-}
+//class RTCRtpReceiveParameters : RTCRtpParameters() {
+//     override lateinit var encodings: MutableList<RTCRtpDecodingParameters>
+//}
 
 class RTCRtpRtxParameters {
     var ssrc: Number? = null
 }
 
-class RTCRtpSendParameters : RTCRtpParameters() {
-    var degradationPreference: RTCDegradationPreference? = null
-    lateinit var encodings: MutableCollection<RTCRtpEncodingParameters>
-    lateinit var transactionId: String
-}
+//class RTCRtpSendParameters : RTCRtpParameters() {
+//    var degradationPreference: RTCDegradationPreference? = null
+//    lateinit var encodings: MutableCollection<RTCRtpEncodingParameters>
+//    lateinit var transactionId: String
+//}
 
 class RTCRtpSynchronizationSource : RTCRtpContributingSource() {
     var voiceActivityFlag: Boolean? = null

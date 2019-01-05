@@ -9,7 +9,7 @@ import com.dingsoft.sdptransform.SessionDescription
 
 
 fun extractRtpCapabilities(sdpObj: SessionDescription): RTCRtpCapabilities {
-    val codecsMap = HashMap<Any, RTCRtpCodecCapability>()
+    val codecsMap = HashMap<Any?, RTCRtpCodecCapability>()
     val headerExtensions = arrayListOf<RTCRtpHeaderExtensionCapability>()
     var gotAudio = false
     var gotVideo = false
@@ -128,52 +128,3 @@ data class RtcpFeedback(
     val type: String,
     val parameter: String? = null
 )
-
-var codecName: String? = null
-var RTCRtpCodecCapability.name: String?
-    get() = codecName
-    set(value) {
-        codecName = value
-    }
-
-var codecKind: String? = null
-var RTCRtpCodecCapability.kind: String?
-    get() = codecKind
-    set(value) {
-        codecKind = value
-    }
-
-var codecPreferredPayloadType: Int = 0
-var RTCRtpCodecCapability.preferredPayloadType: Int
-    get() = codecPreferredPayloadType
-    set(value) {
-        codecPreferredPayloadType = value
-    }
-
-var codecParameters: Map<String, Any>? = null
-var RTCRtpCodecCapability.parameters: Map<String, Any>?
-    get() = codecParameters
-    set(value) {
-        codecParameters = value
-    }
-
-var codecRtcpFeedback: MutableCollection<RtcpFeedback>? = null
-var RTCRtpCodecCapability.rtcpFeedback: MutableCollection<RtcpFeedback>?
-    get() = codecRtcpFeedback
-    set(value) {
-        codecRtcpFeedback = value
-    }
-
-var rtpHeaderExtensionKind: String? = null
-var RTCRtpHeaderExtensionCapability.kind: String?
-    get() = rtpHeaderExtensionKind
-    set(value) {
-        rtpHeaderExtensionKind = value
-    }
-
-var rtpHeaderExtensionPreferredId: Int? = null
-var RTCRtpHeaderExtensionCapability.preferredId: Int?
-    get() = rtpHeaderExtensionPreferredId
-    set(value) {
-        rtpHeaderExtensionPreferredId = value
-    }

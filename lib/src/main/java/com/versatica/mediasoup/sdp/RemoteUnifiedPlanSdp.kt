@@ -155,8 +155,8 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
                 for (codec in codecs) {
                     val rtp = MediaAttributes.Rtp(
                         payload = codec.payloadType,
-                        codec = codec.name,
-                        rate = codec.clockRate.toInt()
+                        codec = codec.name ?: "",
+                        rate = codec.clockRate?.toInt()
                     )
 
                     if (codec.channels != null && codec.channels!! > 1)
@@ -389,8 +389,8 @@ class RecvRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
                     for (codec in codecs) {
                         val rtp = MediaAttributes.Rtp(
                             payload = codec.payloadType,
-                            codec = codec.name,
-                            rate = codec.clockRate.toInt()
+                            codec = codec.name ?: "",
+                            rate = codec.clockRate?.toInt()
                         )
 
                         if (codec.channels != null && codec.channels!! > 1)
@@ -512,27 +512,6 @@ fun createRemoteUnifiedPlanSdp(direction: String, rtpParametersByKind: MutableMa
         "send" -> SendRemoteSdp(rtpParametersByKind)
         "recv" -> RecvRemoteSdp(rtpParametersByKind)
         else -> null
-    }
-
-var rtpCodecName: String = ""
-var RTCRtpCodecParameters.name: String
-    get() = rtpCodecName
-    set(value) {
-        rtpCodecName = value
-    }
-
-var rtpCodecParameters: Map<String, Any>? = null
-var RTCRtpCodecParameters.parameters: Map<String, Any>?
-    get() = rtpCodecParameters
-    set(value) {
-        rtpCodecParameters = value
-    }
-
-var rtpCodecRtcpFeedback: List<RtcpFeedback>? = null
-var RTCRtpCodecParameters.rtcpFeedback: List<RtcpFeedback>?
-    get() = rtpCodecRtcpFeedback
-    set(value) {
-        rtpCodecRtcpFeedback = value
     }
 
 data class TransportRemoteIceParameters(
