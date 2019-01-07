@@ -339,6 +339,7 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         candidateParams.put("sdpMid", candidate.sdpMid);
         candidateParams.put("candidate", candidate.sdp);
         params.put("candidate", candidateParams);
+        params.put("nativeIceCandidate",candidate);
 
         webRTCModule.sendEvent("peerConnectionGotICECandidate", params);
     }
@@ -386,6 +387,7 @@ class PeerConnectionObserver implements PeerConnection.Observer {
         HashMap params = new HashMap();
         params.put("id", id);
         params.put("iceGatheringState", iceGatheringStateString(iceGatheringState));
+        params.put("nativeIceGatheringState", iceGatheringState);
 
         webRTCModule.sendEvent("peerConnectionIceGatheringChanged", params);
     }

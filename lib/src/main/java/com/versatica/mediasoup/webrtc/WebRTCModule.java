@@ -988,10 +988,7 @@ public class WebRTCModule {
 //                    params.putString("sdp", sdp.description);
 //                    params.putString("type", sdp.type.canonicalForm());
 //                    callback.invoke(true, params);
-                    HashMap params = new HashMap();
-                    params.put("sdp", sdp.description);
-                    params.put("type", sdp.type.canonicalForm());
-                    callback.invoke(true, params);
+                    callback.invoke(true, sdp);
                 }
 
                 @Override
@@ -1000,6 +997,48 @@ public class WebRTCModule {
                 @Override
                 public void onSetSuccess() {}
             }, parseMediaConstraints(constraints));
+        } else {
+            Log.d(TAG, "peerConnectionCreateOffer() peerConnection is null");
+            callback.invoke(false, "peerConnection is null");
+        }
+    }
+
+    //add by csb
+    public void peerConnectionCreateOffer(int id,
+                                          MediaConstraints constraints,
+                                          Callback callback) {
+        ThreadUtils.runOnExecutor(() ->
+                peerConnectionCreateOfferAsync(id, constraints, callback));
+    }
+
+    //add by csb
+    private void peerConnectionCreateOfferAsync(int id,
+                                                MediaConstraints constraints,
+                                                final Callback callback) {
+        PeerConnection peerConnection = getPeerConnection(id);
+
+        if (peerConnection != null) {
+            peerConnection.createOffer(new SdpObserver() {
+                @Override
+                public void onCreateFailure(String s) {
+                    callback.invoke(false, s);
+                }
+
+                @Override
+                public void onCreateSuccess(SessionDescription sdp) {
+//                    HashMap params = new HashMap();
+//                    params.put("sdp", sdp.description);
+//                    params.put("type", sdp.type.canonicalForm());
+//                    callback.invoke(true, params);
+                    callback.invoke(true,sdp);
+                }
+
+                @Override
+                public void onSetFailure(String s) {}
+
+                @Override
+                public void onSetSuccess() {}
+            }, constraints);
         } else {
             Log.d(TAG, "peerConnectionCreateOffer() peerConnection is null");
             callback.invoke(false, "peerConnection is null");
@@ -1034,10 +1073,7 @@ public class WebRTCModule {
 //                    params.putString("sdp", sdp.description);
 //                    params.putString("type", sdp.type.canonicalForm());
 //                    callback.invoke(true, params);
-                    HashMap params = new HashMap();
-                    params.put("sdp", sdp.description);
-                    params.put("type", sdp.type.canonicalForm());
-                    callback.invoke(true, params);
+                    callback.invoke(true, sdp);
                 }
 
                 @Override
@@ -1046,6 +1082,48 @@ public class WebRTCModule {
                 @Override
                 public void onSetSuccess() {}
             }, parseMediaConstraints(constraints));
+        } else {
+            Log.d(TAG, "peerConnectionCreateAnswer() peerConnection is null");
+            callback.invoke(false, "peerConnection is null");
+        }
+    }
+
+    //add by csb
+    public void peerConnectionCreateAnswer(int id,
+                                           MediaConstraints constraints,
+                                           Callback callback) {
+        ThreadUtils.runOnExecutor(() ->
+                peerConnectionCreateAnswerAsync(id, constraints, callback));
+    }
+
+    //add by csb
+    private void peerConnectionCreateAnswerAsync(int id,
+                                                 MediaConstraints constraints,
+                                                 final Callback callback) {
+        PeerConnection peerConnection = getPeerConnection(id);
+
+        if (peerConnection != null) {
+            peerConnection.createAnswer(new SdpObserver() {
+                @Override
+                public void onCreateFailure(String s) {
+                    callback.invoke(false, s);
+                }
+
+                @Override
+                public void onCreateSuccess(SessionDescription sdp) {
+//                    HashMap params = new HashMap();
+//                    params.put("sdp", sdp.description);
+//                    params.put("type", sdp.type.canonicalForm());
+//                    callback.invoke(true, params);
+                    callback.invoke(true,sdp);
+                }
+
+                @Override
+                public void onSetFailure(String s) {}
+
+                @Override
+                public void onSetSuccess() {}
+            }, constraints);
         } else {
             Log.d(TAG, "peerConnectionCreateAnswer() peerConnection is null");
             callback.invoke(false, "peerConnection is null");
@@ -1099,6 +1177,47 @@ public class WebRTCModule {
         Log.d(TAG, "peerConnectionSetLocalDescription() end");
     }
 
+    //add by csb
+    public void peerConnectionSetLocalDescription(SessionDescription sdp,
+                                                  int id,
+                                                  Callback callback) {
+        ThreadUtils.runOnExecutor(() ->
+                peerConnectionSetLocalDescriptionAsync(sdp, id, callback));
+    }
+
+    private void peerConnectionSetLocalDescriptionAsync(SessionDescription sdp,
+                                                        int id,
+                                                        final Callback callback) {
+        PeerConnection peerConnection = getPeerConnection(id);
+
+        Log.d(TAG, "peerConnectionSetLocalDescription() start");
+        if (peerConnection != null) {
+            peerConnection.setLocalDescription(new SdpObserver() {
+                @Override
+                public void onCreateSuccess(SessionDescription sdp) {
+                }
+
+                @Override
+                public void onSetSuccess() {
+                    callback.invoke(true);
+                }
+
+                @Override
+                public void onCreateFailure(String s) {
+                }
+
+                @Override
+                public void onSetFailure(String s) {
+                    callback.invoke(false, s);
+                }
+            }, sdp);
+        } else {
+            Log.d(TAG, "peerConnectionSetLocalDescription() peerConnection is null");
+            callback.invoke(false, "peerConnection is null");
+        }
+        Log.d(TAG, "peerConnectionSetLocalDescription() end");
+    }
+
     //@ReactMethod
     public void peerConnectionSetRemoteDescription(HashMap sdpMap,
                                                    int id,
@@ -1111,7 +1230,6 @@ public class WebRTCModule {
                                                          int id,
                                                          final Callback callback) {
         PeerConnection peerConnection = getPeerConnection(id);
-
         Log.d(TAG, "peerConnectionSetRemoteDescription() start");
         if (peerConnection != null) {
             SessionDescription sdp = new SessionDescription(
@@ -1144,6 +1262,49 @@ public class WebRTCModule {
         }
         Log.d(TAG, "peerConnectionSetRemoteDescription() end");
     }
+
+    //add by csb
+    public void peerConnectionSetRemoteDescription(SessionDescription sdp,
+                                                   int id,
+                                                   Callback callback) {
+        ThreadUtils.runOnExecutor(() ->
+                peerConnectionSetRemoteDescriptionAsync(sdp, id, callback));
+    }
+
+    //add by csb
+    private void peerConnectionSetRemoteDescriptionAsync(SessionDescription sdp,
+                                                         int id,
+                                                         final Callback callback) {
+        PeerConnection peerConnection = getPeerConnection(id);
+
+        Log.d(TAG, "peerConnectionSetRemoteDescription() start");
+        if (peerConnection != null) {
+            peerConnection.setRemoteDescription(new SdpObserver() {
+                @Override
+                public void onCreateSuccess(final SessionDescription sdp) {
+                }
+
+                @Override
+                public void onSetSuccess() {
+                    callback.invoke(true);
+                }
+
+                @Override
+                public void onCreateFailure(String s) {
+                }
+
+                @Override
+                public void onSetFailure(String s) {
+                    callback.invoke(false, s);
+                }
+            }, sdp);
+        } else {
+            Log.d(TAG, "peerConnectionSetRemoteDescription() peerConnection is null");
+            callback.invoke(false, "peerConnection is null");
+        }
+        Log.d(TAG, "peerConnectionSetRemoteDescription() end");
+    }
+
 
     //@ReactMethod
     public void peerConnectionAddICECandidate(HashMap candidateMap,
@@ -1268,6 +1429,85 @@ public class WebRTCModule {
             Log.d(TAG, "dataChannelSend() peerConnection is null");
         } else {
             pco.dataChannelSend(dataChannelId, data, type);
+        }
+    }
+
+    ////add by csb
+    public List<RtpTransceiver> peerConnectionGetTransceivers(int peerConnectionId){
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "getTransceivers() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "getTransceivers() end");
+            return peerConnection.getTransceivers();
+        } else {
+            Log.d(TAG, "getTransceivers() peerConnection is null");
+            return new ArrayList<>();
+        }
+    }
+
+    public RtpTransceiver peerConnectionAddTransceiver(int peerConnectionId,
+                                         MediaStreamTrack track) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "addTransceiver() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "addTransceiver() end");
+            return peerConnection.addTransceiver(track);
+        } else {
+            Log.d(TAG, "addTransceiver( ) peerConnection is null");
+            return null;
+        }
+    }
+
+    public RtpTransceiver peerConnectionAddTransceiver(int peerConnectionId,
+                                         MediaStreamTrack track,
+                                         @Nullable RtpTransceiver.RtpTransceiverInit init) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "addTransceiver() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "addTransceiver() end");
+            return peerConnection.addTransceiver(track,init);
+        } else {
+            Log.d(TAG, "addTransceiver( ) peerConnection is null");
+            return null;
+        }
+    }
+
+    public RtpTransceiver peerConnectionAddTransceiver(int peerConnectionId,
+                                         MediaStreamTrack.MediaType mediaType) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "addTransceiver() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "addTransceiver() end");
+            return peerConnection.addTransceiver(mediaType);
+        } else {
+            Log.d(TAG, "addTransceiver( ) peerConnection is null");
+            return null;
+        }
+    }
+
+    public RtpTransceiver peerConnectionAddTransceiver(int peerConnectionId,
+                                         MediaStreamTrack.MediaType mediaType,
+                                         @Nullable RtpTransceiver.RtpTransceiverInit init) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "addTransceiver() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "addTransceiver() end");
+            return peerConnection.addTransceiver(mediaType,init);
+        } else {
+            Log.d(TAG, "addTransceiver( ) peerConnection is null");
+            return null;
+        }
+    }
+
+    public List<RtpSender> peerConnectionGetSenders(int peerConnectionId) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "peerConnectionGetSenders() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "peerConnectionGetSenders() end");
+            return peerConnection.getSenders();
+        } else {
+            Log.d(TAG, "peerConnectionGetSenders() peerConnection is null");
+            return new ArrayList<>();
         }
     }
 }
