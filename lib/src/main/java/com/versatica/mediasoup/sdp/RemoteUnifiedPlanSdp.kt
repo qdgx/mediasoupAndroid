@@ -69,17 +69,17 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
             address = "0.0.0.0",
             ipVer = 4,
             netType = "IN",
-            sessionId = this.sdpGlobalFields.id,
+            sessionId = this.sdpGlobalFields.id.toLong(),
             sessionVersion = this.sdpGlobalFields.version,
             username = "mediasoup-client"
         )
         sdpObj.name = "-"
         sdpObj.timing = SessionDescription.Timing(start = 0, stop = 0)
         sdpObj.icelite = if (remoteIceParameters?.iceLite != null) "ice-lite" else null
-        sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
-            semantic = "WMS",
-            token = "*"
-        )
+//        sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
+//            semantic = "WMS",
+//            token = "*"
+//        )
         if (bundleMids.isNotEmpty()) {
             sdpObj.groups = arrayListOf(
                 SessionAttributes.Group(
@@ -288,17 +288,17 @@ class RecvRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
             address = "0.0.0.0",
             ipVer = 4,
             netType = "IN",
-            sessionId = this.sdpGlobalFields.id,
+            sessionId = this.sdpGlobalFields.id.toLong(),
             sessionVersion = this.sdpGlobalFields.version,
             username = "mediasoup-client"
         )
         sdpObj.name = "-"
         sdpObj.timing = SessionDescription.Timing(start = 0, stop = 0)
         sdpObj.icelite = if (remoteIceParameters?.iceLite != null) "ice-lite" else null
-        sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
-            semantic = "WMS",
-            token = "*"
-        )
+//        sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
+//            semantic = "WMS",
+//            token = "*"
+//        )
 
         if (mids.isNotEmpty()) {
             sdpObj.groups = arrayListOf(
