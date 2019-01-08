@@ -10,7 +10,7 @@ import com.versatica.mediasoup.Utils
 
 val logger = Logger("RemoteUnifiedPlanSdp")
 
-open class RemoteSdp(rtpParametersByKind: MutableMap<String, RTCRtpParameters>) {
+open class RemoteSdp(rtpParametersByKind: Map<String, RTCRtpParameters>) {
 
     // Transport local parameters, including DTLS parameters.
     var transportLocalParameters: TransportRemoteIceParameters? = null
@@ -40,7 +40,7 @@ open class RemoteSdp(rtpParametersByKind: MutableMap<String, RTCRtpParameters>) 
     }
 }
 
-class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
+class SendRemoteSdp(var rtpParametersByKind: Map<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
 
     fun createAnswerSdp(localSdpObj: SessionDescription): String {
         logger.debug("createAnswerSdp()")
@@ -260,7 +260,7 @@ class SendRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
 
 }
 
-class RecvRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
+class RecvRemoteSdp(var rtpParametersByKind: Map<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
 
     /**
      * @param {Array<Object>} consumerInfo - Consumer informations.
@@ -507,7 +507,7 @@ class RecvRemoteSdp(var rtpParametersByKind: MutableMap<String, RTCRtpParameters
     }
 }
 
-fun createRemoteUnifiedPlanSdp(direction: String, rtpParametersByKind: MutableMap<String, RTCRtpParameters>) =
+fun createRemoteUnifiedPlanSdp(direction: String, rtpParametersByKind: Map<String, RTCRtpParameters>) =
     when (direction) {
         "send" -> SendRemoteSdp(rtpParametersByKind)
         "recv" -> RecvRemoteSdp(rtpParametersByKind)
