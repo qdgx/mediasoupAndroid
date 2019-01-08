@@ -49,6 +49,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="2dp"/>
+
+            <Button
+                    android:id="@+id/getNativeRtpCapabilitiesTest"
+                    android:text="getNativeRtpCapabilitiesTest"
+                    android:textAllCaps="false"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

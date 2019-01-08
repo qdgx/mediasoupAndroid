@@ -6,10 +6,8 @@ import android.util.Log;
 import android.util.SparseArray;
 import org.webrtc.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 public class WebRTCModule {
     static final String TAG = WebRTCModule.class.getCanonicalName();
 
@@ -75,7 +73,8 @@ public class WebRTCModule {
                 = new DefaultVideoEncoderFactory(
                     eglContext,
                     /* enableIntelVp8Encoder */ true,
-                    /* enableH264HighProfile */ false);
+                    ///* enableH264HighProfile */ false);
+                    /* enableH264HighProfile */ true);
             decoderFactory = new DefaultVideoDecoderFactory(eglContext);
         } else {
             encoderFactory = new SoftwareVideoEncoderFactory();
@@ -1508,6 +1507,39 @@ public class WebRTCModule {
         } else {
             Log.d(TAG, "peerConnectionGetSenders() peerConnection is null");
             return new ArrayList<>();
+        }
+    }
+
+    public RtpSender peerConnectionAddTrack(int peerConnectionId,
+                                                  MediaStreamTrack mediaStreamTrack) {
+        return peerConnectionAddTrack(peerConnectionId,mediaStreamTrack, Collections.emptyList());
+    }
+
+    public RtpSender peerConnectionAddTrack(int peerConnectionId,
+                                            MediaStreamTrack mediaStreamTrack,
+                                            List<String> streamIds) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+
+        Log.d(TAG, "peerConnectionAddTrack() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "peerConnectionAddTrack() end");
+            return peerConnection.addTrack(mediaStreamTrack,streamIds);
+        } else {
+            Log.d(TAG, "peerConnectionAddTrack() peerConnection is null");
+            return null;
+        }
+    }
+
+    public boolean peerConnectionRemoveTrack(int peerConnectionId,
+                                               RtpSender sender) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "peerConnectionRemoveTrack() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "peerConnectionRemoveTrack() end");
+            return peerConnection.removeTrack(sender);
+        } else {
+            Log.d(TAG, "peerConnectionRemoveTrack() peerConnection is null");
+            return false;
         }
     }
 }

@@ -3,6 +3,9 @@ package com.versatica.mediasoup.demo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.versatica.mediasoup.Logger
+import com.versatica.mediasoup.handlers.Handle
+import com.versatica.mediasoup.sdp.RTCRtpCodecCapability
+import com.versatica.mediasoup.sdp.RTCRtpHeaderExtensionCapability
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.functions.Function
@@ -132,6 +135,18 @@ class MainActivity : AppCompatActivity() {
                 .subscribe {
                     logger.debug(it as String)
                 }
+        }
+
+        getNativeRtpCapabilitiesTest.setOnClickListener {
+            Handle.getNativeRtpCapabilities().subscribe(
+                {
+                    var codecs: MutableCollection<RTCRtpCodecCapability> = it.codecs
+                    var headerExtensions: MutableCollection<RTCRtpHeaderExtensionCapability> = it.headerExtensions
+                    var fecMechanisms: MutableList<Any>? = it.fecMechanisms
+                },
+                {
+
+                })
         }
     }
 

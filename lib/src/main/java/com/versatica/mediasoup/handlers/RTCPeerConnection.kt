@@ -104,37 +104,51 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter() {
         _getWebRTCModule().peerConnectionSetConfiguration(configuration,this._peerConnectionId)
     }
 
-    fun getTransceivers():List<RtpTransceiver>{
-        return _getWebRTCModule().peerConnectionGetTransceivers(this._peerConnectionId)
-    }
-
-    fun addTransceiver(track: MediaStreamTrack): RtpTransceiver?{
-        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,track)
-    }
-
-    fun addTransceiver(track: MediaStreamTrack,
-                       init: RtpTransceiver.RtpTransceiverInit
-    ): RtpTransceiver?{
-        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,track,init)
-    }
-
-    fun addTransceiver(mediaType: MediaStreamTrack.MediaType): RtpTransceiver?{
-        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,mediaType)
-    }
-
-    fun addTransceiver(mediaType: MediaStreamTrack.MediaType,
-                       init: RtpTransceiver.RtpTransceiverInit
-    ): RtpTransceiver?{
-        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,mediaType,init)
-    }
+//    fun getTransceivers():List<RtpTransceiver>{
+//        return _getWebRTCModule().peerConnectionGetTransceivers(this._peerConnectionId)
+//    }
+//
+//    fun addTransceiver(track: MediaStreamTrack): RtpTransceiver?{
+//        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,track)
+//    }
+//
+//    fun addTransceiver(track: MediaStreamTrack,
+//                       init: RtpTransceiver.RtpTransceiverInit
+//    ): RtpTransceiver?{
+//        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,track,init)
+//    }
+//
+//    fun addTransceiver(mediaType: MediaStreamTrack.MediaType): RtpTransceiver?{
+//        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,mediaType)
+//    }
+//
+//    fun addTransceiver(mediaType: MediaStreamTrack.MediaType,
+//                       init: RtpTransceiver.RtpTransceiverInit
+//    ): RtpTransceiver?{
+//        return _getWebRTCModule().peerConnectionAddTransceiver(this._peerConnectionId,mediaType,init)
+//    }
 
     fun getSenders():List<RtpSender>{
         return _getWebRTCModule().peerConnectionGetSenders(this._peerConnectionId)
     }
 
+    fun addTrack(mediaStreamTrack:MediaStreamTrack):RtpSender{
+        return _getWebRTCModule().peerConnectionAddTrack(this._peerConnectionId,mediaStreamTrack)
+    }
+
+    fun addTrack(mediaStreamTrack:MediaStreamTrack,
+                 streamIds: List<String>):RtpSender{
+        return _getWebRTCModule().peerConnectionAddTrack(this._peerConnectionId,mediaStreamTrack,streamIds)
+    }
+
+    fun removeTrack(sender:RtpSender):Boolean{
+        return _getWebRTCModule().peerConnectionRemoveTrack(this._peerConnectionId,sender)
+    }
+
     fun close(){
         _getWebRTCModule().peerConnectionClose(this._peerConnectionId)
     }
+
 
     private fun _registerEvents(){
         this.on("peerConnectionOnRenegotiationNeeded"){

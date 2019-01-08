@@ -54,7 +54,6 @@ class PeerConnectionObserver implements PeerConnection.Observer {
     boolean addStream(MediaStream localStream) {
         if (peerConnection != null && peerConnection.addStream(localStream)) {
             localStreams.add(localStream);
-
             return true;
         }
 
