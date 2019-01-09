@@ -7,6 +7,7 @@ import com.versatica.mediasoup.Utils
 /**
  * @author wolfhan
  */
+
 object RemoteUnifiedPlanSdp {
 
     val logger = Logger("RemoteUnifiedPlanSdp")
@@ -212,7 +213,10 @@ object RemoteUnifiedPlanSdp {
                             // Don't add a header extension if not present in the offer.
                             val matchedLocalExt = localMediaObj.ext?.find {
                                 it.uri === ext.uri
-                            } ?: continue
+                            }
+
+                            if (matchedLocalExt != null)
+                                continue
 
                             remoteMediaObj.ext?.add(
                                 SharedAttributes.Ext(
@@ -261,7 +265,7 @@ object RemoteUnifiedPlanSdp {
     class RecvRemoteSdp(var rtpParametersByKind: Map<String, RTCRtpParameters>) : RemoteSdp(rtpParametersByKind) {
 
         /**
-         * @param {MutableList<ConsumerInfo>} consumerInfo - Consumer informations.
+         * @param {Array<Object>} consumerInfo - Consumer informations.
          * @return {String}
          */
         fun createOfferSdp(consumerInfo: MutableList<ConsumerInfo>): String {
