@@ -1,4 +1,4 @@
-package com.versatica.mediasoup.sdp
+package com.versatica.mediasoup.handlers.sdp
 
 /**
  * @author wolfhan

@@ -1,4 +1,4 @@
-package com.versatica.mediasoup.sdp
+package com.versatica.mediasoup.handlers.sdp
 
 import com.dingsoft.sdptransform.*
 import com.versatica.mediasoup.Logger
@@ -519,20 +519,6 @@ data class TransportRemoteIceParameters(
     var iceCandidates: MutableList<RTCIceCandidateDictionary>,
     var dtlsParameters: RTCDtlsParameters
 )
-
-var rtcIceParametersIceLite: Boolean? = null
-var RTCIceParameters.iceLite: Boolean?
-    get() = rtcIceParametersIceLite
-    set(value) {
-        rtcIceParametersIceLite = value
-    }
-
-var rtcIceCandidateDictionaryFamily: String = ""
-var RTCIceCandidateDictionary.family: String
-    get() = rtcIceCandidateDictionaryFamily
-    set(value) {
-        rtcIceCandidateDictionaryFamily = value
-    }
 
 data class ConsumerInfo(
     var kind: String,

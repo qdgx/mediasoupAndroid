@@ -1,4 +1,4 @@
-package com.versatica.mediasoup.sdp
+package com.versatica.mediasoup.handlers.sdp
 
 import org.webrtc.*
 
@@ -132,10 +132,11 @@ class RTCIceGatherOptions {
     var iceservers: MutableCollection<RTCIceServer>? = null
 }
 
-class RTCIceParameters {
-    var password: String? = null
-    var usernameFragment: String? = null
-}
+class RTCIceParameters(
+    var password: String? = null,
+    var usernameFragment: String? = null,
+    var iceLite: Boolean? = null
+)
 
 class RTCIceServer {
     //    var credential: String | RTCOAuthCredential?=null
@@ -233,7 +234,8 @@ class RTCRtcpFeedback {
 
 data class RTCRtcpParameters(
     var cname: String? = null,
-    var reducedSize: Boolean? = null
+    var reducedSize: Boolean? = null,
+    var mux: Boolean? = null
 )
 
 data class RTCRtpCapabilities(

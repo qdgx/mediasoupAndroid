@@ -3,13 +3,12 @@ package com.versatica.mediasoup.handlers
 import com.dingsoft.sdptransform.SdpTransform
 import com.versatica.eventemitter.EventEmitter
 import com.versatica.mediasoup.Logger
-import com.versatica.mediasoup.sdp.RTCExtendedRtpCapabilities
-import com.versatica.mediasoup.sdp.RTCRtpCapabilities
-import com.versatica.mediasoup.sdp.extractRtpCapabilities
+import com.versatica.mediasoup.handlers.sdp.RTCExtendedRtpCapabilities
+import com.versatica.mediasoup.handlers.sdp.RTCRtpCapabilities
+import com.versatica.mediasoup.handlers.sdp.extractRtpCapabilities
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import org.webrtc.MediaConstraints
-import org.webrtc.MediaStreamTrack
 
 val logger = Logger("Handle")
 
