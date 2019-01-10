@@ -515,9 +515,11 @@ fun createRemoteUnifiedPlanSdp(direction: String, rtpParametersByKind: Map<Strin
     }
 
 data class TransportRemoteIceParameters(
-    var iceParameters: RTCIceParameters,
-    var iceCandidates: MutableList<RTCIceCandidateDictionary>,
-    var dtlsParameters: RTCDtlsParameters
+    var iceParameters: RTCIceParameters = RTCIceParameters(),
+    var iceCandidates: MutableList<RTCIceCandidateDictionary> = mutableListOf(),
+    var dtlsParameters: RTCDtlsParameters = RTCDtlsParameters()
+
+
 )
 
 var rtcIceParametersIceLite: Boolean? = null

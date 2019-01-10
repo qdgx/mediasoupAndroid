@@ -1519,7 +1519,6 @@ public class WebRTCModule {
                                             MediaStreamTrack mediaStreamTrack,
                                             List<String> streamIds) {
         PeerConnection peerConnection = getPeerConnection(peerConnectionId);
-
         Log.d(TAG, "peerConnectionAddTrack() start");
         if (peerConnection != null) {
             Log.d(TAG, "peerConnectionAddTrack() end");
@@ -1541,5 +1540,9 @@ public class WebRTCModule {
             Log.d(TAG, "peerConnectionRemoveTrack() peerConnection is null");
             return false;
         }
+    }
+
+    public MediaStream createLocalMediaStream(String label){
+        return mFactory.createLocalMediaStream(label);
     }
 }
