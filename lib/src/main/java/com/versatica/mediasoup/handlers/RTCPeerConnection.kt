@@ -1,11 +1,9 @@
 package com.versatica.mediasoup.handlers
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.JSONObject
 import com.versatica.eventemitter.EventEmitter
-import com.versatica.mediasoup.sdp.RTCIceConnectionState
-import com.versatica.mediasoup.sdp.RTCIceGathererState
-import com.versatica.mediasoup.sdp.RTCSignalingState
+import com.versatica.mediasoup.handlers.sdp.RTCIceConnectionState
+import com.versatica.mediasoup.handlers.sdp.RTCIceGathererState
+import com.versatica.mediasoup.handlers.sdp.RTCSignalingState
 import com.versatica.mediasoup.webrtc.WebRTCModule
 import io.reactivex.Observable
 import org.webrtc.*

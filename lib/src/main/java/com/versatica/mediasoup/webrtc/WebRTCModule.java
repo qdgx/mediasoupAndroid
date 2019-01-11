@@ -1557,4 +1557,5 @@ public class WebRTCModule {
     public MediaStream createLocalMediaStream(String label){
         return mFactory.createLocalMediaStream(label);
     }
+
 }
