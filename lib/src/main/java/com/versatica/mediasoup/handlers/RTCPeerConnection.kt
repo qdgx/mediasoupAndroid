@@ -132,6 +132,10 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter() {
         return _getWebRTCModule().peerConnectionGetSenders(this._peerConnectionId)
     }
 
+    fun getReceivers():List<RtpReceiver>{
+        return _getWebRTCModule().peerConnectionGetReceivers(this._peerConnectionId)
+    }
+
     fun addTrack(mediaStreamTrack:MediaStreamTrack):RtpSender{
         return _getWebRTCModule().peerConnectionAddTrack(this._peerConnectionId,mediaStreamTrack)
     }
