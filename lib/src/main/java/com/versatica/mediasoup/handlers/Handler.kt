@@ -18,7 +18,7 @@ import org.webrtc.SessionDescription
 
 val logger = Logger("Handle")
 
-open class Handle(
+open class Handler(
     direction: String,
     rtpParametersByKind: HashMap<String, RTCRtpParameters>,
     settings: RoomOptions
@@ -59,18 +59,20 @@ open class Handle(
             direction: String,
             extendedRtpCapabilities: RTCExtendedRtpCapabilities,
             settings: RoomOptions
-        ) {
+        ):Handler? {
             var rtpParametersByKind: HashMap<String, RTCRtpParameters> = HashMap()
             when (direction) {
                 "send" -> {
                     rtpParametersByKind["audio"] = getSendingRtpParameters("audio", extendedRtpCapabilities)
                     rtpParametersByKind["video"] = getSendingRtpParameters("video", extendedRtpCapabilities)
+                    return SendHandler(rtpParametersByKind, settings)
                 }
                 "recv" -> {
                     rtpParametersByKind["audio"] = getReceivingFullRtpParameters("audio", extendedRtpCapabilities)
                     rtpParametersByKind["video"] = getReceivingFullRtpParameters("video", extendedRtpCapabilities)
+                    return RecvHandler(rtpParametersByKind, settings)
                 }
-                else -> null
+                else -> return  null
             }
         }
     }
@@ -140,7 +142,7 @@ open class Handle(
 class SendHandler(
     rtpParametersByKind: HashMap<String, RTCRtpParameters>,
     settings: RoomOptions
-) : Handle("send", rtpParametersByKind, settings) {
+) : Handler("send", rtpParametersByKind, settings) {
 
     //Local stream ids
     private val _mediaStreamLabels: List<String> = listOf("ARDAMS")
@@ -393,7 +395,7 @@ class SendHandler(
 class RecvHandler(
     rtpParametersByKind: HashMap<String, RTCRtpParameters>,
     settings: RoomOptions
-) : Handle("recv", rtpParametersByKind, settings) {
+) : Handler("recv", rtpParametersByKind, settings) {
 
     // Seen media kinds.
     private val _kinds:HashSet<String> = HashSet()
