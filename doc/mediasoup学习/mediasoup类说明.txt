@@ -1588,18 +1588,13 @@ UnsupportedError类
     RoomState={new: 'new',joining: 'joining',joined: 'joined',closed : 'closed'}  Room房间状态枚举
     
 构造方法：
-    constructor(direction, extendedRtpCapabilities, settings, appData)
-        描述：Producer构造方法
+    constructor(options)
+        描述：Room类构造方法
         参数：
-            direction：通道类型，【send,recv】,字符串类型
-            extendedRtpCapabilities：扩展的rtp能力 Json对象
-            settings：room参数设置，Json类型
-            appData：传递自定义参数，Any 对象
+            options：通道类型，【send,recv】,字符串类型
         流程说明：
-            初始化Transport通道对象
-            命令处理队列commandQueue设置对【exec】事件监听处理
-            handle类增加对handle对象内部消息事件处理，详见_handleHandler()函数说明
-        调用点：Room对象createTransport(direction, appData)
+            初始化Romm对象类成员变量
+        调用点：开发者调用
 
 公有方法：
     join(peerName, appData)
