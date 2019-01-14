@@ -1153,7 +1153,7 @@ UnsupportedError类
     
 构造方法：
     constructor(direction, extendedRtpCapabilities, settings, appData)
-        描述：Producer构造方法
+        描述：Transport构造方法
         参数：
             direction：通道类型，【send,recv】,字符串类型
             extendedRtpCapabilities：扩展的rtp能力 Json对象
@@ -1325,7 +1325,7 @@ UnsupportedError类
         流程说明： 
             调用命令队列发送【addConsumer】消息，传递Consumer对象
         调用点：
-            Transport对象receive(transport)方法
+            Consumer对象receive(transport)方法
 
     removeConsumer(consumer)
         描述：通道中移除指定consumer对象
@@ -1423,10 +1423,10 @@ UnsupportedError类
 
                 【@needcreatetransport】：通道被创建时触发，传递本地通道参数
                     transport接收后重新构建参数发送【createTransport】的requset消息
-                    room对象接收并转发【createTransport】的requset消息
-                    开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
-                    服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
-                    客户端socketIo接收后，回传数据room->transport->handle中
+                        room对象接收并转发【createTransport】的requset消息
+                        开发者接收后【createTransport】的request消息后，通过socketIO发送消息至服务端
+                        服务端接收到客户端传递【createTransport】消息（target=peer），调用room.receiveRequest(request)处理后返回给客户端
+                        客户端socketIo接收后，回传数据room->transport->handle中
 
                 【@needupdatetransport】：通道被更新时触发，传递本地通道参数
                     构建待传递的dtls参数

@@ -1510,6 +1510,18 @@ public class WebRTCModule {
         }
     }
 
+    public List<RtpReceiver> peerConnectionGetReceivers(int peerConnectionId) {
+        PeerConnection peerConnection = getPeerConnection(peerConnectionId);
+        Log.d(TAG, "peerConnectionGetReceivers() start");
+        if (peerConnection != null) {
+            Log.d(TAG, "peerConnectionGetReceivers() end");
+            return peerConnection.getReceivers();
+        } else {
+            Log.d(TAG, "peerConnectionGetReceivers() peerConnection is null");
+            return new ArrayList<>();
+        }
+    }
+
     public RtpSender peerConnectionAddTrack(int peerConnectionId,
                                                   MediaStreamTrack mediaStreamTrack) {
         return peerConnectionAddTrack(peerConnectionId,mediaStreamTrack, Collections.emptyList());

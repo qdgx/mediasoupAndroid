@@ -14,6 +14,14 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
             <Button
+                    android:id="@+id/test"
+                    android:text="test"
+                    android:textAllCaps="false"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="2dp"/>
+
+            <Button
                     android:id="@+id/safeEmit"
                     android:text="safeEmit"
                     android:textAllCaps="false"

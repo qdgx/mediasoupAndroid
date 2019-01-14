@@ -1,5 +1,6 @@
 package com.versatica.mediasoup.handlers
 
+import com.alibaba.fastjson.JSON
 import com.dingsoft.sdptransform.SdpTransform
 import com.versatica.mediasoup.EnhancedEventEmitter
 import com.versatica.mediasoup.Logger
@@ -8,6 +9,8 @@ import com.versatica.mediasoup.handlers.sdp.*
 import com.versatica.mediasoup.webrtc.WebRTCModule
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import java.util.*
+import kotlin.collections.ArrayList
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStreamTrack
 import org.webrtc.RtpSender
@@ -15,7 +18,7 @@ import org.webrtc.SessionDescription
 
 val logger = Logger("Handle")
 
-open class Handle(
+open class Handler(
     direction: String,
     rtpParametersByKind: HashMap<String, RTCRtpParameters>,
     settings: RoomOptions
@@ -24,13 +27,13 @@ open class Handle(
         fun getNativeRtpCapabilities(): Observable<RTCRtpCapabilities> {
             logger.debug("getNativeRtpCapabilities()")
 
-            var config = HashMap<String, Any>()
+            val config = HashMap<String, Any>()
             config["iceTransportPolicy"] = "all"
             config["bundlePolicy"] = "max-bundle"
             config["rtcpMuxPolicy"] = "require"
             config["sdpSemantics"] = "plan-b"
-            var pc = RTCPeerConnection(config)
-            var mediaConstraints = MediaConstraints()
+            val pc = RTCPeerConnection(config)
+            val mediaConstraints = MediaConstraints()
             mediaConstraints.mandatory.add(
                 MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true")
             )
@@ -42,8 +45,8 @@ open class Handle(
             return pc.createOffer(mediaConstraints).flatMap { offer ->
                 Observable.create(ObservableOnSubscribe<RTCRtpCapabilities> {
                     try {
-                        var sdpObj = SdpTransform().parse(offer.description)
-                        var nativeRtpCapabilities = extractRtpCapabilities(sdpObj)
+                        val sdpObj = SdpTransform().parse(offer.description)
+                        val nativeRtpCapabilities = extractRtpCapabilities(sdpObj)
                         it.onNext(nativeRtpCapabilities)
                     } catch (e: Exception) {
                         it.onError(Throwable())
@@ -56,31 +59,34 @@ open class Handle(
             direction: String,
             extendedRtpCapabilities: RTCExtendedRtpCapabilities,
             settings: RoomOptions
-        ) {
-            var rtpParametersByKind: HashMap<String, RTCRtpParameters> = HashMap()
+        ):Handler? {
+            val rtpParametersByKind: HashMap<String, RTCRtpParameters> = HashMap()
             when (direction) {
                 "send" -> {
                     rtpParametersByKind["audio"] = getSendingRtpParameters("audio", extendedRtpCapabilities)
                     rtpParametersByKind["video"] = getSendingRtpParameters("video", extendedRtpCapabilities)
+                    return SendHandler(rtpParametersByKind, settings)
                 }
                 "recv" -> {
                     rtpParametersByKind["audio"] = getReceivingFullRtpParameters("audio", extendedRtpCapabilities)
                     rtpParametersByKind["video"] = getReceivingFullRtpParameters("video", extendedRtpCapabilities)
+                    return RecvHandler(rtpParametersByKind, settings)
                 }
-                else -> null
+                else -> return  null
             }
         }
     }
 
-    protected lateinit var _pc: RTCPeerConnection
-    protected lateinit var _rtpParametersByKind: HashMap<String, RTCRtpParameters>
+    protected var _pc: RTCPeerConnection
+    protected var _rtpParametersByKind: HashMap<String, RTCRtpParameters>
     protected var _remoteSdp: RemotePlanBSdp.RemoteSdp?
     protected var _transportReady: Boolean = false
     protected var _transportUpdated: Boolean = false
+    protected var _transportCreated: Boolean = false
 
     init {
         // RTCPeerConnection instance.
-        var config = HashMap<String, Any>()
+        val config = HashMap<String, Any>()
         config["iceServers"] = settings.turnServers
         config["iceTransportPolicy"] = settings.iceTransportPolicy
         config["bundlePolicy"] = "max-bundle"
@@ -103,6 +109,7 @@ open class Handle(
                 RTCIceConnectionState.FAILED -> this.emit("@connectionstatechange", "failed")
                 RTCIceConnectionState.DISCONNECTED -> this.emit("@connectionstatechange", "disconnected")
                 RTCIceConnectionState.CLOSED -> this.emit("@connectionstatechange", "closed")
+                else-> Unit
             }
         }
     }
@@ -135,7 +142,7 @@ open class Handle(
 class SendHandler(
     rtpParametersByKind: HashMap<String, RTCRtpParameters>,
     settings: RoomOptions
-) : Handle("send", rtpParametersByKind, settings) {
+) : Handler("send", rtpParametersByKind, settings) {
 
     //Local stream ids
     private val _mediaStreamLabels: List<String> = listOf("ARDAMS")
@@ -148,12 +155,12 @@ class SendHandler(
         this._transportReady = false
     }
 
-    fun addProducer(): Observable<RTCRtpParameters> {
+    fun addProducer(producer: Any): Observable<RTCRtpParameters> {
         //only for test
-        var track = MediaStreamTrack(1)
-        var id = 123
-        var simulcast = true
-        var kind = "video"
+        val track = MediaStreamTrack(1)
+        val id = 123
+        val simulcast = true
+        val kind = "video"
 
         logger.debug("addProducer() [id:$id, kind:$kind, trackId:${track.id()}]")
 
@@ -163,7 +170,7 @@ class SendHandler(
         var rtpSender: RtpSender
         var localSdpObj: com.dingsoft.sdptransform.SessionDescription = com.dingsoft.sdptransform.SessionDescription()
 
-        return Observable.just("")
+        return Observable.just(Unit)
             .flatMap {
                 // Add the stream to the PeerConnection.
                 rtpSender = this._pc.addTrack(track, _mediaStreamLabels)
@@ -177,11 +184,11 @@ class SendHandler(
                 if (simulcast) {
                     logger.debug("addProducer() | enabling simulcast")
 
-                    var sdpObject = SdpTransform().parse(cloneOffer.description)
+                    val sdpObject = SdpTransform().parse(cloneOffer.description)
 
                     addPlanBSimulcast(sdpObject, track)
 
-                    var offerSdp = SdpTransform().write(sdpObject)
+                    val offerSdp = SdpTransform().write(sdpObject)
 
                     cloneOffer = SessionDescription(offer.type, offerSdp)
                 }
@@ -210,7 +217,7 @@ class SendHandler(
                 val rtpParameters = this._rtpParametersByKind[kind]
 
                 // Fill the RTP parameters for this track.
-                fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track);
+                fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track)
 
                 Observable.create(ObservableOnSubscribe<RTCRtpParameters> {
                     //next
@@ -219,11 +226,11 @@ class SendHandler(
             }
     }
 
-    fun removeProducer(): Observable<Unit> {
+    fun removeProducer(producer: Any): Observable<Any> {
         //only for test
-        var track = MediaStreamTrack(1)
-        var id = 123
-        var kind = "video"
+        val track = MediaStreamTrack(1)
+        val id = 123
+        val kind = "video"
 
         if (!this._trackIds.contains(track.id()))
             return Observable.create {
@@ -232,7 +239,7 @@ class SendHandler(
 
         logger.debug("removeProducer() [id:$id, kind:$kind, trackId:${track.id()}]")
 
-        return Observable.just("")
+        return Observable.just(Unit)
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
@@ -252,7 +259,7 @@ class SendHandler(
             }.flatMap { offer ->
                 logger.debug("removeProducer() | calling pc.setLocalDescription() [offer:${offer.toString()}]")
 
-                this._pc.setLocalDescription(offer);
+                this._pc.setLocalDescription(offer)
             }.flatMap {
                 if (this._pc.signalingState === RTCSignalingState.STABLE) {
                     Observable.create {
@@ -270,17 +277,17 @@ class SendHandler(
             }
     }
 
-    fun replaceProducerTrack(): Observable<Unit> {
+    fun replaceProducerTrack(producer: Any,
+                             track: MediaStreamTrack): Observable<Any> {
         //only for test
-        var track = MediaStreamTrack(1)
-        var id = 123
-        var kind = "video"
+        val id = 123
+        val kind = "video"
 
-        var oldTrack = MediaStreamTrack(2)
+        val oldTrack = MediaStreamTrack(2)
 
         logger.debug("replaceProducerTrack() [id:$id, kind:$kind, trackId:${track.id()}]")
 
-        return Observable.just("")
+        return Observable.just(Unit)
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
@@ -311,18 +318,15 @@ class SendHandler(
             }
     }
 
-    fun restartIce(): Observable<Unit> {
-        //only for test
-        var remoteIceParameters = RTCIceParameters()
-
+    fun restartIce(remoteIceParameters: RTCIceParameters): Observable<Any> {
         logger.debug("restartIce()")
 
         // Provide the remote SDP handler with new remote ICE parameters.
         this._remoteSdp?.updateTransportRemoteIceParameters(remoteIceParameters)
 
-        return Observable.just("")
+        return Observable.just(Unit)
             .flatMap {
-                var mediaConstraints = MediaConstraints()
+                val mediaConstraints = MediaConstraints()
                 mediaConstraints.mandatory.add(
                     MediaConstraints.KeyValuePair("iceRestart", "true")
                 )
@@ -345,15 +349,15 @@ class SendHandler(
             }
     }
 
-    fun _setupTransport(): Observable<Unit> {
+    private fun _setupTransport(): Observable<Unit> {
         logger.debug("_setupTransport()")
-        return Observable.just("")
+        return Observable.just(Unit)
             .flatMap {
                 // Get our local DTLS parameters.
-                var transportLocalParameters: TransportRemoteIceParameters = TransportRemoteIceParameters()
+                val transportLocalParameters = TransportRemoteIceParameters()
                 val sdp = this._pc.localDescription.description
                 val sdpObj = SdpTransform().parse(sdp)
-                val dtlsParameters = extractDtlsParameters(sdpObj);
+                val dtlsParameters = extractDtlsParameters(sdpObj)
 
                 // Let's decide that we'll be DTLS server (because we can).
                 dtlsParameters.role = RTCDtlsRole.SERVER
@@ -381,5 +385,231 @@ class SendHandler(
                     it.onNext(Unit)
                 })
             }
+    }
+}
+
+
+class RecvHandler(
+    rtpParametersByKind: HashMap<String, RTCRtpParameters>,
+    settings: RoomOptions
+) : Handler("recv", rtpParametersByKind, settings) {
+
+    // Seen media kinds.
+    private val _kinds:HashSet<String> = HashSet()
+
+    // Map of Consumers information indexed by consumer.id.
+    // - kind {String}
+    // - trackId {String}
+    // - ssrc {Number}
+    // - rtxSsrc {Number}
+    // - cname {String}
+    // @type {Map<Number, Object>}
+    private val _consumerInfos: HashMap<Int,ConsumerInfo> = HashMap()
+
+    init {
+        // Got transport remote parameters.
+        this._transportCreated = false
+
+        // Got transport local parameters.
+        this._transportUpdated = false
+    }
+
+    fun addConsumer(consumer: Any): Observable<MediaStreamTrack> {
+        //only for test
+        val id = 123
+        val kind = "video"
+        val encoding = RtpEncoding()
+        val cname = "cname"
+        val rtxSsrc = 234
+
+        val consumerInfo: ConsumerInfo = ConsumerInfo(
+            kind,
+            "recv-stream-$id",
+            "consumer-$kind-$id",
+            0,
+            cname,
+            "",
+            false,
+            rtxSsrc
+        )
+
+        logger.debug("addConsumer() [id:$id, kind:$kind]")
+
+        if (encoding.rtx !=null && encoding.rtx!![encoding.ssrc] !=null)
+            consumerInfo.rtxSsrc = encoding.rtx!![encoding.ssrc]
+
+        this._consumerInfos[id] = consumerInfo
+        this._kinds.add(kind)
+
+        return Observable.just(Unit)
+            .flatMap {
+                if (!this._transportCreated){
+                     this._setupTransport()
+                }else{
+                    Observable.create{
+                        //next
+                        it.onNext(Unit)
+                    }
+                }
+            }
+            .flatMap {
+                //only for test
+                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo> = HashMap()
+
+                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
+                val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
+
+                logger.debug(
+                    "addConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]")
+
+                this._pc.setRemoteDescription(offer)
+            }
+            .flatMap {
+                this._pc.createAnswer(MediaConstraints())
+            }
+            .flatMap { answer ->
+                logger.debug(
+                    "addConsumer() | calling pc.setLocalDescription() [answer:${answer.description}]")
+                this._pc.setLocalDescription(answer)
+            }.flatMap {
+                if (!this._transportUpdated) {
+                    _updateTransport()
+                } else {
+                    Observable.create{
+                        //next
+                        it.onNext(Unit)
+                    }
+                }
+            }.flatMap {
+                val newRtpReceiver = this._pc.getReceivers().find {
+                    val track = it.track()
+                    if (track == null){
+                        false
+                    }else{
+                        track.id() === consumerInfo.trackId
+                    }
+                }
+
+                if (newRtpReceiver == null)
+                    throw Throwable("RTCRtpSender not found")
+
+                Observable.create(ObservableOnSubscribe<MediaStreamTrack> {
+                    //next
+                    it.onNext(newRtpReceiver.track()!!)
+                })
+            }
+    }
+
+    fun removeConsumer(consumer: Any): Observable<Any> {
+        //only for test
+        val id = 123
+        val kind = "video"
+
+        logger.debug("removeConsumer() [id:$id, kind:$kind]")
+
+        if (!this._consumerInfos.contains(id))
+            return Observable.create {
+                it.onError(Throwable("Consumer not found"))
+            }
+
+        return Observable.just(Unit)
+            .flatMap {
+                //only for test
+                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo> = HashMap()
+
+                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
+                val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
+
+                logger.debug(
+                    "removeConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]")
+
+                this._pc.setRemoteDescription(offer)
+            }
+            .flatMap {
+                this._pc.createAnswer(MediaConstraints())
+            }
+            .flatMap { answer ->
+                logger.debug(
+                    "removeConsumer() | calling pc.setLocalDescription() [answer:${answer.description}]")
+                this._pc.setLocalDescription(answer)
+            }
+    }
+
+    fun restartIce(remoteIceParameters: RTCIceParameters): Observable<Any> {
+        logger.debug("restartIce()")
+
+        // Provide the remote SDP handler with new remote ICE parameters.
+        (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).updateTransportRemoteIceParameters(remoteIceParameters)
+
+        return Observable.just(Unit)
+            .flatMap {
+                //only for test
+                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo
+
+                        > = HashMap()
+
+                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
+                val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
+
+                logger.debug(
+                    "restartIce() | calling pc.setRemoteDescription() [offer:${offer.description}]")
+
+                this._pc.setRemoteDescription(offer)
+            }
+            .flatMap {
+                this._pc.createAnswer(MediaConstraints())
+            }
+            .flatMap { answer ->
+                logger.debug(
+                    "restartIce() | calling pc.setLocalDescription() [answer:${answer.description}]")
+                this._pc.setLocalDescription(answer)
+            }
+    }
+
+
+    private fun _setupTransport(): Observable<Unit> {
+
+        logger.debug("_setupTransport()")
+
+        return Observable.just(Unit)
+            .flatMap {
+                // We need transport remote parameters
+                Observable.create(ObservableOnSubscribe<Any> {
+                    //next
+                    this.safeEmitAsPromise(it, "@needcreatetransport").subscribe()
+                })
+            }
+            .flatMap { transportRemoteParameters ->
+                // Provide the remote SDP handler with transport remote parameters.
+                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters = (transportRemoteParameters as TransportRemoteIceParameters)
+
+                this._transportCreated = true
+
+                Observable.create(ObservableOnSubscribe<Unit> {
+                    //next
+                    it.onNext(Unit)
+                })
+            }
+    }
+
+    private fun _updateTransport(): Observable<Unit> {
+        logger.debug("_updateTransport()")
+        // Get our local DTLS parameters.
+        // const transportLocalParameters = {}
+        val sdp = this._pc.localDescription.description
+        val sdpObj = SdpTransform().parse(sdp)
+        val dtlsParameters = extractDtlsParameters(sdpObj)
+        //val transportLocalParameters = { dtlsParameters }
+        val transportLocalParameters = JSON.toJSONString(dtlsParameters)
+
+        // We need to provide transport local parameters.
+        this.safeEmit("@needupdatetransport", transportLocalParameters)
+
+        this._transportUpdated = true
+
+        return Observable.create{
+            //next
+            it.onNext(Unit)
+        }
     }
 }

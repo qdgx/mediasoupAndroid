@@ -3,7 +3,7 @@ package com.versatica.mediasoup.demo
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.versatica.mediasoup.Logger
-import com.versatica.mediasoup.handlers.Handle
+import com.versatica.mediasoup.handlers.Handler
 import com.versatica.mediasoup.handlers.sdp.RTCRtpCodecCapability
 import com.versatica.mediasoup.handlers.sdp.RTCRtpHeaderExtensionCapability
 import io.reactivex.Observable
@@ -19,6 +19,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        test.setOnClickListener {
+
+        }
+
         safeEmit.setOnClickListener {
             val eventEmitterImpl: EventEmitterImpl = EventEmitterImpl()
             eventEmitterImpl.on("key") { args ->
@@ -138,7 +142,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         getNativeRtpCapabilitiesTest.setOnClickListener {
-            Handle.getNativeRtpCapabilities().subscribe(
+            Handler.getNativeRtpCapabilities().subscribe(
                 {
                     var codecs: MutableCollection<RTCRtpCodecCapability> = it.codecs
                     var headerExtensions: MutableCollection<RTCRtpHeaderExtensionCapability> = it.headerExtensions
