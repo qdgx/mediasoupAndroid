@@ -60,7 +60,7 @@ open class Handler(
             extendedRtpCapabilities: RTCExtendedRtpCapabilities,
             settings: RoomOptions
         ):Handler? {
-            var rtpParametersByKind: HashMap<String, RTCRtpParameters> = HashMap()
+            val rtpParametersByKind: HashMap<String, RTCRtpParameters> = HashMap()
             when (direction) {
                 "send" -> {
                     rtpParametersByKind["audio"] = getSendingRtpParameters("audio", extendedRtpCapabilities)
@@ -77,8 +77,8 @@ open class Handler(
         }
     }
 
-    protected lateinit var _pc: RTCPeerConnection
-    protected lateinit var _rtpParametersByKind: HashMap<String, RTCRtpParameters>
+    protected var _pc: RTCPeerConnection
+    protected var _rtpParametersByKind: HashMap<String, RTCRtpParameters>
     protected var _remoteSdp: RemotePlanBSdp.RemoteSdp?
     protected var _transportReady: Boolean = false
     protected var _transportUpdated: Boolean = false
@@ -86,7 +86,7 @@ open class Handler(
 
     init {
         // RTCPeerConnection instance.
-        var config = HashMap<String, Any>()
+        val config = HashMap<String, Any>()
         config["iceServers"] = settings.turnServers
         config["iceTransportPolicy"] = settings.iceTransportPolicy
         config["bundlePolicy"] = "max-bundle"
@@ -155,7 +155,7 @@ class SendHandler(
         this._transportReady = false
     }
 
-    fun addProducer(): Observable<RTCRtpParameters> {
+    fun addProducer(producer: Any): Observable<RTCRtpParameters> {
         //only for test
         val track = MediaStreamTrack(1)
         val id = 123
@@ -226,7 +226,7 @@ class SendHandler(
             }
     }
 
-    fun removeProducer(): Observable<Unit> {
+    fun removeProducer(producer: Any): Observable<Any> {
         //only for test
         val track = MediaStreamTrack(1)
         val id = 123
@@ -277,9 +277,9 @@ class SendHandler(
             }
     }
 
-    fun replaceProducerTrack(): Observable<Unit> {
+    fun replaceProducerTrack(producer: Any,
+                             track: MediaStreamTrack): Observable<Any> {
         //only for test
-        val track = MediaStreamTrack(1)
         val id = 123
         val kind = "video"
 
@@ -318,10 +318,7 @@ class SendHandler(
             }
     }
 
-    fun restartIce(): Observable<Unit> {
-        //only for test
-        val remoteIceParameters = RTCIceParameters()
-
+    fun restartIce(remoteIceParameters: RTCIceParameters): Observable<Any> {
         logger.debug("restartIce()")
 
         // Provide the remote SDP handler with new remote ICE parameters.
@@ -417,7 +414,7 @@ class RecvHandler(
         this._transportUpdated = false
     }
 
-    fun addConsumer(): Observable<MediaStreamTrack> {
+    fun addConsumer(consumer: Any): Observable<MediaStreamTrack> {
         //only for test
         val id = 123
         val kind = "video"
@@ -503,7 +500,7 @@ class RecvHandler(
             }
     }
 
-    fun removeConsumer(): Observable<Unit> {
+    fun removeConsumer(consumer: Any): Observable<Any> {
         //only for test
         val id = 123
         val kind = "video"
@@ -538,8 +535,7 @@ class RecvHandler(
             }
     }
 
-    fun restartIce(remoteIceParameters: RTCIceParameters): Observable<Unit> {
-
+    fun restartIce(remoteIceParameters: RTCIceParameters): Observable<Any> {
         logger.debug("restartIce()")
 
         // Provide the remote SDP handler with new remote ICE parameters.

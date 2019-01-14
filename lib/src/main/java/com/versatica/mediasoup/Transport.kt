@@ -1,6 +1,8 @@
 package com.versatica.mediasoup
 
 import com.versatica.mediasoup.handlers.Handler
+import com.versatica.mediasoup.handlers.RecvHandler
+import com.versatica.mediasoup.handlers.SendHandler
 import com.versatica.mediasoup.handlers.sdp.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
@@ -37,7 +39,7 @@ class Transport(
     val _commandQueue = CommandQueue()
 
     // Device specific handler.
-    val _handler = Handler.getHandle(direction, extendedRtpCapabilities, settings)
+    var _handler = Handler.getHandle(direction, extendedRtpCapabilities, settings)
 
     // Transport state. Values can be:
     // "new"/"connecting"/"connected"/"failed"/"disconnected"/"closed"
@@ -49,6 +51,16 @@ class Transport(
             _execCommand(args[0] as CommandQueue.Command, args[1] as CommandQueue.PromiseHolder)
         }
 
+        //SendHandler RecvHandler
+        when (direction) {
+            "send" -> {
+                _handler = _handler as SendHandler
+            }
+            "recv" -> {
+                _handler = _handler as RecvHandler
+            }
+            else -> Unit
+        }
         this._handleHandler()
     }
 
@@ -57,7 +69,7 @@ class Transport(
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun close(appData: Any?){
+    fun close(appData: Any?) {
         logger.debug("close()")
 
         if (this._closed)
@@ -65,17 +77,16 @@ class Transport(
 
         this._closed = true
 
-        if (this._statsEnabled)
-        {
+        if (this._statsEnabled) {
             this._statsEnabled = false
             this.disableStats()
         }
 
-        var closeTransportNotify = CloseTransportNotify()
+        val closeTransportNotify = CloseTransportNotify()
         closeTransportNotify.id = this._id
         closeTransportNotify.appData = appData
 
-        this.safeEmit("@notify", "closeTransport",closeTransportNotify)
+        this.safeEmit("@notify", "closeTransport", closeTransportNotify)
 
         this.emit("@close")
         this.safeEmit("close", "local", appData!!)
@@ -92,15 +103,13 @@ class Transport(
      * @param {Any} [appData] - App custom data.
      * @param {Boolean} destroy - Whether the local transport must be destroyed.
      */
-    fun remoteClose(appData: Any?, destroy: Boolean)
-    {
+    fun remoteClose(appData: Any?, destroy: Boolean) {
         logger.debug("remoteClose() [destroy:$destroy]")
 
         if (this._closed)
             return
 
-        if (!destroy)
-        {
+        if (!destroy) {
             this._handler?.remoteClosed()
             return
         }
@@ -114,7 +123,7 @@ class Transport(
     }
 
 
-    private fun _destroy(){
+    private fun _destroy() {
         // Close the CommandQueue.
         this._commandQueue.close()
 
@@ -125,13 +134,13 @@ class Transport(
     fun restartIce(): Observable<Any> {
         logger.debug("restartIce()")
 
-        if (this._closed){
-            return Observable.create{
+        if (this._closed) {
+            return Observable.create {
                 //next
                 it.onNext(Unit)
             }
-        } else if (this._connectionState === "new"){
-            return  Observable.create{
+        } else if (this._connectionState === "new") {
+            return Observable.create {
                 //next
                 it.onNext(Unit)
             }
@@ -144,22 +153,22 @@ class Transport(
 
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it,"@request","restartTransport",data).subscribe()
+                    this.safeEmitAsPromise(it, "@request", "restartTransport", data).subscribe()
                 })
             }.flatMap { response ->
                 //only for test
                 //val remoteIceParameters = response.iceParameters
-                val remoteIceParameters = RTCIceParameters("","",true)
+                val remoteIceParameters = RTCIceParameters("", "", true)
 
-                this._commandQueue.push("restartIce",remoteIceParameters)
+                this._commandQueue.push("restartIce", remoteIceParameters)
             }
     }
 
-    fun enableStats(interval: Int = DEFAULT_STATS_INTERVAL){
+    fun enableStats(interval: Int = DEFAULT_STATS_INTERVAL) {
         logger.debug("enableStats() [interval:$interval]")
 
         var statsInterval = interval
-        if (statsInterval < 1000){
+        if (statsInterval < 1000) {
             statsInterval = DEFAULT_STATS_INTERVAL
         }
 
@@ -177,7 +186,7 @@ class Transport(
 
         this._statsEnabled = false
 
-        var data = DisableTransportStatsNotify()
+        val data = DisableTransportStatsNotify()
         data.id = this._id
 
         this.safeEmit("@notify", "disableTransportStats", data)
@@ -192,16 +201,16 @@ class Transport(
      *
      * @return {Promise}
      */
-    fun addProducer(producer:Any): Observable<Any> {
+    fun addProducer(producer: Any): Observable<Any> {
         logger.debug("addProducer() [producer:$producer]")
 
-        if (this._closed){
-            return Observable.create{
+        if (this._closed) {
+            return Observable.create {
                 //next
                 it.onError(InvalidStateError("Transport closed"))
             }
-        } else if (this._connectionState === "new"){
-            return  Observable.create{
+        } else if (this._connectionState === "new") {
+            return Observable.create {
                 //next
                 it.onError(Throwable("not a sending Transport"))
             }
@@ -214,18 +223,19 @@ class Transport(
     /**
      * @private
      */
-    fun removeProducer(producer: Any,
-                       originator: String,
-                       appData: Any) {
+    fun removeProducer(
+        producer: Any,
+        originator: String,
+        appData: Any
+    ) {
         logger.debug("removeProducer() [producer:$producer]")
 
         // Enqueue command.
-        if (!this._closed)
-        {
+        if (!this._closed) {
             this._commandQueue.push("removeProducer", producer)
         }
 
-        if (originator === "local"){
+        if (originator === "local") {
             val data = CloseProducerNotify()
             //data.id = producer.id
             data.appData = appData
@@ -237,8 +247,10 @@ class Transport(
     /**
      * @private
      */
-    fun pauseProducer(producer: Any,
-                      appData: Any) {
+    fun pauseProducer(
+        producer: Any,
+        appData: Any
+    ) {
         logger.debug("pauseProducer() [producer:$producer]")
 
         val data = PauseProducerNotify()
@@ -251,8 +263,10 @@ class Transport(
     /**
      * @private
      */
-    fun resumeProducer(producer: Any,
-                       appData: Any) {
+    fun resumeProducer(
+        producer: Any,
+        appData: Any
+    ) {
         logger.debug("resumeProducer() [producer:$producer]")
 
         val data = ResumeProducerNotify()
@@ -267,19 +281,24 @@ class Transport(
      *
      * @return {Promise}
      */
-    fun replaceProducerTrack(producer: Any,
-                             track: MediaStreamTrack):Observable<Any> {
+    fun replaceProducerTrack(
+        producer: Any,
+        track: MediaStreamTrack
+    ): Observable<Any> {
         logger.debug("replaceProducerTrack() [producer:$producer]")
 
         return this._commandQueue.push(
-            "replaceProducerTrack", ReplaceProducerTrackInfo(producer,track))
+            "replaceProducerTrack", ReplaceProducerTrackInfo(producer, track)
+        )
     }
 
     /**
      * @private
      */
-    fun enableProducerStats(producer: Any,
-                            interval: Int) {
+    fun enableProducerStats(
+        producer: Any,
+        interval: Int
+    ) {
         logger.debug("enableProducerStats() [producer:$producer]")
 
         val data = EnableProducerStatsNotify()
@@ -313,13 +332,13 @@ class Transport(
     fun addConsumer(consumer: Any): Observable<Any> {
         logger.debug("addConsumer() [consumer:$consumer]")
 
-        if (this._closed){
-            return Observable.create{
+        if (this._closed) {
+            return Observable.create {
                 //next
                 it.onError(InvalidStateError("Transport closed"))
             }
-        } else if (this._connectionState === "new"){
-            return  Observable.create{
+        } else if (this._connectionState === "new") {
+            return Observable.create {
                 //next
                 it.onError(Throwable("not a receiving Transport"))
             }
@@ -332,7 +351,7 @@ class Transport(
     /**
      * @private
      */
-    fun removeConsumer(consumer: Any){
+    fun removeConsumer(consumer: Any) {
         logger.debug("removeConsumer () [consumer:$consumer]")
 
         // Enqueue command.
@@ -342,8 +361,10 @@ class Transport(
     /**
      * @private
      */
-    fun pauseConsumer(consumer: Any,
-                      appData: Any){
+    fun pauseConsumer(
+        consumer: Any,
+        appData: Any
+    ) {
         logger.debug("pauseConsumer () [consumer:$consumer]")
 
         val data = PauseConsumerNotify()
@@ -356,8 +377,10 @@ class Transport(
     /**
      * @private
      */
-    fun resumeConsumer(consumer: Any,
-                        appData: Any){
+    fun resumeConsumer(
+        consumer: Any,
+        appData: Any
+    ) {
         logger.debug("resumeConsumer () [consumer:$consumer]")
 
         val data = ResumeConsumerNotify()
@@ -370,8 +393,10 @@ class Transport(
     /**
      * @private
      */
-    fun setConsumerPreferredProfile(consumer: Any,
-                                    profile: String){
+    fun setConsumerPreferredProfile(
+        consumer: Any,
+        profile: String
+    ) {
         logger.debug("setConsumerPreferredProfile () [consumer:$consumer]")
 
         val data = SetConsumerPreferredProfileNotify()
@@ -384,8 +409,10 @@ class Transport(
     /**
      * @private
      */
-    fun enableConsumerStats(consumer: Any,
-                            interval: Int){
+    fun enableConsumerStats(
+        consumer: Any,
+        interval: Int
+    ) {
         logger.debug("enableConsumerStats () [consumer:$consumer]")
 
         val data = EnableConsumerStatsNotify()
@@ -421,7 +448,7 @@ class Transport(
     private fun _handleHandler() {
         _handler?.on("@connectionstatechange") {
             val state = it[0] as String
-            if (this._connectionState != state){
+            if (this._connectionState != state) {
                 logger.debug("Transport connection state changed to $state")
 
                 this._connectionState = state
@@ -439,10 +466,10 @@ class Transport(
             val data = CreateTransportRequest()
             data.id = this._id
             data.direction = this._direction
-            data .options = this._settings.transportOptions
+            data.options = this._settings.transportOptions
             data.appData = this._appData
 
-            if (transportLocalParameters?.dtlsParameters != null)
+            if (transportLocalParameters.dtlsParameters != null)
                 data.dtlsParameters = transportLocalParameters.dtlsParameters
 
             this.safeEmit("@request", "createTransport", data, callback, errback)
@@ -453,7 +480,7 @@ class Transport(
 
             val data = UpdateTransportNotify()
 
-            if (transportLocalParameters?.dtlsParameters != null)
+            if (transportLocalParameters.dtlsParameters != null)
                 data.dtlsParameters = transportLocalParameters.dtlsParameters
 
             this.safeEmit("@notify", "updateTransport", data)
@@ -461,15 +488,32 @@ class Transport(
     }
 
     private fun _execCommand(command: CommandQueue.Command, promiseHolder: CommandQueue.PromiseHolder) {
-        var promise: Observable<Any>? = null
+        var promise: Observable<Any>?
         try {
             when (command.method) {
                 "addProducer" -> {
-                    var data = command.data
-                    promise = this._execAddProducer(data)
+                    val producer = command.data
+                    promise = this._execAddProducer(producer)
                 }
                 "removeProducer" -> {
-
+                    val producer = command.data
+                    promise = this._execRemoveProducer(producer)
+                }
+                "replaceProducerTrack" -> {
+                    val data = command.data as ReplaceProducerTrackInfo
+                    promise = this._execReplaceProducerTrack(data.producer, data.track)
+                }
+                "addConsumer" -> {
+                    val consumer = command.data
+                    promise = this._execAddConsumer(consumer)
+                }
+                "removeConsumer" -> {
+                    val consumer = command.data
+                    promise = this._execRemoveConsumer(consumer)
+                }
+                "restartIce" -> {
+                    val remoteIceParameters = command.data as RTCIceParameters
+                    promise = this._execRestartIce(remoteIceParameters)
                 }
                 else -> {
                     promise = Observable.create {
@@ -487,27 +531,149 @@ class Transport(
         promiseHolder.promise = promise
     }
 
-    private fun _execAddProducer(data: Any): Observable<Any>? {
+    private fun _execAddProducer(producer: Any): Observable<Any>? {
+        //only for test
+        val id = 123
+        val locallyPaused = true
+        val kind = "video"
+        val appData = ""
+
         logger.debug("_execAddProducer()")
+
+        var producerRtpParameters: RTCRtpParameters
+
         // Call the handler.
-        return Observable.just(data as String)
-            .flatMap { str: String ->
-                Observable.create(ObservableOnSubscribe<String> {
-                    //next
-                    it.onNext("_execAddProducer step1 $str")
-                })
-            }.flatMap { str: String ->
+        return Observable.just(Unit)
+            .flatMap {
+                (_handler as SendHandler).addProducer(producer)
+            }.flatMap {
+                producerRtpParameters = it
+
+                val data = CreateProducerRequest()
+                data.id = id
+                data.kind = kind
+                data.transportId = this._id
+                data.rtpParameters = producerRtpParameters
+                data.paused = locallyPaused
+                data.appData = appData
+
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it, "@request", "createProducer", "_execAddProducer step2 $str").subscribe()
+                    this.safeEmitAsPromise(it, "@request", "createProducer", data).subscribe()
                 })
-            }.flatMap { data: Any ->
-                Observable.create(ObservableOnSubscribe<Any> {
-                    //next
-                    it.onNext(data)
+            }.flatMap {
+                //producer.setRtpParameters(producerRtpParameters)
+                Observable.create(ObservableOnSubscribe<Unit> {
+                    it.onNext(Unit)
                 })
             }
     }
+
+    private fun _execRemoveProducer(producer: Any): Observable<Any>? {
+        logger.debug("_execRemoveProducer()")
+
+        if (_handler is SendHandler) {
+            // Call the handler.
+            return (_handler as SendHandler).removeProducer(producer)
+        } else {
+            return Observable.create {
+                it.onNext(Unit)
+            }
+        }
+    }
+
+    private fun _execReplaceProducerTrack(producer: Any, track: MediaStreamTrack): Observable<Any>? {
+        logger.debug("_execReplaceProducerTrack()")
+
+        if (_handler is SendHandler) {
+            // Call the handler.
+            return (_handler as SendHandler).replaceProducerTrack(producer,track)
+        } else {
+            return Observable.create {
+                it.onNext(Unit)
+            }
+        }
+    }
+
+    private fun _execAddConsumer(consumer: Any): Observable<Any>? {
+        //only for test
+        val id = 123
+        val locallyPaused = true
+        val preferredProfile = "high"
+
+        logger.debug("_execAddConsumer()")
+
+        var consumerTrack: Any = Unit
+
+        // Call the handler.
+        return Observable.just(Unit)
+            .flatMap {
+                (_handler as RecvHandler).addConsumer(consumer)
+            }.flatMap { track->
+                consumerTrack = track
+
+                val data = EnableConsumerRequest()
+                data.id = id
+                data.transportId = this._id
+                data.paused = locallyPaused
+                data.preferredProfile = preferredProfile
+
+                Observable.create(ObservableOnSubscribe<Any> {
+                    //next
+                    this.safeEmitAsPromise(it, "@request", "enableConsumer", data).subscribe()
+                })
+            }.flatMap { response ->
+                val paused = true
+                val effectiveProfile = "low"
+
+                if (paused){
+                    //consumer.remotePause()
+                }
+
+                if (preferredProfile.isNotEmpty()){
+                    //consumer.remoteSetPreferredProfile(preferredProfile)
+                }
+
+                if (effectiveProfile.isNotEmpty()){
+                    //consumer.remoteEffectiveProfileChanged(effectiveProfile)
+                }
+
+                Observable.create(ObservableOnSubscribe<Any> {
+                    it.onNext(consumerTrack)
+                })
+            }
+    }
+
+    private fun _execRemoveConsumer(consumer: Any): Observable<Any>? {
+        logger.debug("_execRemoveConsumer()")
+
+        if (_handler is RecvHandler) {
+            // Call the handler.
+            return (_handler as RecvHandler).removeConsumer(consumer)
+        } else {
+            return Observable.create {
+                it.onNext(Unit)
+            }
+        }
+    }
+
+    private fun _execRestartIce(remoteIceParameters: RTCIceParameters): Observable<Any>? {
+        logger.debug("_execRestartIce()")
+
+        // Call the handler.
+        if (_handler is SendHandler) {
+            // Call the handler.
+            return (_handler as SendHandler).restartIce(remoteIceParameters)
+        } else if (_handler is RecvHandler) {
+            // Call the handler.
+            return (_handler as RecvHandler).restartIce(remoteIceParameters)
+        } else {
+            return Observable.create {
+                it.onNext(Unit)
+            }
+        }
+    }
+
 }
 
 class RestartTransportRequest {
@@ -611,7 +777,7 @@ class CloseProducerNotify {
     var appData: Any? = null
 }
 
-class ReplaceProducerTrackInfo(
-    producer: Any,
-    track: MediaStreamTrack
+data class ReplaceProducerTrackInfo(
+    var producer: Any,
+    var track: MediaStreamTrack
 )
