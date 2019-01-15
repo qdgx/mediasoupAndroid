@@ -1610,7 +1610,7 @@ UnsupportedError类
                 调用_sendRequest发送【queryRoom】类型，并传递参数，发送【queryRoom】类型的message消息
                     开发者通过room.on('request')监听mediasoup SDK，收到【queryRoom】消息后，通过socketIo发送【queryRoom】消息至服务端
                     服务端：接收到客户端传递【queryRoom】消息（target=room），调用room.receiveRequest(request)处理后，获取room设置信息并返回
-                then 接收到服务端【queryRoom】回应，保存至roomSettings中
+                    接收到服务端【queryRoom】回应，保存至roomSettings中
                 then 获取本地设备Rtp能力参数并返回 
                 then 对返回的rtpCapabilities进行数据过滤，包括：
                     获取扩展的RTP能力 ortc.getExtendedRtpCapabilities
@@ -1653,6 +1653,16 @@ UnsupportedError类
             获取Peer通道对象集合peers，循环关闭
         调用点：
             Room对象receiveNotification(notification) 'close'状态
+
+    canSend(kind)
+        描述：判断是否支持发送音频/视频
+        参数：
+            kind：媒体类型，String对象 【audio，video】
+        返回值：无
+        流程说明： 
+            返回是否支持发送指定类型媒体
+        调用点：
+            开发者调用
 
     createTransport(direction, appData)
         描述：创建指定类型发送或接收通道
