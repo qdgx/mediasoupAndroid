@@ -124,7 +124,7 @@ class Transport(
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun close(appData: Any?) {
+    fun close(appData: Any? = null) {
         logger.debug("close()")
 
         if (this._closed)

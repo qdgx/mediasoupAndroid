@@ -4,7 +4,7 @@ package com.versatica.mediasoup
  * @author wolfhan
  */
 
-class Peer(var name: String, var appData: Any, private var logger: Logger = Logger("Peer")) :
+class Peer(var name: String, var appData: Any?, private var logger: Logger = Logger("Peer")) :
     EnhancedEventEmitter(logger) {
 
     var closed = false
@@ -17,7 +17,7 @@ class Peer(var name: String, var appData: Any, private var logger: Logger = Logg
      *
      *  @private
      */
-    private fun close() {
+    fun close() {
         logger.debug("close()")
 
         if (this.closed)
@@ -42,7 +42,7 @@ class Peer(var name: String, var appData: Any, private var logger: Logger = Logg
      *
      * @param {Any} [appData] - App custom data.
      */
-    private fun remoteClose(appData: Any) {
+    fun remoteClose(appData: Any? = null) {
         logger.debug("remoteClose()")
 
         if (this.closed)
@@ -51,7 +51,7 @@ class Peer(var name: String, var appData: Any, private var logger: Logger = Logg
         this.closed = true
 
         this.emit("@close")
-        this.safeEmit("close", "remote", appData)
+        this.safeEmit("close", "remote", appData!!)
 
         // Close all the Consumers.
         for (consumer in this._consumers.values) {

@@ -28,11 +28,11 @@ open class EnhancedEventEmitter(logger: Logger) : EventEmitter() {
     ): Observable<Any> {
         return Observable.create {
             //success callback
-            var callback = { result: Any ->
+            val callback = { result: Any ->
                 observableEmitter.onNext(result)
             }
             //error callback
-            var errback = { error: String ->
+            val errback = { error: String ->
                 _logger.error(error)
                 observableEmitter.onError(Throwable(error))
             }
