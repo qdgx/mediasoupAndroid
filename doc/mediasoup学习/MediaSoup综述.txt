@@ -8,7 +8,7 @@ mediasoup的原理
 5：Producer将媒体数据发送给每一个订阅者Consumer
 
 名词说明：
-Room：音视频会议室，包含多个会议参与者，对于客户端而言，Room也标识本地参与者
+Room：音视频会议室，包含该会议室内多个会议参与者，对于客户端而言，Room对象包括当前会议室连接状态，本地Peer名称，远端Peer连接集，本地Producer集
 
 Peer：会议参与者，包含：Transport，Producer，Consumer，对客户端而言，Peer代表同一会议室内的其他参与者
 
@@ -20,7 +20,7 @@ Producer：本地webRtc Track媒体数据，如果本地存在音频，视频两
 
 Consumer：对端webRtc Track媒体数据，如果会议室有多个Track，则对应多个Consumer
 
-Profile：标识媒体流质量，该配置只对设置了simulcast联播流的媒体生效 【default，low，medium，high，none】
+Profile：标识媒体流质量，该配置只对设置了simulcast联播流的媒体生效 【default，low，medium，high，none{】
 
 联播(Simulcast)：发布方同时发布几路不同码流的视频到服务器（SFU)上来，SFU根据接收方的网络状态转发相应的码流给接收用户。
 如发布方同时发布9M视频码流和0.4M的视频码流，这样就可以同时兼兼顾到网络好的用户和网络差的用户了。

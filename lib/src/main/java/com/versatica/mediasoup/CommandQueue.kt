@@ -65,23 +65,23 @@ class CommandQueue : EventEmitter() {
             .subscribe()
     }
 
-    private fun _handleCommand(command: Command): Observable<String> {
+    private fun _handleCommand(command: Command): Observable<Unit> {
         logger.debug("_handleCommand() [method:$command]")
 
         if (this.closed) {
             command.observableEmitter!!.onError(Throwable(""))
-            return Observable.just("")
+            return Observable.just(Unit)
         }
 
         var promiseHolder = PromiseHolder(null)
         this.emit("exec", command, promiseHolder)
 
-        return Observable.just("")
+        return Observable.just(Unit)
             .flatMap {
                 promiseHolder.promise
             }
             .flatMap { result: Any ->
-                Observable.create(ObservableOnSubscribe<String> {
+                Observable.create(ObservableOnSubscribe<Unit> {
                     logger.debug("_handleCommand() | command succeeded [method:$command.method]")
 
                     if (this.closed) {
@@ -91,7 +91,7 @@ class CommandQueue : EventEmitter() {
                         command.observableEmitter!!.onNext(result)
                     }
                     //next
-                    it.onNext(result as String)
+                    it.onNext(Unit)
                 })
             }
     }

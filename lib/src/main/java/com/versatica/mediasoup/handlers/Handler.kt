@@ -544,9 +544,7 @@ class RecvHandler(
         return Observable.just(Unit)
             .flatMap {
                 //only for test
-                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo
-
-                        > = HashMap()
+                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo> = HashMap()
 
                 val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)

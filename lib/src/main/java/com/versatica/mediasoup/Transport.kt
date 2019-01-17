@@ -9,13 +9,13 @@ import io.reactivex.ObservableOnSubscribe
 import org.webrtc.MediaStreamTrack
 
 val DEFAULT_STATS_INTERVAL = 1000
-val logger = Logger("Transport")
 
 class Transport(
     direction: String,
     extendedRtpCapabilities: RTCExtendedRtpCapabilities,
     settings: RoomOptions,
-    appData: Any? = null
+    appData: Any? = null,
+    private var logger: Logger = Logger("Transport")
 ) : EnhancedEventEmitter(logger) {
     // Id.
     val _id = Utils.randomNumber()
@@ -63,6 +63,61 @@ class Transport(
         }
         this._handleHandler()
     }
+
+    /**
+     * Transport id.
+     *
+     * @return {Number}
+     */
+    fun id(): Int {
+        return this._id
+    }
+
+    /**
+     * Whether the Transport is closed.
+     *
+     * @return {Boolean}
+     */
+    fun closed(): Boolean {
+        return this._closed
+    }
+
+    /**
+     * Transport direction.
+     *
+     * @return {String}
+     */
+    fun direction(): String {
+        return this._direction
+    }
+
+    /**
+     * App custom data.
+     *
+     * @return {Any}
+     */
+    fun appData(): Any? {
+        return this._appData
+    }
+
+    /**
+     * Connection state.
+     *
+     * @return {String}
+     */
+    fun connectionState(): String {
+        return this._connectionState
+    }
+
+    /**
+     * Device handler.
+     *
+     * @return {Handler}
+     */
+    fun handler(): Handler? {
+        return this._handler
+    }
+
 
     /**
      * Close the Transport.
@@ -676,105 +731,11 @@ class Transport(
 
 }
 
-class RestartTransportRequest {
-    var id: Int? = 0
-}
-
-class EnableTransportStatsNotify {
-    var id: Int? = 0
-    var interval: Int? = 0
-}
-
-class DisableTransportStatsNotify {
-    var id: Int? = 0
-    var interval: Int? = 0
-}
-
-class CreateTransportRequest {
-    var id: Int? = 0
-    var direction: String? = null
-    var options: TransportOptions? = null
-    var appData: Any? = null
-    var dtlsParameters: RTCDtlsParameters? = null
-}
-
 class UpdateTransportNotify {
+    val method: String = "updateTransport"
+    val target: String = "peer"
     var id: Int? = 0
     var dtlsParameters: RTCDtlsParameters? = null
-}
-
-class updateProducerNotify {
-    var id: Int? = 0
-    var rtpParameters: RTCRtpParameters? = null
-}
-
-class PauseProducerNotify {
-    var id: Int? = 0
-    var appData: Any? = null
-}
-
-class EnableProducerStatsNotify {
-    var id: Int? = 0
-    var interval: Int? = 0
-}
-
-class ResumeProducerNotify {
-    var id: Int? = 0
-    var appData: Any? = null
-}
-
-class DisableProducerStatsNotify {
-    var id: Int? = 0
-}
-
-class PauseConsumerNotify {
-    var id: Int? = 0
-    var appData: Any? = null
-}
-
-class ResumeConsumerNotify {
-    var id: Int? = 0
-    var appData: Any? = null
-}
-
-class SetConsumerPreferredProfileNotify {
-    var id: Int? = 0
-    var profile: String? = null
-}
-
-class EnableConsumerStatsNotify {
-    var id: Int? = 0
-    var interval: Int? = 0
-}
-
-class DisableConsumerStatsNotify {
-    var id: Int? = 0
-}
-
-class CreateProducerRequest {
-    var id: Int? = 0
-    var kind: String? = null
-    var transportId: Int? = null
-    var rtpParameters: RTCRtpParameters? = null
-    var paused: Boolean = false
-    var appData: Any? = null
-}
-
-class EnableConsumerRequest {
-    var id: Int? = 0
-    var transportId: Int? = null
-    var paused: Boolean = false
-    var preferredProfile: String? = null
-}
-
-class CloseTransportNotify {
-    var id: Int? = 0
-    var appData: Any? = null
-}
-
-class CloseProducerNotify {
-    var id: Int? = 0
-    var appData: Any? = null
 }
 
 data class ReplaceProducerTrackInfo(

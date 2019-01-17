@@ -19,8 +19,10 @@ class TransportOptions {
 }
 
 class RoomOptions {
+    //roomSettings
+    var roomSettings: QueryRoomResponse? = null
     //Timeout for mediasoup protocol sent requests (in milliseconds)
-    var requestTimeout: Int = 10000
+    var requestTimeout: Int = 30000
     //Options for created transports.
     var transportOptions: TransportOptions = TransportOptions()
     //Array of TURN servers.
