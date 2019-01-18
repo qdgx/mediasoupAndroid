@@ -496,7 +496,7 @@ class Transport(
      *
      * @param {Object} stats
      */
-    fun remoteStats(stats: RTCStats) {
+    fun remoteStats(stats: ArrayList<RTCTransportStats>) {
         this.safeEmit("stats", stats)
     }
 

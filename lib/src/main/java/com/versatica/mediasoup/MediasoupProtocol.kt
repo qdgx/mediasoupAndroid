@@ -71,8 +71,11 @@ class PeerData {
 class ConsumerData {
     var id: Int = 0
     var kind: String = ""
+    var peerName: String = ""
     var rtpParameters: RTCRtpParameters = RTCRtpParameters()
     var paused: Boolean = false
+    var preferredProfile: String = ""
+    var effectiveProfile: String = "default"
     var appData: Any? = null
 }
 
@@ -306,6 +309,15 @@ class TransportStatsNotify : MediasoupNotify(
     var stats: ArrayList<RTCTransportStats> = ArrayList()
 }
 
+//producerPaused [notification]
+class ProducerPausedNotify : MediasoupNotify(
+    "producerPaused",
+    "peer"
+) {
+    var id: Int = 0
+    var appData: Any? = null
+}
+
 //producerResumed [notification]
 class ProducerResumedNotify : MediasoupNotify(
     "producerResumed",
@@ -338,9 +350,7 @@ class NewPeerNotify : MediasoupNotify(
     "newPeer",
     "peer"
 ) {
-    var name: String = ""
-    var consumers: ArrayList<ConsumerData> = ArrayList()
-    var appData: Any? = null
+    var peerData: PeerData = PeerData()
 }
 
 //peerClosed [notification]
@@ -357,13 +367,16 @@ class NewConsumerNotify : MediasoupNotify(
     "newConsumer",
     "peer"
 ) {
+    var consumerData: ConsumerData = ConsumerData()
+}
+
+//consumerClosed [notification]
+class ConsumerClosedNotify : MediasoupNotify(
+    "consumerClosed",
+    "peer"
+) {
     var id: Int = 0
-    var kind: String? = ""
-    var peerName: String? = ""
-    var rtpParameters: RTCRtpParameters? = null
-    var paused: Boolean? = false
-    var preferredProfile: String = ""
-    var effectiveProfile: String? = "default"
+    val peerName: String = ""
     var appData: Any? = null
 }
 
@@ -413,6 +426,7 @@ class ConsumerStatsNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
+    val peerName: String = ""
     val stats: ArrayList<RTCTransportStats> = ArrayList()
 }
 
