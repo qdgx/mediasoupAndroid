@@ -5,39 +5,39 @@ import com.versatica.mediasoup.handlers.Handler
 import com.versatica.mediasoup.handlers.sdp.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import org.webrtc.MediaStreamTrack
 import java.util.*
 import kotlin.collections.ArrayList
 
-val logger = Logger("Transport")
 
 /**
  * Room class.
  *
- * @param {Object} [options]
- * @param {Object} [options.roomSettings] Remote room settings, including its RTP
+ * @param {Object} options
+ * @param {Object} options.roomSettings Remote room settings, including its RTP
  * capabilities, mandatory codecs, etc. If given, no "queryRoom" request is sent
  * to the server to discover them.
- * @param {Number} [options.requestTimeout=10000] - Timeout for sent requests
+ * @param {Number} options.requestTimeout=10000 - Timeout for sent requests
  * (in milliseconds). Defaults to 10000 (10 seconds).
- * @param {Object} [options.transportOptions] - Options for Transport created in mediasoup.
- * @param {Array<RTCIceServer>} [options.turnServers] - Array of TURN servers.
- * @param {RTCIceTransportPolicy} [options.iceTransportPolicy] - ICE transport policy.
- * @param {Boolean} [options.spy] - Whether this is a spy peer.
+ * @param {Object} options.transportOptions - Options for Transport created in mediasoup.
+ * @param {Array<RTCIceServer>} options.turnServers - Array of TURN servers.
+ * @param {RTCIceTransportPolicy} options.iceTransportPolicy - ICE transport policy.
+ * @param {Boolean} options.spy - Whether this is a spy peer.
  *
  * @throws {Error} if device is not supported.
  *
  * @emits {request: Object, callback: Function, errback: Function} request
  * @emits {notification: Object} notify
  * @emits {peer: Peer} newpeer
- * @emits {originator: String, [appData]: Any} close
+ * @emits {originator: String, appData: Any} close
  */
 
 class Room(
     options: RoomOptions,
-    private var logger: Logger = Logger("Transport")
+    private var logger: Logger = Logger("Room")
 ): EnhancedEventEmitter(logger){
     // Computed settings.
-    private lateinit var _settings: RoomOptions
+    private var _settings: RoomOptions
 
     // Room state
     private var _state = RoomState.NEW
@@ -247,7 +247,7 @@ class Room(
 
                 this._sendRequest(joinRequest)
                     .flatMap { response ->
-                        var joinResponse = JSON.parseObject(response,JoinResponse::class.java)
+                        val joinResponse = JSON.parseObject(response,JoinResponse::class.java)
 
                         Observable.create(ObservableOnSubscribe<ArrayList<PeerData>> {
                             //next
@@ -288,7 +288,7 @@ class Room(
             return
 
         // Send a notification.
-        var leaveNotification = LeaveNotification()
+        val leaveNotification = LeaveNotification()
         leaveNotification.appData = appData
         this._sendNotification(leaveNotification)
 
@@ -405,7 +405,6 @@ class Room(
         this._transports.put(transport.id(), transport)
 
         transport.on("@request") {
-            val method = it[0] as String
             val data = it[1] as MediasoupRequest
             val callback = it[2] as Function1<Any, Unit>
             val errback = it[3] as Function1<Any, Unit>
@@ -421,7 +420,6 @@ class Room(
         }
 
         transport.on("@notify"){
-            val method = it[0] as String
             val data = it[1] as MediasoupNotify
             this._sendNotification(data)
         }
@@ -431,6 +429,302 @@ class Room(
         }
 
         return transport
+    }
+
+    /**
+     * Creates a Producer.
+     *
+     * @param {MediaStreamTrack} track
+     * @param {Object} options
+     * @param {Object} options.simulcast
+     * @param {Any} appData - App custom data.
+     *
+     * @return {Producer}
+     *
+     * @throws {InvalidStateError} if not joined.
+     * @throws {TypeError} if wrong arguments.
+     * @throws {Error} if cannot send the given kindor we are a spy peer.
+     */
+    fun createProducer(track: MediaStreamTrack?,
+                       options: Any? = null,
+                       appData: Any? = null): Any{
+        logger.debug("createProducer() [track:${track.toString()}, options:%o]")
+
+        if (!this.joined()){
+            throw InvalidStateError("invalid state ${this._state}")
+        }else if (this._settings.spy){
+            throw Error("a spy peer cannot send media to the room")
+        }else if (track == null){
+            throw Error("no track given")
+        }else if (track.state() === MediaStreamTrack.State.ENDED){
+            throw Error("track.readyState is ended")
+        }
+
+        when (track.kind()) {
+            "audio" -> {
+                throw Error("cannot send [audio]")
+            }
+            "video" -> {
+                throw Error("cannot send [video]")
+            }
+            else -> throw Error("cannot send ${track.kind()}")
+        }
+
+        //options = options || {}
+
+        // Create a new Producer.
+        //val producer =  Producer(track, options, appData)
+
+        // Store it.
+        //this._producers.set(producer.id, producer)
+
+//        producer.on("@close", () =>
+//        {
+//            this._producers.delete(producer.id)
+//        })
+//
+//        return producer
+        return Unit
+    }
+
+    /**
+     * Produce a ICE restart in all the Transports.
+     */
+    fun restartIce(){
+        if (!this.joined()){
+            logger.warn("restartIce() | invalid state ${this._state}")
+            return
+        }
+
+        for (transport in ArrayList(this._transports.values)){
+            transport.restartIce()
+        }
+    }
+
+    /**
+     * Provide the local Room with a notification generated by mediasoup server.
+     *
+     * @param {Object} notification
+     */
+    fun receiveNotification(notification: MediasoupNotify): Observable<Unit>{
+        if (this.closed()){
+            return  Observable.create {
+                it.onError(InvalidStateError("Room closed"))
+            }
+        }else if (!notification.notification){
+            return  Observable.create {
+                it.onError(Throwable("not a notification"))
+            }
+        }
+
+        val method = notification.method
+
+        logger.debug("receiveNotification() [method:%s, notification:%o]")
+
+        return  Observable.just(Unit)
+            .flatMap {
+                when(method){
+                    "closed" ->{
+                        val appData = (notification as ClosedNotify).appData
+                        this.remoteClose(appData)
+                    }
+                    "transportClosed" ->{
+                        val id = (notification as TransportClosedNotify).id
+                        val appData = notification.appData
+                        val transport = this._transports[id]
+
+                        if (transport == null)
+                            throw  Error("Transport not found [id:${id}]")
+
+                        transport.remoteClose(appData,false)
+                    }
+                    "transportStats" ->{
+                        val id = (notification as TransportStatsNotify).id
+                        val stats = notification.stats
+                        val transport = this._transports[id]
+
+                        if (transport == null)
+                            throw  Error("Transport not found [id:${id}]")
+
+                        transport.remoteStats(stats)
+                    }
+                    "newPeer" ->{
+                        val name = (notification as NewPeerNotify).peerData.name
+
+                        if (this._peers.containsKey(name))
+                            throw  Error("Peer already exists [name: $name]")
+
+                        val peerData = notification.peerData
+
+                        this._handlePeerData(peerData)
+                    }
+                    "peerClosed" ->{
+                        val peerName = (notification as PeerClosedNotify).name
+                        val appData = notification.appData
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        peer.remoteClose(appData)
+                    }
+                    "producerPaused" ->{
+                        val id = (notification as ProducerPausedNotify).id
+                        val appData = notification.appData
+                        val producer = this._producers[id]
+
+                        if (producer == null)
+                            throw Error("Producer not found [id: $id]")
+
+                        //producer.remotePause(appData)
+                    }
+                    "producerResumed" ->{
+                        val id = (notification as ProducerResumedNotify).id
+                        val appData = notification.appData
+                        val producer = this._producers[id]
+
+                        if (producer == null)
+                            throw Error("Producer not found [id: $id]")
+
+                        //producer.remoteResume(appData)
+                    }
+                    "producerClosed" ->{
+                        val id = (notification as ProducerClosedNotify).id
+                        val appData = notification.appData
+                        val producer = this._producers[id]
+
+                        if (producer == null)
+                            throw Error("Producer not found [id: $id]")
+
+                        //producer.remoteClose(appData)
+                    }
+                    "producerStats" ->{
+                        val id = (notification as ProducerStatsNotify).id
+                        val stats = notification.stats
+                        val producer = this._producers[id]
+
+                        if (producer == null)
+                            throw Error("Producer not found [id: $id]")
+
+                        //producer.remoteStats(stats)
+                    }
+                    "newConsumer" ->{
+                        val peerName = (notification as NewConsumerNotify).consumerData.peerName
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name $peerName]")
+
+                        val consumerData = notification.consumerData
+
+                        this._handleConsumerData(consumerData, peer)
+                    }
+                    "consumerClosed" ->{
+                        val id = (notification as ConsumerClosedNotify).id
+                        val peerName = notification.peerName
+                        val appData = notification.appData
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        val consumer = peer.getConsumerById(id)
+
+                        if(consumer == null)
+                            throw Error("`Consumer not found [id: $id]")
+
+                        //consumer.remoteClose(appData)
+                    }
+                    "consumerPaused" ->{
+                        val id = (notification as ConsumerPausedNotify).id
+                        val peerName = notification.peerName
+                        val appData = notification.appData
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        val consumer = peer.getConsumerById(id)
+
+                        if(consumer == null)
+                            throw Error("`Consumer not found [id: $id]")
+
+                        //consumer.remotePause(appData)
+                    }
+                    "consumerResumed" ->{
+                        val id = (notification as ConsumerResumedNotify).id
+                        val peerName = notification.peerName
+                        val appData = notification.appData
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        val consumer = peer.getConsumerById(id)
+
+                        if(consumer == null)
+                            throw Error("`Consumer not found [id: $id]")
+
+                        //consumer.remoteResume(appData)
+                    }
+                    "consumerPreferredProfileSet" ->{
+                        val id = (notification as ConsumerPreferredProfileSetNotify).id
+                        val peerName = notification.peerName
+                        val profile = notification.profile
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        val consumer = peer.getConsumerById(id)
+
+                        if(consumer == null)
+                            throw Error("`Consumer not found [id: $id]")
+
+                        //consumer.remoteSetPreferredProfile(profile)
+                    }
+                    "consumerEffectiveProfileChanged" ->{
+                        val id = (notification as ConsumerEffectiveProfileChangedNotify).id
+                        val peerName = notification.peerName
+                        val profile = notification.profile
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        val consumer = peer.getConsumerById(id)
+
+                        if(consumer == null)
+                            throw Error("`Consumer not found [id: $id]")
+
+                        //consumer.remoteEffectiveProfileChanged(profile)
+                    }
+                    "consumerStats" ->{
+                        val id = (notification as ConsumerStatsNotify).id
+                        val peerName = notification.peerName
+                        val stats = notification.stats
+                        val peer = this._peers[peerName]
+
+                        if (peer == null)
+                            throw Error("no Peer found [name: $peerName]")
+
+                        val consumer = peer.getConsumerById(id)
+
+                        if(consumer == null)
+                            throw Error("`Consumer not found [id: $id]")
+
+                        //consumer.remoteStats(stats)
+                    }
+                    else ->{
+                        throw Error("unknown notification method ${method}")
+                    }
+                }
+
+                Observable.create(ObservableOnSubscribe<Unit> {
+                    //next
+                    it.onNext(Unit)
+                })
+            }
     }
     
     fun _sendRequest(request: MediasoupRequest): Observable<String> {
@@ -450,7 +744,7 @@ class Room(
         return Observable.create {
             var done = false
 
-            val timer: Timer= Timer()
+            val timer = Timer()
             timer.schedule(object : TimerTask() {
                 override fun run() {
                     logger.error("request failed [method:${request.method}]: timeout")
@@ -461,7 +755,7 @@ class Room(
             }, this._settings.requestTimeout)
 
             //success callback
-            var callback = callback@{ response: String ->
+            val callback = callback@{ response: String ->
                 if (done)
                     return@callback
 
@@ -483,7 +777,7 @@ class Room(
             }
 
             //error callback
-            var errback = errback@{ error: Error ->
+            val errback = errback@{ error: Error ->
                 if (done)
                     return@errback
 
@@ -509,7 +803,7 @@ class Room(
             }
 
             //need to change obj to jsonString
-            this.safeEmit("request",JSON.toJSONString(request), callback, errback)
+            this.safeEmit("request",request, callback, errback)
         }
     }
 
