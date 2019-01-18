@@ -460,16 +460,6 @@ class Room(
             throw Error("track.readyState is ended")
         }
 
-//        when (track.kind()) {
-//            "audio" -> {
-//                throw Error("cannot send [audio]")
-//            }
-//            "video" -> {
-//                throw Error("cannot send [video]")
-//            }
-//            else -> throw Error("cannot send ${track.kind()}")
-//        }
-
         // Create a new Producer.
         val producer = Producer(track, options, appData)
 

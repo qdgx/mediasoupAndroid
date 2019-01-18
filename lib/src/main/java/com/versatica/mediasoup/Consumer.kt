@@ -52,7 +52,7 @@ class Consumer(
 
     // Preferred profile.
     // @type {String}
-    private var _preferredProfile = "default"
+    var _preferredProfile = "default"
 
     // Effective profile.
     // @type {String}

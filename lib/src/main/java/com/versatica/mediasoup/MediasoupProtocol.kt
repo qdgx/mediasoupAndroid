@@ -230,7 +230,7 @@ class EnableConsumerRequest : MediasoupRequest(
 class EnableConsumerResponse {
     var paused: Boolean = false
     var preferredProfile: String = ""
-    var effectiveProfile: String? = "default"
+    var effectiveProfile: String = "default"
 }
 
 //pauseConsumer [notification]

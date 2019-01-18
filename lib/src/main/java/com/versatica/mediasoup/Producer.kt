@@ -38,7 +38,7 @@ class Producer(
 
     // Simulcast.
     // @type {Object|false}
-    private var simulcast: Any = false
+    var simulcast: Any = false
 
     // Associated Transport.
     // @type {Transport}

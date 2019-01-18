@@ -530,7 +530,7 @@ data class ConsumerInfo(
     var trackId: String,
     var ssrc: Int,
     var cname: String,
-    var mid: String,
-    var closed: Boolean,
-    var rtxSsrc: Int?
+    var mid: String = "",
+    var closed: Boolean = false,
+    var rtxSsrc: Int? = 0
 )

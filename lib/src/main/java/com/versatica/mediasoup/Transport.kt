@@ -6,6 +6,7 @@ import com.versatica.mediasoup.handlers.SendHandler
 import com.versatica.mediasoup.handlers.sdp.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
 
 val DEFAULT_STATS_INTERVAL = 1000
@@ -256,7 +257,7 @@ class Transport(
      *
      * @return {Promise}
      */
-    fun addProducer(producer: Any): Observable<Any> {
+    fun addProducer(producer: Producer): Observable<Any> {
         logger.debug("addProducer() [producer:$producer]")
 
         if (this._closed) {
@@ -279,7 +280,7 @@ class Transport(
      * @private
      */
     fun removeProducer(
-        producer: Any,
+        producer: Producer,
         originator: String,
         appData: Any? = null
     ) {
@@ -292,7 +293,7 @@ class Transport(
 
         if (originator === "local") {
             val data = CloseProducerNotify()
-            //data.id = producer.id
+            data.id = producer.id
             data.appData = appData
 
             this.safeEmit("@notify", "closeProducer", data)
@@ -303,13 +304,13 @@ class Transport(
      * @private
      */
     fun pauseProducer(
-        producer: Any,
+        producer: Producer,
         appData: Any
     ) {
         logger.debug("pauseProducer() [producer:$producer]")
 
         val data = PauseProducerNotify()
-        //data.id =  producer.id
+        data.id =  producer.id
         data.appData = appData
 
         this.safeEmit("@notify", "pauseProducer", data)
@@ -319,13 +320,13 @@ class Transport(
      * @private
      */
     fun resumeProducer(
-        producer: Any,
+        producer: Producer,
         appData: Any
     ) {
         logger.debug("resumeProducer() [producer:$producer]")
 
         val data = ResumeProducerNotify()
-        //data.id =  producer.id
+        data.id =  producer.id
         data.appData = appData
 
         this.safeEmit("@notify", "resumeProducer", data)
@@ -337,7 +338,7 @@ class Transport(
      * @return {Promise}
      */
     fun replaceProducerTrack(
-        producer: Any,
+        producer: Producer,
         track: MediaStreamTrack
     ): Observable<Any> {
         logger.debug("replaceProducerTrack() [producer:$producer]")
@@ -351,13 +352,13 @@ class Transport(
      * @private
      */
     fun enableProducerStats(
-        producer: Any,
+        producer: Producer,
         interval: Int
     ) {
         logger.debug("enableProducerStats() [producer:$producer]")
 
         val data = EnableProducerStatsNotify()
-        //data.id = producer.id
+        data.id = producer.id
         data.interval = interval
 
         this.safeEmit("@notify", "enableProducerStats", data)
@@ -366,11 +367,11 @@ class Transport(
     /**
      * @private
      */
-    fun disableProducerStats(producer: Any) {
+    fun disableProducerStats(producer: Producer) {
         logger.debug("disableProducerStats() [producer:$producer]")
 
         val data = DisableProducerStatsNotify()
-        //data.id = producer.id
+        data.id = producer.id
 
         this.safeEmit("@notify", "disableProducerStats", data)
     }
@@ -384,7 +385,7 @@ class Transport(
      *
      * @return {Promise} Resolves to a remote MediaStreamTrack.
      */
-    fun addConsumer(consumer: Any): Observable<Any> {
+    fun addConsumer(consumer: Consumer): Observable<Any> {
         logger.debug("addConsumer() [consumer:$consumer]")
 
         if (this._closed) {
@@ -406,7 +407,7 @@ class Transport(
     /**
      * @private
      */
-    fun removeConsumer(consumer: Any) {
+    fun removeConsumer(consumer: Consumer) {
         logger.debug("removeConsumer () [consumer:$consumer]")
 
         // Enqueue command.
@@ -417,13 +418,13 @@ class Transport(
      * @private
      */
     fun pauseConsumer(
-        consumer: Any,
+        consumer: Consumer,
         appData: Any
     ) {
         logger.debug("pauseConsumer () [consumer:$consumer]")
 
         val data = PauseConsumerNotify()
-        //data.id = consumer.id
+        data.id = consumer.id
         data.appData = appData
 
         this.safeEmit("@notify", "pauseConsumer", data)
@@ -433,13 +434,13 @@ class Transport(
      * @private
      */
     fun resumeConsumer(
-        consumer: Any,
+        consumer: Consumer,
         appData: Any
     ) {
         logger.debug("resumeConsumer () [consumer:$consumer]")
 
         val data = ResumeConsumerNotify()
-        //data.id = consumer.id
+        data.id = consumer.id
         data.appData = appData
 
         this.safeEmit("@notify", "resumeConsumer", data)
@@ -449,13 +450,13 @@ class Transport(
      * @private
      */
     fun setConsumerPreferredProfile(
-        consumer: Any,
+        consumer: Consumer,
         profile: String
     ) {
         logger.debug("setConsumerPreferredProfile () [consumer:$consumer]")
 
         val data = SetConsumerPreferredProfileNotify()
-        //data.id = consumer.id
+        data.id = consumer.id
         data.profile = profile
 
         this.safeEmit("@notify", "setConsumerPreferredProfile", data)
@@ -465,13 +466,13 @@ class Transport(
      * @private
      */
     fun enableConsumerStats(
-        consumer: Any,
+        consumer: Consumer,
         interval: Int
     ) {
         logger.debug("enableConsumerStats () [consumer:$consumer]")
 
         val data = EnableConsumerStatsNotify()
-        //data.id = consumer.id
+        data.id = consumer.id
         data.interval = interval
 
         this.safeEmit("@notify", "enableConsumerStats", data)
@@ -480,11 +481,11 @@ class Transport(
     /**
      * @private
      */
-    fun disableConsumerStats(consumer: Any) {
+    fun disableConsumerStats(consumer: Consumer) {
         logger.debug("disableConsumerStats () [consumer:$consumer]")
 
         val data = DisableConsumerStatsNotify()
-        //data.id = consumer.id
+        data.id = consumer.id
 
         this.safeEmit("@notify", "disableConsumerStats", data)
     }
@@ -547,11 +548,11 @@ class Transport(
         try {
             when (command.method) {
                 "addProducer" -> {
-                    val producer = command.data
+                    val producer = command.data as Producer
                     promise = this._execAddProducer(producer)
                 }
                 "removeProducer" -> {
-                    val producer = command.data
+                    val producer = command.data as Producer
                     promise = this._execRemoveProducer(producer)
                 }
                 "replaceProducerTrack" -> {
@@ -559,11 +560,11 @@ class Transport(
                     promise = this._execReplaceProducerTrack(data.producer, data.track)
                 }
                 "addConsumer" -> {
-                    val consumer = command.data
+                    val consumer = command.data as Consumer
                     promise = this._execAddConsumer(consumer)
                 }
                 "removeConsumer" -> {
-                    val consumer = command.data
+                    val consumer = command.data as Consumer
                     promise = this._execRemoveConsumer(consumer)
                 }
                 "restartIce" -> {
@@ -586,13 +587,7 @@ class Transport(
         promiseHolder.promise = promise
     }
 
-    private fun _execAddProducer(producer: Any): Observable<Any>? {
-        //only for test
-        val id = 123
-        val locallyPaused = true
-        val kind = "video"
-        val appData = ""
-
+    private fun _execAddProducer(producer: Producer): Observable<Any>? {
         logger.debug("_execAddProducer()")
 
         var producerRtpParameters: RTCRtpParameters
@@ -605,12 +600,12 @@ class Transport(
                 producerRtpParameters = it
 
                 val data = CreateProducerRequest()
-                data.id = id
-                data.kind = kind
+                data.id = producer.id
+                data.kind = producer.kind()
                 data.transportId = this._id
                 data.rtpParameters = producerRtpParameters
-                data.paused = locallyPaused
-                data.appData = appData
+                data.paused = producer.locallyPaused
+                data.appData = producer.appData
 
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
@@ -624,7 +619,7 @@ class Transport(
             }
     }
 
-    private fun _execRemoveProducer(producer: Any): Observable<Any>? {
+    private fun _execRemoveProducer(producer: Producer): Observable<Any>? {
         logger.debug("_execRemoveProducer()")
 
         if (_handler is SendHandler) {
@@ -637,7 +632,7 @@ class Transport(
         }
     }
 
-    private fun _execReplaceProducerTrack(producer: Any, track: MediaStreamTrack): Observable<Any>? {
+    private fun _execReplaceProducerTrack(producer: Producer, track: MediaStreamTrack): Observable<Any>? {
         logger.debug("_execReplaceProducerTrack()")
 
         if (_handler is SendHandler) {
@@ -650,15 +645,10 @@ class Transport(
         }
     }
 
-    private fun _execAddConsumer(consumer: Any): Observable<Any>? {
-        //only for test
-        val id = 123
-        val locallyPaused = true
-        val preferredProfile = "high"
-
+    private fun _execAddConsumer(consumer: Consumer): Observable<Any>? {
         logger.debug("_execAddConsumer()")
 
-        var consumerTrack: Any = Unit
+        var consumerTrack: MediaStreamTrack? = null
 
         // Call the handler.
         return Observable.just(Unit)
@@ -668,38 +658,37 @@ class Transport(
                 consumerTrack = track
 
                 val data = EnableConsumerRequest()
-                data.id = id
+                data.id = consumer.id
                 data.transportId = this._id
-                data.paused = locallyPaused
-                data.preferredProfile = preferredProfile
+                data.paused = consumer.locallyPaused
+                data.preferredProfile = consumer._preferredProfile
 
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
                     this.safeEmitAsPromise(it, "@request", "enableConsumer", data).subscribe()
                 })
             }.flatMap { response ->
-                val paused = true
-                val effectiveProfile = "low"
+                val enableConsumerResponse = response as EnableConsumerResponse
 
-                if (paused){
-                    //consumer.remotePause()
+                if (enableConsumerResponse.paused){
+                    consumer.remotePause()
                 }
 
-                if (preferredProfile.isNotEmpty()){
-                    //consumer.remoteSetPreferredProfile(preferredProfile)
+                if (enableConsumerResponse.preferredProfile.isNotEmpty()){
+                    consumer.remoteSetPreferredProfile(enableConsumerResponse.preferredProfile)
                 }
 
-                if (effectiveProfile.isNotEmpty()){
-                    //consumer.remoteEffectiveProfileChanged(effectiveProfile)
+                if (enableConsumerResponse.effectiveProfile.isNotEmpty()){
+                    consumer.remoteEffectiveProfileChanged(enableConsumerResponse.effectiveProfile)
                 }
 
                 Observable.create(ObservableOnSubscribe<Any> {
-                    it.onNext(consumerTrack)
+                    it.onNext(consumerTrack!!)
                 })
             }
     }
 
-    private fun _execRemoveConsumer(consumer: Any): Observable<Any>? {
+    private fun _execRemoveConsumer(consumer: Consumer): Observable<Any>? {
         logger.debug("_execRemoveConsumer()")
 
         if (_handler is RecvHandler) {
@@ -739,6 +728,6 @@ class UpdateTransportNotify {
 }
 
 data class ReplaceProducerTrackInfo(
-    var producer: Any,
+    var producer: Producer,
     var track: MediaStreamTrack
 )

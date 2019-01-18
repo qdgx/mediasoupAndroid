@@ -2,9 +2,7 @@ package com.versatica.mediasoup.handlers
 
 import com.alibaba.fastjson.JSON
 import com.dingsoft.sdptransform.SdpTransform
-import com.versatica.mediasoup.EnhancedEventEmitter
-import com.versatica.mediasoup.Logger
-import com.versatica.mediasoup.RoomOptions
+import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.sdp.*
 import com.versatica.mediasoup.webrtc.WebRTCModule
 import io.reactivex.Observable
@@ -15,6 +13,7 @@ import org.webrtc.MediaConstraints
 import org.webrtc.MediaStreamTrack
 import org.webrtc.RtpSender
 import org.webrtc.SessionDescription
+import kotlin.collections.HashMap
 
 val logger = Logger("Handle")
 
@@ -155,14 +154,10 @@ class SendHandler(
         this._transportReady = false
     }
 
-    fun addProducer(producer: Any): Observable<RTCRtpParameters> {
-        //only for test
-        val track = MediaStreamTrack(1)
-        val id = 123
-        val simulcast = true
-        val kind = "video"
+    fun addProducer(producer: Producer): Observable<RTCRtpParameters> {
+        val track = producer.track
 
-        logger.debug("addProducer() [id:$id, kind:$kind, trackId:${track.id()}]")
+        logger.debug("addProducer() [id:${producer.id}, kind:${producer.kind()}, trackId:${track.id()}]")
 
         // Add the track id to the Set.
         this._trackIds.add(track.id())
@@ -181,7 +176,7 @@ class SendHandler(
                 var cloneOffer = SessionDescription(offer.type, offer.description)
 
                 // If simulcast is set, mangle the offer.
-                if (simulcast) {
+                if (producer.simulcast is HashMap<*, *>) {
                     logger.debug("addProducer() | enabling simulcast")
 
                     val sdpObject = SdpTransform().parse(cloneOffer.description)
@@ -214,7 +209,7 @@ class SendHandler(
 
                 this._pc.setRemoteDescription(answer)
             }.flatMap {
-                val rtpParameters = this._rtpParametersByKind[kind]
+                val rtpParameters = this._rtpParametersByKind[producer.kind()]
 
                 // Fill the RTP parameters for this track.
                 fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track)
@@ -226,18 +221,15 @@ class SendHandler(
             }
     }
 
-    fun removeProducer(producer: Any): Observable<Any> {
-        //only for test
-        val track = MediaStreamTrack(1)
-        val id = 123
-        val kind = "video"
+    fun removeProducer(producer: Producer): Observable<Any> {
+        val track = producer.track
 
         if (!this._trackIds.contains(track.id()))
             return Observable.create {
                 it.onError(Throwable("track not found"))
             }
 
-        logger.debug("removeProducer() [id:$id, kind:$kind, trackId:${track.id()}]")
+        logger.debug("removeProducer() [id:${producer.id}, kind:${producer.kind()}, trackId:${track.id()}]")
 
         return Observable.just(Unit)
             .flatMap {
@@ -257,7 +249,7 @@ class SendHandler(
 
                 this._pc.createOffer(MediaConstraints())
             }.flatMap { offer ->
-                logger.debug("removeProducer() | calling pc.setLocalDescription() [offer:${offer.toString()}]")
+                logger.debug("removeProducer() | calling pc.setLocalDescription() [offer:$offer]")
 
                 this._pc.setLocalDescription(offer)
             }.flatMap {
@@ -270,22 +262,18 @@ class SendHandler(
                     val remoteSdp = (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
                     val answer = SessionDescription(SessionDescription.Type.fromCanonicalForm("answer"), remoteSdp)
 
-                    logger.debug("removeProducer() | calling pc.setRemoteDescription() [answer:${answer.toString()}]")
+                    logger.debug("removeProducer() | calling pc.setRemoteDescription() [answer:$answer]")
 
                     this._pc.setRemoteDescription(answer)
                 }
             }
     }
 
-    fun replaceProducerTrack(producer: Any,
+    fun replaceProducerTrack(producer: Producer,
                              track: MediaStreamTrack): Observable<Any> {
-        //only for test
-        val id = 123
-        val kind = "video"
+        logger.debug("replaceProducerTrack() [id:${producer.id}, kind:${producer.kind()}, trackId:${track.id()}]")
 
-        val oldTrack = MediaStreamTrack(2)
-
-        logger.debug("replaceProducerTrack() [id:$id, kind:$kind, trackId:${track.id()}]")
+        val oldTrack = producer.track
 
         return Observable.just(Unit)
             .flatMap {
@@ -414,32 +402,30 @@ class RecvHandler(
         this._transportUpdated = false
     }
 
-    fun addConsumer(consumer: Any): Observable<MediaStreamTrack> {
-        //only for test
-        val id = 123
-        val kind = "video"
-        val encoding = RtpEncoding()
-        val cname = "cname"
-        val rtxSsrc = 234
+    fun addConsumer(consumer: Consumer): Observable<MediaStreamTrack> {
+        logger.debug("addConsumer() [id:${consumer.id}, kind:${consumer.kind}]")
 
+        if (this._consumerInfos.containsKey(consumer.id))
+            return  Observable.create {
+                it.onError(Error("Consumer already added"))
+            }
+
+        val encoding = consumer.rtpParameters.encodings?.get(0)
+        val cname = consumer.rtpParameters.rtcp?.cname
         val consumerInfo: ConsumerInfo = ConsumerInfo(
-            kind,
-            "recv-stream-$id",
-            "consumer-$kind-$id",
-            0,
-            cname,
-            "",
-            false,
-            rtxSsrc
+            consumer.kind,
+            "recv-stream-${consumer.id}",
+            "consumer-${consumer.kind}-${consumer.id}",
+            encoding?.ssrc!!,
+            cname!!
         )
 
-        logger.debug("addConsumer() [id:$id, kind:$kind]")
+        //csb mybe wrong
+        if (encoding.rtx !=null && encoding.rtx!![encoding.ssrc!!] != null)
+            consumerInfo.rtxSsrc = encoding.rtx!![encoding.ssrc!!]
 
-        if (encoding.rtx !=null && encoding.rtx!![encoding.ssrc] !=null)
-            consumerInfo.rtxSsrc = encoding.rtx!![encoding.ssrc]
-
-        this._consumerInfos[id] = consumerInfo
-        this._kinds.add(kind)
+        this._consumerInfos[consumer.id] = consumerInfo
+        this._kinds.add(consumer.kind)
 
         return Observable.just(Unit)
             .flatMap {
@@ -453,9 +439,6 @@ class RecvHandler(
                 }
             }
             .flatMap {
-                //only for test
-                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo> = HashMap()
-
                 val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
 
@@ -500,23 +483,16 @@ class RecvHandler(
             }
     }
 
-    fun removeConsumer(consumer: Any): Observable<Any> {
-        //only for test
-        val id = 123
-        val kind = "video"
+    fun removeConsumer(consumer: Consumer): Observable<Any> {
+        logger.debug("removeConsumer() [id:${consumer.id}, kind:${consumer.kind}]")
 
-        logger.debug("removeConsumer() [id:$id, kind:$kind]")
-
-        if (!this._consumerInfos.contains(id))
+        if (!this._consumerInfos.contains(consumer.id))
             return Observable.create {
                 it.onError(Throwable("Consumer not found"))
             }
 
         return Observable.just(Unit)
             .flatMap {
-                //only for test
-                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo> = HashMap()
-
                 val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
 
@@ -543,9 +519,6 @@ class RecvHandler(
 
         return Observable.just(Unit)
             .flatMap {
-                //only for test
-                val _consumerInfos: HashMap<Int,com.versatica.mediasoup.handlers.sdp.ConsumerInfo> = HashMap()
-
                 val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
 
