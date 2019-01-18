@@ -1,7 +1,6 @@
 package com.versatica.mediasoup
 
 import com.versatica.mediasoup.handlers.sdp.*
-import org.webrtc.RTCStats
 
 /**
  * mediasoup protocol
@@ -430,7 +429,7 @@ class ConsumerStatsNotify : MediasoupNotify(
     val stats: ArrayList<RTCTransportStats> = ArrayList()
 }
 
-
-
-
-
+class SimulcastOptions {
+    var simulcast: HashMap<String, Int>? = null
+    var enabled = false
+}

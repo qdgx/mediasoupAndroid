@@ -1,6 +1,5 @@
 package com.versatica.mediasoup
 
-import com.dingsoft.sdptransform.MediaAttributes
 import com.versatica.mediasoup.handlers.sdp.RTCRtpParameters
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
@@ -10,8 +9,11 @@ import org.webrtc.MediaStreamTrack
  * @author wolfhan
  */
 
-class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var appData: Any) :
-    EnhancedEventEmitter(logger = Logger("Producer")) {
+class Producer(
+    var track: MediaStreamTrack, var options: SimulcastOptions?, var appData: Any?,
+    private var logger: Logger = Logger("Producer")
+) :
+    EnhancedEventEmitter(logger) {
 
     val DEFAULT_STATS_INTERVAL = 1000
     val SIMULCAST_DEFAULT = mapOf(
@@ -63,10 +65,13 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
     var statsInterval = DEFAULT_STATS_INTERVAL
 
     init {
-//            if (typeof options.simulcast === 'object')
-//    this._simulcast = Object.assign({}, SIMULCAST_DEFAULT, options.simulcast)
-//    else if (options.simulcast === true)
-//    this._simulcast = Object.assign({}, SIMULCAST_DEFAULT)
+        if (options?.enabled == true && options?.simulcast != null) {
+            val map = hashMapOf<String, Int>()
+            map.putAll(SIMULCAST_DEFAULT)
+            map.putAll(options?.simulcast as HashMap)
+            this.simulcast = map
+        } else if (options?.enabled == true)
+            this.simulcast = SIMULCAST_DEFAULT
 
         // Handle the effective track.
         this.handleTrack()
@@ -91,7 +96,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun close(appData: Any) {
+    fun close(appData: Any?) {
         logger.debug("close()")
 
         if (this.closed)
@@ -112,8 +117,8 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
 
         this.destroy()
 
-        this.emit("@close", "local", appData)
-        this.safeEmit("close", "local", appData)
+        this.emit("@close", "local", appData ?: "")
+        this.safeEmit("close", "local", appData ?: "")
     }
 
     /**
@@ -124,7 +129,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun remoteClose(appData: Any) {
+    fun remoteClose(appData: Any?) {
         logger.debug("remoteClose()")
 
         if (this.closed)
@@ -137,12 +142,12 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
 
         this.destroy()
 
-        this.emit("@close", "remote", appData)
-        this.safeEmit("close", "remote", appData)
+        this.emit("@close", "remote", appData ?: "")
+        this.safeEmit("close", "remote", appData ?: "")
     }
 
     fun destroy() {
-//        this.transport = false
+        this.transport = null
         this.rtpParameters = null
 
         try {
@@ -236,7 +241,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun remotePause(appData: Any) {
+    fun remotePause(appData: Any?) {
         logger.debug("remotePause()")
 
         if (this.closed || this.remotelyPaused)
@@ -245,7 +250,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
         this.remotelyPaused = true
         this.track.setEnabled(false)
 
-        this.safeEmit("pause", "remote", appData)
+        this.safeEmit("pause", "remote", appData ?: "")
     }
 
     /**
@@ -255,7 +260,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
      *
      * @return {Boolean} true if not paused.
      */
-    fun resume(appData: Any): Boolean {
+    fun resume(appData: Any?): Boolean {
         logger.debug("resume()")
 
         if (this.closed) {
@@ -272,9 +277,9 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
             this.track.setEnabled(true)
 
         if (this.transport != null)
-            this.transport?.resumeProducer(this, appData)
+            this.transport?.resumeProducer(this, appData ?: "")
 
-        this.safeEmit("resume", "local", appData)
+        this.safeEmit("resume", "local", appData ?: "")
 
         // Return true if not paused.
         return !this.paused()
@@ -288,7 +293,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun remoteResume(appData: Any) {
+    fun remoteResume(appData: Any?) {
         logger.debug("remoteResume()")
 
         if (this.closed || !this.remotelyPaused)
@@ -299,7 +304,7 @@ class Producer(var track: MediaStreamTrack, var options: MediaAttributes, var ap
         if (!this.locallyPaused)
             this.track.setEnabled(true)
 
-        this.safeEmit("resume", "remote", appData)
+        this.safeEmit("resume", "remote", appData ?: "")
     }
 
     /**

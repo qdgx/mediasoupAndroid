@@ -51,7 +51,7 @@ class Room(
 
     // Map of Producers indexed by id.
     // @type {map<Number, Producer>}
-    private val _producers: HashMap<Int, Any> = HashMap()
+    private val _producers: HashMap<Int, Producer> = HashMap()
 
     // Map of Peers indexed by name.
     // @type {map<String, Peer>}
@@ -305,7 +305,7 @@ class Room(
 
         // Close all the Producers.
         for (producer in ArrayList(this._producers.values)){
-            //producer.close()
+            producer.close(appData)
         }
 
         // Close all the Peers.
@@ -338,7 +338,7 @@ class Room(
 
         // Close all the Producers.
         for (producer in ArrayList(this._producers.values)){
-            //producer.remoteClose()
+            producer.remoteClose(appData)
         }
 
         // Close all the Peers.
@@ -446,9 +446,9 @@ class Room(
      * @throws {Error} if cannot send the given kindor we are a spy peer.
      */
     fun createProducer(track: MediaStreamTrack?,
-                       options: Any? = null,
-                       appData: Any? = null): Any{
-        logger.debug("createProducer() [track:${track.toString()}, options:%o]")
+                       options: SimulcastOptions? = null,
+                       appData: Any? = null): Producer{
+        logger.debug("createProducer() [track:${track.toString()}, options:$options]")
 
         if (!this.joined()){
             throw InvalidStateError("invalid state ${this._state}")
@@ -460,31 +460,27 @@ class Room(
             throw Error("track.readyState is ended")
         }
 
-        when (track.kind()) {
-            "audio" -> {
-                throw Error("cannot send [audio]")
-            }
-            "video" -> {
-                throw Error("cannot send [video]")
-            }
-            else -> throw Error("cannot send ${track.kind()}")
-        }
-
-        //options = options || {}
+//        when (track.kind()) {
+//            "audio" -> {
+//                throw Error("cannot send [audio]")
+//            }
+//            "video" -> {
+//                throw Error("cannot send [video]")
+//            }
+//            else -> throw Error("cannot send ${track.kind()}")
+//        }
 
         // Create a new Producer.
-        //val producer =  Producer(track, options, appData)
+        val producer = Producer(track, options, appData)
 
         // Store it.
-        //this._producers.set(producer.id, producer)
+        this._producers[producer.id] = producer
 
-//        producer.on("@close", () =>
-//        {
-//            this._producers.delete(producer.id)
-//        })
-//
-//        return producer
-        return Unit
+        producer.on("@close") {
+            this._producers.remove(producer.id)
+        }
+
+        return producer
     }
 
     /**
@@ -576,7 +572,7 @@ class Room(
                         if (producer == null)
                             throw Error("Producer not found [id: $id]")
 
-                        //producer.remotePause(appData)
+                        producer.remotePause(appData)
                     }
                     "producerResumed" ->{
                         val id = (notification as ProducerResumedNotify).id
@@ -586,7 +582,7 @@ class Room(
                         if (producer == null)
                             throw Error("Producer not found [id: $id]")
 
-                        //producer.remoteResume(appData)
+                        producer.remoteResume(appData)
                     }
                     "producerClosed" ->{
                         val id = (notification as ProducerClosedNotify).id
@@ -596,7 +592,7 @@ class Room(
                         if (producer == null)
                             throw Error("Producer not found [id: $id]")
 
-                        //producer.remoteClose(appData)
+                        producer.remoteClose(appData)
                     }
                     "producerStats" ->{
                         val id = (notification as ProducerStatsNotify).id
@@ -606,7 +602,7 @@ class Room(
                         if (producer == null)
                             throw Error("Producer not found [id: $id]")
 
-                        //producer.remoteStats(stats)
+                        producer.remoteStats(stats)
                     }
                     "newConsumer" ->{
                         val peerName = (notification as NewConsumerNotify).consumerData.peerName
@@ -633,7 +629,7 @@ class Room(
                         if(consumer == null)
                             throw Error("`Consumer not found [id: $id]")
 
-                        //consumer.remoteClose(appData)
+                        consumer.remoteClose(appData)
                     }
                     "consumerPaused" ->{
                         val id = (notification as ConsumerPausedNotify).id
@@ -649,7 +645,7 @@ class Room(
                         if(consumer == null)
                             throw Error("`Consumer not found [id: $id]")
 
-                        //consumer.remotePause(appData)
+                        consumer.remotePause(appData)
                     }
                     "consumerResumed" ->{
                         val id = (notification as ConsumerResumedNotify).id
@@ -665,7 +661,7 @@ class Room(
                         if(consumer == null)
                             throw Error("`Consumer not found [id: $id]")
 
-                        //consumer.remoteResume(appData)
+                        consumer.remoteResume(appData)
                     }
                     "consumerPreferredProfileSet" ->{
                         val id = (notification as ConsumerPreferredProfileSetNotify).id
@@ -681,7 +677,7 @@ class Room(
                         if(consumer == null)
                             throw Error("`Consumer not found [id: $id]")
 
-                        //consumer.remoteSetPreferredProfile(profile)
+                        consumer.remoteSetPreferredProfile(profile)
                     }
                     "consumerEffectiveProfileChanged" ->{
                         val id = (notification as ConsumerEffectiveProfileChangedNotify).id
@@ -697,7 +693,7 @@ class Room(
                         if(consumer == null)
                             throw Error("`Consumer not found [id: $id]")
 
-                        //consumer.remoteEffectiveProfileChanged(profile)
+                        consumer.remoteEffectiveProfileChanged(profile)
                     }
                     "consumerStats" ->{
                         val id = (notification as ConsumerStatsNotify).id
@@ -713,7 +709,7 @@ class Room(
                         if(consumer == null)
                             throw Error("`Consumer not found [id: $id]")
 
-                        //consumer.remoteStats(stats)
+                        consumer.remoteStats(stats)
                     }
                     else ->{
                         throw Error("unknown notification method ${method}")
@@ -842,17 +838,16 @@ class Room(
             this.safeEmit("newpeer", peer)
     }
 
-    fun _handleConsumerData(consumerData: ConsumerData,
-                            peer: Peer) {
-        //val consumer = Consumer(id, kind, rtpParameters, peer, appData)
-        val consumer = Consumer()
+    fun _handleConsumerData(consumerData: ConsumerData, peer: Peer) {
+        val consumer =
+            Consumer(consumerData.id, consumerData.kind, consumerData.rtpParameters, peer, consumerData.appData)
         val supported = canReceive(consumerData.rtpParameters, this._extendedRtpCapabilities)
 
-//        if (supported)
-//            consumer.setSupported(true)
-//
-//        if (consumerData.paused)
-//            consumer.remotePause()
+        if (supported)
+            consumer.supported = true
+
+        if (consumerData.paused)
+            consumer.remotePause()
 
         peer.addConsumer(consumer)
     }

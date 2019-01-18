@@ -9,8 +9,11 @@ import org.webrtc.MediaStreamTrack
  * @author wolfhan
  */
 
-class Consumer(var id: Int, var kind: String, var rtpParameters: RTCRtpParameters, var peer: Peer, var appData: Any) :
-    EnhancedEventEmitter(logger = Logger("Consumer")) {
+class Consumer(
+    var id: Int, var kind: String, var rtpParameters: RTCRtpParameters, var peer: Peer, var appData: Any?,
+    private var logger: Logger = Logger("Consumer")
+) :
+    EnhancedEventEmitter(logger) {
 
     val PROFILES = setOf("default", "low", "medium", "high")
     val DEFAULT_STATS_INTERVAL = 1000
@@ -94,7 +97,7 @@ class Consumer(var id: Int, var kind: String, var rtpParameters: RTCRtpParameter
      *
      * @private
      */
-    fun remoteClose() {
+    fun remoteClose(appData: Any? = null) {
         logger.debug("remoteClose()")
 
         if (this.closed)
@@ -223,7 +226,7 @@ class Consumer(var id: Int, var kind: String, var rtpParameters: RTCRtpParameter
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun remotePause(appData: Any) {
+    fun remotePause(appData: Any? = null) {
         logger.debug("remotePause()")
 
         if (this.closed || this.remotelyPaused)
@@ -234,7 +237,7 @@ class Consumer(var id: Int, var kind: String, var rtpParameters: RTCRtpParameter
         if (this.track != null)
             this.track?.setEnabled(false)
 
-        this.safeEmit("pause", "remote", appData)
+        this.safeEmit("pause", "remote", appData ?: "")
     }
 
     /**
@@ -277,7 +280,7 @@ class Consumer(var id: Int, var kind: String, var rtpParameters: RTCRtpParameter
      *
      * @param {Any} [appData] - App custom data.
      */
-    fun remoteResume(appData: Any) {
+    fun remoteResume(appData: Any?) {
         logger.debug("remoteResume()")
 
         if (this.closed || !this.remotelyPaused)
@@ -288,7 +291,7 @@ class Consumer(var id: Int, var kind: String, var rtpParameters: RTCRtpParameter
         if (this.track != null && !this.locallyPaused)
             this.track?.setEnabled(true)
 
-        this.safeEmit("resume", "remote", appData)
+        this.safeEmit("resume", "remote", appData ?: "")
     }
 
     /**
