@@ -9,7 +9,6 @@ import org.webrtc.MediaStreamTrack
 import java.util.*
 import kotlin.collections.ArrayList
 
-val logger = Logger("Transport")
 
 /**
  * Room class.
@@ -35,7 +34,7 @@ val logger = Logger("Transport")
 
 class Room(
     options: RoomOptions,
-    private var logger: Logger = Logger("Transport")
+    private var logger: Logger = Logger("Room")
 ): EnhancedEventEmitter(logger){
     // Computed settings.
     private var _settings: RoomOptions
@@ -804,7 +803,7 @@ class Room(
             }
 
             //need to change obj to jsonString
-            this.safeEmit("request",JSON.toJSONString(request), callback, errback)
+            this.safeEmit("request",request, callback, errback)
         }
     }
 
