@@ -281,7 +281,7 @@ class Transport(
     fun removeProducer(
         producer: Any,
         originator: String,
-        appData: Any
+        appData: Any? = null
     ) {
         logger.debug("removeProducer() [producer:$producer]")
 
