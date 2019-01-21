@@ -33,7 +33,7 @@ import kotlin.collections.ArrayList
  */
 
 class Room(
-    options: RoomOptions,
+    options: RoomOptions? = null,
     private var logger: Logger = Logger("Room")
 ): EnhancedEventEmitter(logger){
     // Computed settings.
