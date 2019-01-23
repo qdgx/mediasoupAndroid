@@ -68,7 +68,8 @@ class App(val roomId: String, val peerName: String) {
 //        });
 
         // Be ready to send mediaSoup client notifications to our remote mediaSoup Peer
-        room.on("notify") { notification ->
+        room.on("notify") { args ->
+            val notification = args[0]
             logger.debug("New notification from local room: $notification")
             socket.emit("mediasoup-notification", notification)
         }
