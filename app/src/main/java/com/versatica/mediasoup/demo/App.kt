@@ -4,9 +4,9 @@ import android.annotation.SuppressLint
 import com.versatica.mediasoup.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import io.socket.client.Ack
 import io.socket.client.IO
 import org.webrtc.AudioTrack
-import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
 
@@ -28,6 +28,7 @@ class App(val roomId: String, val peerName: String) {
     var recvTransport: Transport? = null
 
     // Create a local Room instance associated to the remote Room.
+    @Suppress("UNCHECKED_CAST")
     val roomObj = Room().also { room ->
         room.join(peerName)
             .flatMap {
@@ -47,25 +48,37 @@ class App(val roomId: String, val peerName: String) {
 
         // Event fired by local room when a new remote Peer joins the Room
         room.on("newpeer") {
-            val peer = it as Peer
+            val peer = it[0] as Peer
             logger.debug("A new Peer joined the Room: ${peer.name}")
 
             // Handle the Peer.
             handlePeer(peer)
         }
 
-//        // Event fired by local room
-//        room.on("request", (request, callback, errback) => {
-//            logger.debug("REQUEST: $request")
-//            socket.emit('mediasoup-request', request, (err, response) => {
-//                if (!err) {
-//                    // Success response, so pass the mediasoup response to the local Room.
-//                    callback(response);
-//                } else {
-//                    errback(err);
-//                }
-//            });
-//        });
+        // Event fired by local room
+        room.on("request") {
+            val size = it.size
+            val request = it[0]
+            val ack: Ack?
+            if (size == 3) {
+                val callback = it[1] as Function1<Any, *>
+                val errCallback = it[2] as Function1<Any, *>
+                ack = Ack { subArgs ->
+                    val err = subArgs[0]
+                    val response = subArgs[1]
+                    if (err == null || err == false) {
+                        // Success response, so pass the mediasoup response to the local Room.
+                        callback(response)
+                    } else {
+                        errCallback(err)
+                    }
+                }
+            } else {
+                ack = null
+            }
+            logger.debug("REQUEST: $request")
+            socket.emit("mediasoup-request", request, ack)
+        }
 
         // Be ready to send mediaSoup client notifications to our remote mediaSoup Peer
         room.on("notify") { args ->
@@ -76,7 +89,7 @@ class App(val roomId: String, val peerName: String) {
 
         // Handle notifications from server, as there might be important info, that affects stream
         socket.on("mediasoup-notification") {
-            val notification = it as MediasoupNotify
+            val notification = it[0] as MediasoupNotify
             logger.debug("New notification came from server: $notification")
             room.receiveNotification(notification)
         }
@@ -102,7 +115,7 @@ class App(val roomId: String, val peerName: String) {
         peer.on("newconsumer") {
             logger.debug("Got a new remote Consumer")
             // Handle the Consumer.
-            handleConsumer(it as Consumer)
+            handleConsumer(it[0] as Consumer)
         }
     }
 
@@ -121,14 +134,13 @@ class App(val roomId: String, val peerName: String) {
 
                     val track = it as MediaStreamTrack
                     // Attach the track to a MediaStream and play it.
-                    val stream = MediaStream(0) //todo use real nativeStream instead
-
                     if (consumer.kind === "video") {
-                        stream.addTrack(track as VideoTrack)
+                        val videoTrack = track as VideoTrack
                         //todo add video to ui view
+
                     }
                     if (consumer.kind === "audio") {
-                        stream.addTrack(track as AudioTrack)
+                        val audioTrack = track as AudioTrack
                         //todo add audio to ui view
 
                     }
