@@ -46,35 +46,7 @@ public class VideoCaptureController {
      */
     private VideoCapturer videoCapturer;
 
-//    public VideoCaptureController(CameraEnumerator cameraEnumerator,
-//                                  ReadableMap constraints) {
-//        ReadableMap videoConstraintsMandatory = null;
-//
-//        if (constraints.hasKey("mandatory")
-//                && constraints.getType("mandatory") == ReadableType.Map) {
-//            videoConstraintsMandatory = constraints.getMap("mandatory");
-//        }
-//
-//        String sourceId = getSourceIdConstraint(constraints);
-//        String facingMode = getFacingMode(constraints);
-//
-//        videoCapturer
-//            = createVideoCapturer(cameraEnumerator, sourceId, facingMode);
-//
-//        if (videoConstraintsMandatory != null) {
-//            width = videoConstraintsMandatory.hasKey("minWidth")
-//                ? videoConstraintsMandatory.getInt("minWidth")
-//                : DEFAULT_WIDTH;
-//            height = videoConstraintsMandatory.hasKey("minHeight")
-//                ? videoConstraintsMandatory.getInt("minHeight")
-//                : DEFAULT_HEIGHT;
-//            fps = videoConstraintsMandatory.hasKey("minFrameRate")
-//                ? videoConstraintsMandatory.getInt("minFrameRate")
-//                : DEFAULT_FPS;
-//        }
-//    }
 
-    //csb
     public VideoCaptureController(CameraEnumerator cameraEnumerator,
                                   HashMap constraints) {
         HashMap videoConstraintsMandatory = null;
@@ -242,13 +214,6 @@ public class VideoCaptureController {
      * @return String value of "facingMode" constraints in "GUM" or
      * {@code null} if not specified.
      */
-    //csb
-//    private String getFacingMode(ReadableMap mediaConstraints) {
-//        return
-//                mediaConstraints == null
-//                        ? null
-//                        : ReactBridgeUtil.getMapStrValue(mediaConstraints, "facingMode");
-//    }
     private String getFacingMode(HashMap mediaConstraints) {
         return
             mediaConstraints == null
@@ -265,28 +230,6 @@ public class VideoCaptureController {
      * @return String value of "sourceId" optional "GUM" constraint or
      * {@code null} if not specified.
      */
-//    private String getSourceIdConstraint(ReadableMap mediaConstraints) {
-//        if (mediaConstraints != null
-//                && mediaConstraints.hasKey("optional")
-//                && mediaConstraints.getType("optional") == ReadableType.Array) {
-//            ReadableArray optional = mediaConstraints.getArray("optional");
-//
-//            for (int i = 0, size = optional.size(); i < size; i++) {
-//                if (optional.getType(i) == ReadableType.Map) {
-//                    ReadableMap option = optional.getMap(i);
-//
-//                    if (option.hasKey("sourceId")
-//                            && option.getType("sourceId")
-//                            == ReadableType.String) {
-//                        return option.getString("sourceId");
-//                    }
-//                }
-//            }
-//        }
-//
-//        return null;
-//    }
-
     private String getSourceIdConstraint(HashMap mediaConstraints) {
         if (mediaConstraints != null
                 && mediaConstraints.containsKey("optional")
