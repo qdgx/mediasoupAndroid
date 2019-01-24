@@ -1,21 +1,22 @@
 package com.versatica.mediasoup
-import java.util.*
+
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONArray
 import com.alibaba.fastjson.JSONObject
-
-val MAX: Int = 99999999
-val MIN: Int = 10000000
+import java.util.*
 
 object Utils {
+
+    private const val MAX: Int = 99999999
+    private const val MIN: Int = 10000000
 
     /**
      * Generates a random positive number between 10000000 and 99999999.
      *
      * @return random number
      */
-    fun randomNumber(): Int{
-       return Random().nextInt(MAX - MIN + 1) + MIN
+    fun randomNumber(): Int {
+        return Random().nextInt(MAX - MIN + 1) + MIN
     }
 
     /**
@@ -25,7 +26,7 @@ object Utils {
      * @return new clone JSONObject
      */
     fun clone(obj: JSONObject): JSONObject {
-        var sb = JSON.toJSONString(obj)
+        val sb = JSON.toJSONString(obj)
         return JSON.parseObject(sb)
     }
 
@@ -36,7 +37,7 @@ object Utils {
      * @return new clone JSONArray
      */
     fun clone(obj: JSONArray): JSONArray {
-        var sb = JSON.toJSONString(obj)
+        val sb = JSON.toJSONString(obj)
         return JSON.parseArray(sb)
     }
 }

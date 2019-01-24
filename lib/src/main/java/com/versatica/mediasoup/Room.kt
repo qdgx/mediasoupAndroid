@@ -210,14 +210,14 @@ class Room(
                 logger.debug("join() | native RTP capabilities:$nativeRtpCapabilitiesString")
 
                 // Get extended RTP capabilities.
-                this._extendedRtpCapabilities = getExtendedRtpCapabilities(
+                this._extendedRtpCapabilities = Ortc.getExtendedRtpCapabilities(
                     nativeRtpCapabilities, roomSettings?.rtpCapabilities!!)
 
                 val extendedRtpCapabilitiesString = JSON.toJSONString(this._extendedRtpCapabilities)
                 logger.debug("join() | extended RTP capabilities:$extendedRtpCapabilitiesString)")
 
                 // Check unsupported codecs.
-                val unsupportedRoomCodecs = getUnsupportedCodecs(roomSettings?.rtpCapabilities!!,
+                val unsupportedRoomCodecs = Ortc.getUnsupportedCodecs(roomSettings?.rtpCapabilities!!,
                 roomSettings?.mandatoryCodecPayloadTypes,
                 this._extendedRtpCapabilities)
 
@@ -230,11 +230,11 @@ class Room(
                 }
 
                 // Check whether we can send audio/video.
-                this._canSendByKind.audio = canSend("audio", this._extendedRtpCapabilities)
-                this._canSendByKind.video = canSend("video", this._extendedRtpCapabilities)
+                this._canSendByKind.audio = Ortc.canSend("audio", this._extendedRtpCapabilities)
+                this._canSendByKind.video = Ortc.canSend("video", this._extendedRtpCapabilities)
 
                 // Generate our effective RTP capabilities for receiving media.
-                val effectiveLocalRtpCapabilities = getRtpCapabilities(this._extendedRtpCapabilities)
+                val effectiveLocalRtpCapabilities = Ortc.getRtpCapabilities(this._extendedRtpCapabilities)
 
                 val effectiveLocalRtpCapabilitiesString = JSON.toJSONString(effectiveLocalRtpCapabilities)
                 logger.debug("join() | effective local RTP capabilities for receiving:$effectiveLocalRtpCapabilitiesString")
@@ -831,7 +831,7 @@ class Room(
     fun _handleConsumerData(consumerData: ConsumerData, peer: Peer) {
         val consumer =
             Consumer(consumerData.id, consumerData.kind, consumerData.rtpParameters, peer, consumerData.appData)
-        val supported = canReceive(consumerData.rtpParameters, this._extendedRtpCapabilities)
+        val supported = Ortc.canReceive(consumerData.rtpParameters, this._extendedRtpCapabilities)
 
         if (supported)
             consumer.supported = true

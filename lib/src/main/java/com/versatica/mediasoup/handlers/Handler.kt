@@ -4,13 +4,15 @@ import com.alibaba.fastjson.JSON
 import com.dingsoft.sdptransform.SdpTransform
 import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.sdp.*
-import com.versatica.mediasoup.handlers.webRtc.RTCPeerConnection
 import com.versatica.mediasoup.webrtc.WebRTCModule
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import org.webrtc.*
 import java.util.*
 import kotlin.collections.ArrayList
+import org.webrtc.MediaConstraints
+import org.webrtc.MediaStreamTrack
+import org.webrtc.RtpSender
+import org.webrtc.SessionDescription
 import kotlin.collections.HashMap
 
 val logger = Logger("Handle")
@@ -98,14 +100,14 @@ open class Handler(
         _remoteSdp = RemotePlanBSdp.newInstance(direction, rtpParametersByKind)
 
         //Handle RTCPeerConnection connection status.
-        this._pc.on("onIceConnectionChange") {
+        this._pc.on("iceconnectionstatechange") {
             when (this._pc.iceConnectionState) {
-                PeerConnection.IceConnectionState.CHECKING -> this.emit("@connectionstatechange", "connecting")
-                PeerConnection.IceConnectionState.CONNECTED -> this.emit("@connectionstatechange", "connected")
-                PeerConnection.IceConnectionState.COMPLETED -> this.emit("@connectionstatechange", "connected")
-                PeerConnection.IceConnectionState.FAILED -> this.emit("@connectionstatechange", "failed")
-                PeerConnection.IceConnectionState.DISCONNECTED -> this.emit("@connectionstatechange", "disconnected")
-                PeerConnection.IceConnectionState.CLOSED -> this.emit("@connectionstatechange", "closed")
+                RTCIceConnectionState.CHECKING -> this.emit("@connectionstatechange", "connecting")
+                RTCIceConnectionState.CONNECTED -> this.emit("@connectionstatechange", "connected")
+                RTCIceConnectionState.COMPLETED -> this.emit("@connectionstatechange", "connected")
+                RTCIceConnectionState.FAILED -> this.emit("@connectionstatechange", "failed")
+                RTCIceConnectionState.DISCONNECTED -> this.emit("@connectionstatechange", "disconnected")
+                RTCIceConnectionState.CLOSED -> this.emit("@connectionstatechange", "closed")
                 else-> Unit
             }
         }
@@ -160,7 +162,7 @@ class SendHandler(
         // Add the track id to the Set.
         this._trackIds.add(track.id())
 
-        var rtpSender: RtpSender?
+        var rtpSender: RtpSender
         var localSdpObj: com.dingsoft.sdptransform.SessionDescription = com.dingsoft.sdptransform.SessionDescription()
 
         return Observable.just(Unit)

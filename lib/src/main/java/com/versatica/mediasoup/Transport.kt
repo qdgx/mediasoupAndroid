@@ -6,10 +6,7 @@ import com.versatica.mediasoup.handlers.SendHandler
 import com.versatica.mediasoup.handlers.sdp.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
-
-val DEFAULT_STATS_INTERVAL = 1000
 
 class Transport(
     direction: String,
@@ -18,6 +15,9 @@ class Transport(
     appData: Any? = null,
     private var logger: Logger = Logger("Transport")
 ) : EnhancedEventEmitter(logger) {
+
+    private val DEFAULT_STATS_INTERVAL = 1000
+
     // Id.
     val _id = Utils.randomNumber()
 
@@ -310,7 +310,7 @@ class Transport(
         logger.debug("pauseProducer() [producer:$producer]")
 
         val data = PauseProducerNotify()
-        data.id =  producer.id
+        data.id = producer.id
         data.appData = appData
 
         this.safeEmit("@notify", "pauseProducer", data)
@@ -326,7 +326,7 @@ class Transport(
         logger.debug("resumeProducer() [producer:$producer]")
 
         val data = ResumeProducerNotify()
-        data.id =  producer.id
+        data.id = producer.id
         data.appData = appData
 
         this.safeEmit("@notify", "resumeProducer", data)
@@ -637,7 +637,7 @@ class Transport(
 
         if (_handler is SendHandler) {
             // Call the handler.
-            return (_handler as SendHandler).replaceProducerTrack(producer,track)
+            return (_handler as SendHandler).replaceProducerTrack(producer, track)
         } else {
             return Observable.create {
                 it.onNext(Unit)
@@ -654,7 +654,7 @@ class Transport(
         return Observable.just(Unit)
             .flatMap {
                 (_handler as RecvHandler).addConsumer(consumer)
-            }.flatMap { track->
+            }.flatMap { track ->
                 consumerTrack = track
 
                 val data = EnableConsumerRequest()
@@ -670,15 +670,15 @@ class Transport(
             }.flatMap { response ->
                 val enableConsumerResponse = response as EnableConsumerResponse
 
-                if (enableConsumerResponse.paused){
+                if (enableConsumerResponse.paused) {
                     consumer.remotePause()
                 }
 
-                if (enableConsumerResponse.preferredProfile.isNotEmpty()){
+                if (enableConsumerResponse.preferredProfile.isNotEmpty()) {
                     consumer.remoteSetPreferredProfile(enableConsumerResponse.preferredProfile)
                 }
 
-                if (enableConsumerResponse.effectiveProfile.isNotEmpty()){
+                if (enableConsumerResponse.effectiveProfile.isNotEmpty()) {
                     consumer.remoteEffectiveProfileChanged(enableConsumerResponse.effectiveProfile)
                 }
 

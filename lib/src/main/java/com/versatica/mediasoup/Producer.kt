@@ -12,8 +12,7 @@ import org.webrtc.MediaStreamTrack
 class Producer(
     var track: MediaStreamTrack, var options: SimulcastOptions?, var appData: Any?,
     private var logger: Logger = Logger("Producer")
-) :
-    EnhancedEventEmitter(logger) {
+) : EnhancedEventEmitter(logger) {
 
     val DEFAULT_STATS_INTERVAL = 1000
     val SIMULCAST_DEFAULT = mapOf(
