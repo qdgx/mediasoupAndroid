@@ -175,7 +175,9 @@ fun addSimulcastForTrack(sdpObj: SessionDescription, track: MediaStreamTrack) {
     val ssrc2 = ssrc.plus(1)
     val ssrc3 = ssrc.plus(2)
 
-    section.ssrcGroups = section.ssrcGroups
+    if (section.ssrcGroups == null) {
+        section.ssrcGroups = mutableListOf()
+    }
     section.ssrcGroups?.add(
         MediaAttributes.SsrcGroup(
             semantics = "SIM",
