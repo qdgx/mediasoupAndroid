@@ -12,8 +12,7 @@ import org.webrtc.MediaStreamTrack
 class Consumer(
     var id: Int, var kind: String, var rtpParameters: RTCRtpParameters, var peer: Peer, var appData: Any?,
     private var logger: Logger = Logger("Consumer")
-) :
-    EnhancedEventEmitter(logger) {
+) : EnhancedEventEmitter(logger) {
 
     val PROFILES = setOf("default", "low", "medium", "high")
     val DEFAULT_STATS_INTERVAL = 1000
