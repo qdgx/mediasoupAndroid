@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : ViewGroup(context) {
-    val logger = Logger("WebRTCView")
+    private val logger = Logger("WebRTCView")
     
     /**
      * The height of the last video frame rendered by
@@ -407,7 +407,7 @@ class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : Vie
      * @param videoTrack The `VideoTrack` to be rendered by this
      * `WebRTCView` or `null`.
      */
-    private fun setVideoTrack(videoTrack: VideoTrack?) {
+    fun setVideoTrack(videoTrack: VideoTrack?) {
         val oldVideoTrack = this.videoTrack
 
         if (oldVideoTrack !== videoTrack) {

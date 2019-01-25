@@ -6,19 +6,61 @@ import com.versatica.mediasoup.Logger
 import com.versatica.mediasoup.handlers.Handler
 import com.versatica.mediasoup.handlers.sdp.RTCRtpCodecCapability
 import com.versatica.mediasoup.handlers.sdp.RTCRtpHeaderExtensionCapability
+import com.versatica.mediasoup.handlers.webRtc.GetUserMediaImpl
+import com.versatica.mediasoup.handlers.webRtc.WebRTCModule
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.functions.Function
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+import kotlin.collections.HashMap
 
 class MainActivity : AppCompatActivity() {
     private var logger: Logger = Logger("MainActivity")
+    private val AUDIO_ECHO_CANCELLATION_CONSTRAINT = "googEchoCancellation"
+    private val AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT = "googAutoGainControl"
+    private val AUDIO_HIGH_PASS_FILTER_CONSTRAINT = "googHighpassFilter"
+    private val AUDIO_NOISE_SUPPRESSION_CONSTRAINT = "googNoiseSuppression"
+
+    private val MINI_WIDTH = "minWidth"
+    private val MINI_HEIGHT = "minHeight"
+    private val MINI_FRAMERATE = "minFrameRate"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        openCamera.setOnClickListener {
+            var getUserMediaImpl = GetUserMediaImpl(WebRTCModule.getInstance(this),this)
+            Observable.just(Unit)
+                .flatMap {
+                    var constraints = HashMap<String,HashMap<String,*>>()
+                    //audio
+                    var audioConstraints = HashMap<String,HashMap<String,*>>()
+                    var audioMandatoryConstraints = HashMap<String,String>()
+                    audioMandatoryConstraints[AUDIO_ECHO_CANCELLATION_CONSTRAINT] = "false"
+                    audioMandatoryConstraints[AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT] = "false"
+                    audioMandatoryConstraints[AUDIO_HIGH_PASS_FILTER_CONSTRAINT] = "false"
+                    audioMandatoryConstraints[AUDIO_NOISE_SUPPRESSION_CONSTRAINT] = "false"
+
+                    audioConstraints["mandatory"] = audioMandatoryConstraints
+                    constraints["audio"] = audioConstraints
+
+                    //video
+                    var videoConstraints = HashMap<String,HashMap<String,*>>()
+                    var videoMandatoryConstraints = HashMap<String,String>()
+                    videoMandatoryConstraints[MINI_WIDTH] = "1280"
+                    videoMandatoryConstraints[MINI_HEIGHT] = "720"
+                    videoMandatoryConstraints[MINI_FRAMERATE] = "30"
+
+                    videoConstraints["mandatory"] = videoMandatoryConstraints
+                    constraints["video"] = videoConstraints
+
+                    getUserMediaImpl.getUserMedia(constraints)
+                }
+        }
+
         test.setOnClickListener {
 
         }

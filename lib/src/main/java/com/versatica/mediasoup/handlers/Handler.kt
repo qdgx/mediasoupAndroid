@@ -4,23 +4,22 @@ import com.alibaba.fastjson.JSON
 import com.dingsoft.sdptransform.SdpTransform
 import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.sdp.*
+import com.versatica.mediasoup.handlers.webRtc.RTCPeerConnection
 import com.versatica.mediasoup.webrtc.WebRTCModule
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import org.webrtc.*
 import java.util.*
 import kotlin.collections.ArrayList
-import org.webrtc.MediaConstraints
-import org.webrtc.MediaStreamTrack
-import org.webrtc.RtpSender
-import org.webrtc.SessionDescription
 import kotlin.collections.HashMap
 
-val logger = Logger("Handle")
+val logger = Logger("Handler")
 
 open class Handler(
     direction: String,
     rtpParametersByKind: HashMap<String, RTCRtpParameters>,
-    settings: RoomOptions
+    settings: RoomOptions,
+    private var logger: Logger = Logger("Handler")
 ) : EnhancedEventEmitter(logger) {
     companion object {
         fun getNativeRtpCapabilities(): Observable<RTCRtpCapabilities> {
@@ -45,7 +44,7 @@ open class Handler(
                 Observable.create(ObservableOnSubscribe<RTCRtpCapabilities> {
                     try {
                         val sdpObj = SdpTransform().parse(offer.description)
-                        val nativeRtpCapabilities = extractRtpCapabilities(sdpObj)
+                        val nativeRtpCapabilities = CommonUtils.extractRtpCapabilities(sdpObj)
                         it.onNext(nativeRtpCapabilities)
                     } catch (e: Exception) {
                         it.onError(Throwable())
@@ -58,20 +57,20 @@ open class Handler(
             direction: String,
             extendedRtpCapabilities: RTCExtendedRtpCapabilities,
             settings: RoomOptions
-        ):Handler? {
+        ): Handler? {
             val rtpParametersByKind: HashMap<String, RTCRtpParameters> = HashMap()
             when (direction) {
                 "send" -> {
-                    rtpParametersByKind["audio"] = getSendingRtpParameters("audio", extendedRtpCapabilities)
-                    rtpParametersByKind["video"] = getSendingRtpParameters("video", extendedRtpCapabilities)
+                    rtpParametersByKind["audio"] = Ortc.getSendingRtpParameters("audio", extendedRtpCapabilities)
+                    rtpParametersByKind["video"] = Ortc.getSendingRtpParameters("video", extendedRtpCapabilities)
                     return SendHandler(rtpParametersByKind, settings)
                 }
                 "recv" -> {
-                    rtpParametersByKind["audio"] = getReceivingFullRtpParameters("audio", extendedRtpCapabilities)
-                    rtpParametersByKind["video"] = getReceivingFullRtpParameters("video", extendedRtpCapabilities)
+                    rtpParametersByKind["audio"] = Ortc.getReceivingFullRtpParameters("audio", extendedRtpCapabilities)
+                    rtpParametersByKind["video"] = Ortc.getReceivingFullRtpParameters("video", extendedRtpCapabilities)
                     return RecvHandler(rtpParametersByKind, settings)
                 }
-                else -> return  null
+                else -> return null
             }
         }
     }
@@ -102,13 +101,13 @@ open class Handler(
         //Handle RTCPeerConnection connection status.
         this._pc.on("iceconnectionstatechange") {
             when (this._pc.iceConnectionState) {
-                RTCIceConnectionState.CHECKING -> this.emit("@connectionstatechange", "connecting")
-                RTCIceConnectionState.CONNECTED -> this.emit("@connectionstatechange", "connected")
-                RTCIceConnectionState.COMPLETED -> this.emit("@connectionstatechange", "connected")
-                RTCIceConnectionState.FAILED -> this.emit("@connectionstatechange", "failed")
-                RTCIceConnectionState.DISCONNECTED -> this.emit("@connectionstatechange", "disconnected")
-                RTCIceConnectionState.CLOSED -> this.emit("@connectionstatechange", "closed")
-                else-> Unit
+                PeerConnection.IceConnectionState.CHECKING -> this.emit("@connectionstatechange", "connecting")
+                PeerConnection.IceConnectionState.CONNECTED -> this.emit("@connectionstatechange", "connected")
+                PeerConnection.IceConnectionState.COMPLETED -> this.emit("@connectionstatechange", "connected")
+                PeerConnection.IceConnectionState.FAILED -> this.emit("@connectionstatechange", "failed")
+                PeerConnection.IceConnectionState.DISCONNECTED -> this.emit("@connectionstatechange", "disconnected")
+                PeerConnection.IceConnectionState.CLOSED -> this.emit("@connectionstatechange", "closed")
+                else -> Unit
             }
         }
     }
@@ -162,7 +161,7 @@ class SendHandler(
         // Add the track id to the Set.
         this._trackIds.add(track.id())
 
-        var rtpSender: RtpSender
+        var rtpSender: RtpSender?
         var localSdpObj: com.dingsoft.sdptransform.SessionDescription = com.dingsoft.sdptransform.SessionDescription()
 
         return Observable.just(Unit)
@@ -181,7 +180,7 @@ class SendHandler(
 
                     val sdpObject = SdpTransform().parse(cloneOffer.description)
 
-                    addPlanBSimulcast(sdpObject, track)
+                    UnifiedPlanUtils.addPlanBSimulcast(sdpObject, track)
 
                     val offerSdp = SdpTransform().write(sdpObject)
 
@@ -212,7 +211,7 @@ class SendHandler(
                 val rtpParameters = this._rtpParametersByKind[producer.kind()]
 
                 // Fill the RTP parameters for this track.
-                fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track)
+                PlanBUtils.fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track)
 
                 Observable.create(ObservableOnSubscribe<RTCRtpParameters> {
                     //next
@@ -269,8 +268,10 @@ class SendHandler(
             }
     }
 
-    fun replaceProducerTrack(producer: Producer,
-                             track: MediaStreamTrack): Observable<Any> {
+    fun replaceProducerTrack(
+        producer: Producer,
+        track: MediaStreamTrack
+    ): Observable<Any> {
         logger.debug("replaceProducerTrack() [id:${producer.id}, kind:${producer.kind()}, trackId:${track.id()}]")
 
         val oldTrack = producer.track
@@ -345,7 +346,7 @@ class SendHandler(
                 val transportLocalParameters = TransportRemoteIceParameters()
                 val sdp = this._pc.localDescription.description
                 val sdpObj = SdpTransform().parse(sdp)
-                val dtlsParameters = extractDtlsParameters(sdpObj)
+                val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
 
                 // Let's decide that we'll be DTLS server (because we can).
                 dtlsParameters.role = RTCDtlsRole.SERVER
@@ -383,7 +384,7 @@ class RecvHandler(
 ) : Handler("recv", rtpParametersByKind, settings) {
 
     // Seen media kinds.
-    private val _kinds:HashSet<String> = HashSet()
+    private val _kinds: HashSet<String> = HashSet()
 
     // Map of Consumers information indexed by consumer.id.
     // - kind {String}
@@ -392,7 +393,7 @@ class RecvHandler(
     // - rtxSsrc {Number}
     // - cname {String}
     // @type {Map<Number, Object>}
-    private val _consumerInfos: HashMap<Int,ConsumerInfo> = HashMap()
+    private val _consumerInfos: HashMap<Int, ConsumerInfo> = HashMap()
 
     init {
         // Got transport remote parameters.
@@ -406,7 +407,7 @@ class RecvHandler(
         logger.debug("addConsumer() [id:${consumer.id}, kind:${consumer.kind}]")
 
         if (this._consumerInfos.containsKey(consumer.id))
-            return  Observable.create {
+            return Observable.create {
                 it.onError(Error("Consumer already added"))
             }
 
@@ -421,7 +422,7 @@ class RecvHandler(
         )
 
         //csb mybe wrong
-        if (encoding.rtx !=null && encoding.rtx!![encoding.ssrc!!] != null)
+        if (encoding.rtx != null && encoding.rtx!![encoding.ssrc!!] != null)
             consumerInfo.rtxSsrc = encoding.rtx!![encoding.ssrc!!]
 
         this._consumerInfos[consumer.id] = consumerInfo
@@ -429,21 +430,25 @@ class RecvHandler(
 
         return Observable.just(Unit)
             .flatMap {
-                if (!this._transportCreated){
-                     this._setupTransport()
-                }else{
-                    Observable.create{
+                if (!this._transportCreated) {
+                    this._setupTransport()
+                } else {
+                    Observable.create {
                         //next
                         it.onNext(Unit)
                     }
                 }
             }
             .flatMap {
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
+                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(
+                    ArrayList<String>(_kinds),
+                    ArrayList(_consumerInfos.values)
+                )
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
 
                 logger.debug(
-                    "addConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]")
+                    "addConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]"
+                )
 
                 this._pc.setRemoteDescription(offer)
             }
@@ -452,13 +457,14 @@ class RecvHandler(
             }
             .flatMap { answer ->
                 logger.debug(
-                    "addConsumer() | calling pc.setLocalDescription() [answer:${answer.description}]")
+                    "addConsumer() | calling pc.setLocalDescription() [answer:${answer.description}]"
+                )
                 this._pc.setLocalDescription(answer)
             }.flatMap {
                 if (!this._transportUpdated) {
                     _updateTransport()
                 } else {
-                    Observable.create{
+                    Observable.create {
                         //next
                         it.onNext(Unit)
                     }
@@ -466,9 +472,9 @@ class RecvHandler(
             }.flatMap {
                 val newRtpReceiver = this._pc.getReceivers().find {
                     val track = it.track()
-                    if (track == null){
+                    if (track == null) {
                         false
-                    }else{
+                    } else {
                         track.id() === consumerInfo.trackId
                     }
                 }
@@ -493,11 +499,15 @@ class RecvHandler(
 
         return Observable.just(Unit)
             .flatMap {
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
+                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(
+                    ArrayList<String>(_kinds),
+                    ArrayList(_consumerInfos.values)
+                )
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
 
                 logger.debug(
-                    "removeConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]")
+                    "removeConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]"
+                )
 
                 this._pc.setRemoteDescription(offer)
             }
@@ -506,7 +516,8 @@ class RecvHandler(
             }
             .flatMap { answer ->
                 logger.debug(
-                    "removeConsumer() | calling pc.setLocalDescription() [answer:${answer.description}]")
+                    "removeConsumer() | calling pc.setLocalDescription() [answer:${answer.description}]"
+                )
                 this._pc.setLocalDescription(answer)
             }
     }
@@ -519,11 +530,15 @@ class RecvHandler(
 
         return Observable.just(Unit)
             .flatMap {
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(ArrayList<String>(_kinds),ArrayList(_consumerInfos.values))
+                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(
+                    ArrayList<String>(_kinds),
+                    ArrayList(_consumerInfos.values)
+                )
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
 
                 logger.debug(
-                    "restartIce() | calling pc.setRemoteDescription() [offer:${offer.description}]")
+                    "restartIce() | calling pc.setRemoteDescription() [offer:${offer.description}]"
+                )
 
                 this._pc.setRemoteDescription(offer)
             }
@@ -532,7 +547,8 @@ class RecvHandler(
             }
             .flatMap { answer ->
                 logger.debug(
-                    "restartIce() | calling pc.setLocalDescription() [answer:${answer.description}]")
+                    "restartIce() | calling pc.setLocalDescription() [answer:${answer.description}]"
+                )
                 this._pc.setLocalDescription(answer)
             }
     }
@@ -552,7 +568,8 @@ class RecvHandler(
             }
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
-                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters = (transportRemoteParameters as TransportRemoteIceParameters)
+                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters =
+                        (transportRemoteParameters as TransportRemoteIceParameters)
 
                 this._transportCreated = true
 
@@ -569,7 +586,7 @@ class RecvHandler(
         // const transportLocalParameters = {}
         val sdp = this._pc.localDescription.description
         val sdpObj = SdpTransform().parse(sdp)
-        val dtlsParameters = extractDtlsParameters(sdpObj)
+        val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
         //val transportLocalParameters = { dtlsParameters }
         val transportLocalParameters = JSON.toJSONString(dtlsParameters)
 
@@ -578,7 +595,7 @@ class RecvHandler(
 
         this._transportUpdated = true
 
-        return Observable.create{
+        return Observable.create {
             //next
             it.onNext(Unit)
         }

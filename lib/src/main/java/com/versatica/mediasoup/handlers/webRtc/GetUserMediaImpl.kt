@@ -4,9 +4,11 @@ import android.content.Context
 import com.versatica.mediasoup.Logger
 import com.versatica.mediasoup.webrtc.Callback
 import org.webrtc.*
+import io.reactivex.Observable
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+
 
 /**
  * The implementation of `getUserMedia` extracted into a separate file in
@@ -17,7 +19,7 @@ class GetUserMediaImpl(
     context: Context
 ) {
     private val logger = Logger("GetUserMediaImpl")
-    
+
     private val cameraEnumerator: CameraEnumerator
 
     private val webRTCModule: WebRTCModule = webRTCModule
@@ -38,10 +40,10 @@ class GetUserMediaImpl(
         //   2. all camera support level should greater than LEGACY
         //   see: https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics.html#INFO_SUPPORTED_HARDWARE_LEVEL
         if (Camera2Enumerator.isSupported(context)) {
-            logger.debug( "Creating video capturer using Camera2 API.")
+            logger.debug("Creating video capturer using Camera2 API.")
             cameraEnumerator = Camera2Enumerator(context)
         } else {
-            logger.debug( "Creating video capturer using Camera1 API.")
+            logger.debug("Creating video capturer using Camera1 API.")
             cameraEnumerator = Camera1Enumerator(false)
         }
     }
@@ -49,7 +51,7 @@ class GetUserMediaImpl(
     private fun createAudioTrack(constraints: HashMap<*, *>): AudioTrack {
         val audioConstraints = webRTCModule.parseMediaConstraints(constraints["audio"] as HashMap<*, *>)
 
-        logger.debug( "getUserMedia(audio): $audioConstraints")
+        logger.debug("getUserMedia(audio): $audioConstraints")
 
         val id = UUID.randomUUID().toString()
         val pcFactory = webRTCModule.mFactory
@@ -63,7 +65,7 @@ class GetUserMediaImpl(
     private fun createVideoTrack(constraints: HashMap<*, *>): VideoTrack? {
         val videoConstraintsMap = constraints["video"] as HashMap<*, *>
 
-        logger.debug( "getUserMedia(video): $videoConstraintsMap")
+        logger.debug("getUserMedia(video): $videoConstraintsMap")
 
         val videoCaptureController = VideoCaptureController(cameraEnumerator, videoConstraintsMap)
         val videoCapturer = videoCaptureController.videoCapturer ?: return null
@@ -84,11 +86,11 @@ class GetUserMediaImpl(
     }
 
     fun enumerateDevices(): ArrayList<*> {
-        val array = ArrayList<HashMap<*,*>>()
+        val array = ArrayList<HashMap<*, *>>()
         val devices = cameraEnumerator.getDeviceNames()
 
         for (i in devices.indices) {
-            val params = HashMap<String,String>()
+            val params = HashMap<String, String>()
             params.put("deviceId", "" + i)
             params.put("groupId", "")
             params.put("label", devices[i])
@@ -96,7 +98,7 @@ class GetUserMediaImpl(
             array.add(params)
         }
 
-        val audio = HashMap<String,String>()
+        val audio = HashMap<String, String>()
         audio.put("deviceId", "audio-1")
         audio.put("groupId", "")
         audio.put("label", "Audio")
@@ -145,7 +147,7 @@ class GetUserMediaImpl(
         if (audioTrack == null && videoTrack == null) {
             // Fail with DOMException with name AbortError as per:
             // https://www.w3.org/TR/mediacapture-streams/#dom-mediadevices-getusermedia
-            errorCallback.invoke("DOMException", "AbortError")
+            errorCallback.invoke("DOMException AbortError")
             return
         }
 
@@ -156,9 +158,23 @@ class GetUserMediaImpl(
         mediaStream?.addTrack(audioTrack)
         mediaStream?.addTrack(videoTrack)
 
-        logger.debug( "MediaStream id: $streamId")
+        logger.debug("MediaStream id: $streamId")
 
-        successCallback.invoke(streamId, mediaStream)
+        successCallback.invoke(mediaStream)
+    }
+
+    fun getUserMedia(constraints: HashMap<*, *>): Observable<MediaStream> {
+        return Observable.create {
+            getUserMedia(constraints,
+                successCallback = Callback { args ->
+                    var mediaStream = args[0] as MediaStream
+                    it.onNext(mediaStream)
+                },
+                errorCallback = Callback { args ->
+                    var errorMessage = args[0] as String
+                    it.onError(Throwable(errorMessage))
+                })
+        }
     }
 
     fun mediaStreamTrackSetEnabled(trackId: String, enabled: Boolean) {
