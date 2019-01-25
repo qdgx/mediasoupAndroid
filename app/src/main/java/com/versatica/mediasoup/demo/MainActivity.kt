@@ -1,18 +1,26 @@
 package com.versatica.mediasoup.demo
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.widget.Toast
 import com.versatica.mediasoup.Logger
+import com.versatica.mediasoup.handlers.BaseApplication
 import com.versatica.mediasoup.handlers.Handler
 import com.versatica.mediasoup.handlers.sdp.RTCRtpCodecCapability
 import com.versatica.mediasoup.handlers.sdp.RTCRtpHeaderExtensionCapability
 import com.versatica.mediasoup.handlers.webRtc.GetUserMediaImpl
 import com.versatica.mediasoup.handlers.webRtc.WebRTCModule
+import com.yanzhenjie.permission.Action
+import com.yanzhenjie.permission.AndPermission
+import com.yanzhenjie.permission.Permission
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.functions.Function
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
+import org.webrtc.VideoTrack
+import java.lang.Exception
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -26,39 +34,38 @@ class MainActivity : AppCompatActivity() {
     private val MINI_WIDTH = "minWidth"
     private val MINI_HEIGHT = "minHeight"
     private val MINI_FRAMERATE = "minFrameRate"
+    private val ENVIRONMENT_FACINGMODE = "environment"
+    private val USER_FACINGMODE = "user"
+
+
+    private var isCameraOpen = false
+    private var trackId = ""
+    private var faceMode = USER_FACINGMODE
+    private val webRTCModule = _getWebRTCModule()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         openCamera.setOnClickListener {
-            var getUserMediaImpl = GetUserMediaImpl(WebRTCModule.getInstance(this),this)
-            Observable.just(Unit)
-                .flatMap {
-                    var constraints = HashMap<String,HashMap<String,*>>()
-                    //audio
-                    var audioConstraints = HashMap<String,HashMap<String,*>>()
-                    var audioMandatoryConstraints = HashMap<String,String>()
-                    audioMandatoryConstraints[AUDIO_ECHO_CANCELLATION_CONSTRAINT] = "false"
-                    audioMandatoryConstraints[AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT] = "false"
-                    audioMandatoryConstraints[AUDIO_HIGH_PASS_FILTER_CONSTRAINT] = "false"
-                    audioMandatoryConstraints[AUDIO_NOISE_SUPPRESSION_CONSTRAINT] = "false"
+            if (isCameraOpen) {
+                //关闭
+                closeCamera()
+            } else {
+                //开启
+                openCamera()
+            }
+        }
 
-                    audioConstraints["mandatory"] = audioMandatoryConstraints
-                    constraints["audio"] = audioConstraints
-
-                    //video
-                    var videoConstraints = HashMap<String,HashMap<String,*>>()
-                    var videoMandatoryConstraints = HashMap<String,String>()
-                    videoMandatoryConstraints[MINI_WIDTH] = "1280"
-                    videoMandatoryConstraints[MINI_HEIGHT] = "720"
-                    videoMandatoryConstraints[MINI_FRAMERATE] = "30"
-
-                    videoConstraints["mandatory"] = videoMandatoryConstraints
-                    constraints["video"] = videoConstraints
-
-                    getUserMediaImpl.getUserMedia(constraints)
+        switchCamera.setOnClickListener {
+            if (trackId.isNotEmpty()) {
+                if (faceMode == ENVIRONMENT_FACINGMODE) {
+                    faceMode = USER_FACINGMODE
+                } else {
+                    faceMode = ENVIRONMENT_FACINGMODE
                 }
+                webRTCModule.mediaStreamTrackSwitchCamera(trackId)
+            }
         }
 
         test.setOnClickListener {
@@ -196,6 +203,89 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        //reopen camera
+        if (isCameraOpen) {
+            //webRTCModule.mediaStreamTrackSetEnabled(trackId,true)
+            startCamera()
+        }
+    }
+
+    private fun openCamera() {
+        if (AndPermission.hasPermissions(this, Permission.Group.CAMERA)) {
+            startCamera()
+        } else {
+            AndPermission.with(this)
+                .runtime()
+                .permission(Permission.Group.CAMERA)
+                .onGranted {
+                    startCamera()
+                }
+                .onDenied {
+                    Toast.makeText(this@MainActivity, "No permission", Toast.LENGTH_SHORT).show()
+                }.start()
+        }
+    }
+
+    @SuppressLint("CheckResult")
+    private fun startCamera() {
+        Observable.just(Unit)
+            .flatMap {
+                val constraints = HashMap<String, HashMap<String, *>>()
+                //audio
+                val audioConstraints = HashMap<String, Any>()
+                val audioMandatoryConstraints = HashMap<String, String>()
+                audioMandatoryConstraints[AUDIO_ECHO_CANCELLATION_CONSTRAINT] = "false"
+                audioMandatoryConstraints[AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT] = "false"
+                audioMandatoryConstraints[AUDIO_HIGH_PASS_FILTER_CONSTRAINT] = "false"
+                audioMandatoryConstraints[AUDIO_NOISE_SUPPRESSION_CONSTRAINT] = "false"
+
+                audioConstraints["mandatory"] = audioMandatoryConstraints
+                constraints["audio"] = audioConstraints
+
+                //video
+                val videoConstraints = HashMap<String, Any>()
+                val videoMandatoryConstraints = HashMap<String, String>()
+                videoMandatoryConstraints[MINI_WIDTH] = "1280"
+                videoMandatoryConstraints[MINI_HEIGHT] = "720"
+                videoMandatoryConstraints[MINI_FRAMERATE] = "30"
+
+                videoConstraints["mandatory"] = videoMandatoryConstraints
+                videoConstraints["facingMode"] = faceMode
+
+                constraints["video"] = videoConstraints
+
+                webRTCModule.getUserMedia(constraints)
+            }
+            .subscribe(
+                { mediaStream ->
+                    val videoTrack = mediaStream.videoTracks[0]
+                    webRTCView.setVideoTrack(videoTrack)
+                    trackId = videoTrack.id()
+                    isCameraOpen = true
+                    openCamera.setText("closeCamera")
+                },
+                { throwable ->
+                    Toast.makeText(this@MainActivity, throwable.cause.toString(), Toast.LENGTH_SHORT).show()
+                })
+    }
+
+    fun closeCamera() {
+        try {
+            if (trackId.isNotEmpty()) {
+                webRTCModule.mediaStreamTrackStop(trackId)
+                isCameraOpen = false
+                openCamera.setText("openCamera")
+                webRTCView.cleanSurfaceViewRenderer()
+            }
+        } catch (e: Throwable) {
+            logger.error(e.message!!)
+        }
+
+    }
+
+
     private fun addFlatMap(): Function<Int, Observable<Int>> {
         return Function { input ->
             Observable.create(ObservableOnSubscribe<Int> {
@@ -230,5 +320,9 @@ class MainActivity : AppCompatActivity() {
                 }).start()
             }
         }
+    }
+
+    private fun _getWebRTCModule(): WebRTCModule {
+        return WebRTCModule.getInstance(BaseApplication.getAppContext())
     }
 }

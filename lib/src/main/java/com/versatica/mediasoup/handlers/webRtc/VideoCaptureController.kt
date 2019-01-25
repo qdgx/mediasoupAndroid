@@ -1,9 +1,8 @@
 package com.versatica.mediasoup.handlers.webRtc
 
 import com.versatica.mediasoup.Logger
-import org.webrtc.CameraEnumerator
-import org.webrtc.CameraVideoCapturer
-import org.webrtc.VideoCapturer
+import com.versatica.mediasoup.handlers.BaseApplication
+import org.webrtc.*
 
 class VideoCaptureController(
     cameraEnumerator: CameraEnumerator,
@@ -56,15 +55,15 @@ class VideoCaptureController(
 
         if (videoConstraintsMandatory != null) {
             width = if (videoConstraintsMandatory.containsKey("minWidth"))
-                videoConstraintsMandatory["minWidth"] as Int
+                (videoConstraintsMandatory["minWidth"] as String).toInt()
             else
                 DEFAULT_WIDTH
             height = if (videoConstraintsMandatory.containsKey("minHeight"))
-                videoConstraintsMandatory["minHeight"] as Int
+                (videoConstraintsMandatory["minHeight"] as String).toInt()
             else
                 DEFAULT_HEIGHT
             fps = if (videoConstraintsMandatory.containsKey("minFrameRate"))
-                videoConstraintsMandatory["minFrameRate"] as Int
+                (videoConstraintsMandatory["minFrameRate"] as String).toInt()
             else
                 DEFAULT_FPS
         }
@@ -77,13 +76,16 @@ class VideoCaptureController(
         }
     }
 
-    fun startCapture() {
+    fun startCapture(videoSource: VideoSource) {
         try {
+            val surfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", EglUtil.rootEglBaseContext)
+            videoCapturer!!.initialize(surfaceTextureHelper, BaseApplication.getAppContext(),videoSource.capturerObserver)
             videoCapturer!!.startCapture(width, height, fps)
         } catch (e: RuntimeException) {
             // XXX This can only fail if we initialize the capturer incorrectly,
             // which we don't. Thus, ignore any failures here since we trust
             // ourselves.
+            logger.error(e.message!!)
         }
 
     }
@@ -204,10 +206,13 @@ class VideoCaptureController(
      * `null` if not specified.
      */
     private fun getFacingMode(mediaConstraints: HashMap<*, *>?): String? {
-        return if (mediaConstraints == null)
-            null
-        else
-            mediaConstraints["facingMode"] as String
+        if (mediaConstraints == null){
+            return null
+        }else if (mediaConstraints["facingMode"] == null){
+            return null
+        }else{
+            return mediaConstraints["facingMode"] as String
+        }
     }
 
     //csb

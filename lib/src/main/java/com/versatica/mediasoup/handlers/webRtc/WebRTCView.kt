@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.support.v4.view.ViewCompat
+import android.util.AttributeSet
 import android.view.ViewGroup
 import com.versatica.mediasoup.Logger
 import org.webrtc.RendererCommon
@@ -12,7 +13,7 @@ import org.webrtc.VideoTrack
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
-class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : ViewGroup(context) {
+class WebRTCView : ViewGroup{
     private val logger = Logger("WebRTCView")
     
     /**
@@ -98,19 +99,22 @@ class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : Vie
      */
     private var videoTrack: VideoTrack? = null
 
-    init {
+    constructor(context: Context) : this(context, null)
+
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
+
+    constructor(context: Context, attrs: AttributeSet?, def: Int) : super(context, attrs, def) {
         surfaceViewRenderer = SurfaceViewRenderer(context)
         addView(surfaceViewRenderer)
 
         setMirror(false)
         setScalingType(DEFAULT_SCALING_TYPE)
     }
-
     /**
      * "Cleans" the `SurfaceViewRenderer` by setting the view part to
      * opaque black and the surface part to transparent.
      */
-    private fun cleanSurfaceViewRenderer() {
+    fun cleanSurfaceViewRenderer() {
         surfaceViewRenderer.setBackgroundColor(Color.BLACK)
         surfaceViewRenderer.clearImage()
     }
@@ -140,8 +144,7 @@ class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : Vie
         return b
     }
 
-    @Override
-    protected override fun onAttachedToWindow() {
+     override fun onAttachedToWindow() {
         try {
             // Generally, OpenGL is only necessary while this View is attached
             // to a window so there is no point in having the whole rendering
@@ -153,9 +156,8 @@ class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : Vie
             super.onAttachedToWindow()
         }
     }
-    
-    @Override
-    protected override fun onDetachedFromWindow() {
+
+     override fun onDetachedFromWindow() {
         try {
             // Generally, OpenGL is only necessary while this View is attached
             // to a window so there is no point in having the whole rendering
@@ -215,9 +217,8 @@ class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : Vie
             post(requestSurfaceViewRendererLayoutRunnable)
         }
     }
-    
-    @Override
-    protected override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+
+     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         var l = l
         var t = t
         var r = r
@@ -474,6 +475,7 @@ class WebRTCView(context: Context, private val webRTCModule: WebRTCModule) : Vie
             }
 
             surfaceViewRenderer.init(sharedContext, rendererEvents)
+            videoTrack!!.setEnabled(true)
             videoTrack!!.addSink(surfaceViewRenderer)
 
             rendererAttached = true

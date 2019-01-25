@@ -78,7 +78,7 @@ class GetUserMediaImpl(
         val track = pcFactory?.createVideoTrack(id, videoSource)
 
         track?.setEnabled(true)
-        videoCaptureController.startCapture()
+        videoCaptureController.startCapture(videoSource!!)
 
         tracks[id] = TrackPrivate(track!!, videoSource!!, videoCaptureController)
 
@@ -181,8 +181,10 @@ class GetUserMediaImpl(
         val track = tracks[trackId]
         if (track != null && track.videoCaptureController != null) {
             if (enabled) {
-                track.videoCaptureController.startCapture()
+                track.track.setEnabled(true)
+                track.videoCaptureController.startCapture(track.mediaSource as VideoSource)
             } else {
+                track.track.setEnabled(false)
                 track.videoCaptureController.stopCapture()
             }
         }

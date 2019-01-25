@@ -2,6 +2,7 @@ package com.versatica.mediasoup.handlers.webRtc
 
 import android.content.Context
 import com.versatica.mediasoup.Logger
+import io.reactivex.Observable
 import org.webrtc.*
 import kotlin.collections.ArrayList
 
@@ -10,6 +11,8 @@ class WebRTCModule private constructor(context: Context){
 
     var mFactory: PeerConnectionFactory? = null
     private val context = context
+
+    private var getUserMediaImpl: GetUserMediaImpl? = null
 
     companion object {
         @Volatile
@@ -73,6 +76,34 @@ class WebRTCModule private constructor(context: Context){
             //csb
             //mFactory.setVideoHwAccelerationOptions(eglContext, eglContext);
         }
+
+        getUserMediaImpl = GetUserMediaImpl(this, context)
+    }
+
+    fun getUserMedia(constraints: HashMap<*, *>): Observable<MediaStream> {
+        return  getUserMediaImpl!!.getUserMedia(constraints)
+    }
+
+    fun mediaStreamTrackSetEnabled(id: String, enabled: Boolean) {
+        ThreadUtil.runOnExecutor(
+            Runnable {
+                mediaStreamTrackSetEnabledAsync(id,enabled)
+            }
+        )
+    }
+
+    private fun mediaStreamTrackSetEnabledAsync(id: String, enabled: Boolean) {
+        getUserMediaImpl!!.mediaStreamTrackSetEnabled(id, enabled)
+    }
+
+    //@ReactMethod
+    fun mediaStreamTrackStop(trackId: String) {
+        getUserMediaImpl!!.mediaStreamTrackStop(trackId)
+    }
+
+    //@ReactMethod
+    fun mediaStreamTrackSwitchCamera(id: String) {
+        getUserMediaImpl!!.switchCamera(id)
     }
 
     fun peerConnectionInit(configuration: HashMap<*, *>,observer: PeerConnection.Observer): PeerConnection?{
