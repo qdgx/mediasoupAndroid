@@ -44,7 +44,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
 
     val socket = IO.socket("http://172.16.70.213:8080", IO.Options().also {
         it.query = "roomId=$roomId&peerName=$peerName"
-    })
+    }).connect()
 
     // Transport for sending our media.
     var sendTransport: Transport? = null
