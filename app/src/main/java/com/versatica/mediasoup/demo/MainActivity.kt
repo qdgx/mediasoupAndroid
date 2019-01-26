@@ -43,33 +43,36 @@ class MainActivity : AppCompatActivity() {
     private var faceMode = USER_FACINGMODE
     private val webRTCModule = _getWebRTCModule()
 
+    private var app: App? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //create app
+        app = App("room1","csb",this)
+
         openCamera.setOnClickListener {
-            if (isCameraOpen) {
-                //关闭
-                closeCamera()
-            } else {
-                //开启
-                openCamera()
-            }
+//            if (isCameraOpen) {
+//                //关闭
+//                closeCamera()
+//            } else {
+//                //开启
+//                openCamera()
+//            }
+            app!!.joinRoom()
         }
 
         switchCamera.setOnClickListener {
-            if (trackId.isNotEmpty()) {
-                if (faceMode == ENVIRONMENT_FACINGMODE) {
-                    faceMode = USER_FACINGMODE
-                } else {
-                    faceMode = ENVIRONMENT_FACINGMODE
-                }
-                webRTCModule.mediaStreamTrackSwitchCamera(trackId)
-            }
-        }
-
-        test.setOnClickListener {
-
+//            if (trackId.isNotEmpty()) {
+//                if (faceMode == ENVIRONMENT_FACINGMODE) {
+//                    faceMode = USER_FACINGMODE
+//                } else {
+//                    faceMode = ENVIRONMENT_FACINGMODE
+//                }
+//                webRTCModule.mediaStreamTrackSwitchCamera(trackId)
+//            }
+            app!!.switchCamera()
         }
 
         safeEmit.setOnClickListener {
@@ -206,10 +209,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         //reopen camera
-        if (isCameraOpen) {
-            //webRTCModule.mediaStreamTrackSetEnabled(trackId,true)
-            startCamera()
-        }
+//        if (isCameraOpen) {
+//            //webRTCModule.mediaStreamTrackSetEnabled(trackId,true)
+//            startCamera()
+//        }
     }
 
     private fun openCamera() {

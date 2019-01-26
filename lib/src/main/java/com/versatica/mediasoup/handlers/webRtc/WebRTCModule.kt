@@ -6,7 +6,7 @@ import io.reactivex.Observable
 import org.webrtc.*
 import kotlin.collections.ArrayList
 
-class WebRTCModule private constructor(context: Context){
+class WebRTCModule private constructor(context: Context) {
     private val logger = Logger("WebRTCModule")
 
     var mFactory: PeerConnectionFactory? = null
@@ -81,13 +81,13 @@ class WebRTCModule private constructor(context: Context){
     }
 
     fun getUserMedia(constraints: HashMap<*, *>): Observable<MediaStream> {
-        return  getUserMediaImpl!!.getUserMedia(constraints)
+        return getUserMediaImpl!!.getUserMedia(constraints)
     }
 
     fun mediaStreamTrackSetEnabled(id: String, enabled: Boolean) {
         ThreadUtil.runOnExecutor(
             Runnable {
-                mediaStreamTrackSetEnabledAsync(id,enabled)
+                mediaStreamTrackSetEnabledAsync(id, enabled)
             }
         )
     }
@@ -106,12 +106,15 @@ class WebRTCModule private constructor(context: Context){
         getUserMediaImpl!!.switchCamera(id)
     }
 
-    fun peerConnectionInit(configuration: HashMap<*, *>,observer: PeerConnection.Observer): PeerConnection?{
+    fun peerConnectionInit(configuration: HashMap<*, *>, observer: PeerConnection.Observer): PeerConnection? {
         val rtcConfiguration = parseRTCConfiguration(configuration)
         return peerConnectionInit(rtcConfiguration, observer)
     }
 
-    fun peerConnectionInit(configuration: PeerConnection.RTCConfiguration,observer: PeerConnection.Observer): PeerConnection?{
+    fun peerConnectionInit(
+        configuration: PeerConnection.RTCConfiguration,
+        observer: PeerConnection.Observer
+    ): PeerConnection? {
         return mFactory?.createPeerConnection(configuration, observer)
     }
 
@@ -193,47 +196,44 @@ class WebRTCModule private constructor(context: Context){
 
         // iceTransportPolicy (public api)
         if (map.containsKey("iceTransportPolicy")
-            && map["iceTransportPolicy"] is String) {
+            && map["iceTransportPolicy"] is String
+        ) {
             val v = map["iceTransportPolicy"] as String
-            if (v != null) {
-                when (v) {
-                    "all" // public
-                    -> conf.iceTransportsType = PeerConnection.IceTransportsType.ALL
-                    "relay" // public
-                    -> conf.iceTransportsType = PeerConnection.IceTransportsType.RELAY
-                    "nohost" -> conf.iceTransportsType = PeerConnection.IceTransportsType.NOHOST
-                    "none" -> conf.iceTransportsType = PeerConnection.IceTransportsType.NONE
-                }
+            when (v) {
+                "all" // public
+                -> conf.iceTransportsType = PeerConnection.IceTransportsType.ALL
+                "relay" // public
+                -> conf.iceTransportsType = PeerConnection.IceTransportsType.RELAY
+                "nohost" -> conf.iceTransportsType = PeerConnection.IceTransportsType.NOHOST
+                "none" -> conf.iceTransportsType = PeerConnection.IceTransportsType.NONE
             }
         }
 
         // bundlePolicy (public api)
         if (map.containsKey("bundlePolicy")
-            && map["bundlePolicy"] is String) {
+            && map["bundlePolicy"] is String
+        ) {
             val v = map["bundlePolicy"] as String
-            if (v != null) {
-                when (v) {
-                    "balanced" // public
-                    -> conf.bundlePolicy = PeerConnection.BundlePolicy.BALANCED
-                    "max-compat" // public
-                    -> conf.bundlePolicy = PeerConnection.BundlePolicy.MAXCOMPAT
-                    "max-bundle" // public
-                    -> conf.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE
-                }
+            when (v) {
+                "balanced" // public
+                -> conf.bundlePolicy = PeerConnection.BundlePolicy.BALANCED
+                "max-compat" // public
+                -> conf.bundlePolicy = PeerConnection.BundlePolicy.MAXCOMPAT
+                "max-bundle" // public
+                -> conf.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE
             }
         }
 
         // rtcpMuxPolicy (public api)
         if (map.containsKey("rtcpMuxPolicy")
-            && map["rtcpMuxPolicy"] is String) {
+            && map["rtcpMuxPolicy"] is String
+        ) {
             val v = map["rtcpMuxPolicy"] as String
-            if (v != null) {
-                when (v) {
-                    "negotiate" // public
-                    -> conf.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE
-                    "require" // public
-                    -> conf.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE
-                }
+            when (v) {
+                "negotiate" // public
+                -> conf.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.NEGOTIATE
+                "require" // public
+                -> conf.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE
             }
         }
 
@@ -243,7 +243,8 @@ class WebRTCModule private constructor(context: Context){
         // iceCandidatePoolSize of type unsigned short, defaulting to 0
         if (map.containsKey("iceCandidatePoolSize")
             //&& map.getType("iceCandidatePoolSize") == ReadableType.Number
-            && map["iceCandidatePoolSize"] is Number) {
+            && map["iceCandidatePoolSize"] is Number
+        ) {
             val v = map["iceCandidatePoolSize"] as Int
             if (v > 0) {
                 conf.iceCandidatePoolSize = v
@@ -254,32 +255,31 @@ class WebRTCModule private constructor(context: Context){
 
         // tcpCandidatePolicy (private api)
         if (map.containsKey("tcpCandidatePolicy")
-            && map["tcpCandidatePolicy"] is String) {
+            && map["tcpCandidatePolicy"] is String
+        ) {
             val v = map["tcpCandidatePolicy"] as String
-            if (v != null) {
-                when (v) {
-                    "enabled" -> conf.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
-                    "disabled" -> conf.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED
-                }
+            when (v) {
+                "enabled" -> conf.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
+                "disabled" -> conf.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED
             }
         }
 
         // candidateNetworkPolicy (private api)
         if (map.containsKey("candidateNetworkPolicy")
             //&& map.getType("candidateNetworkPolicy") == ReadableType.String
-            && map["candidateNetworkPolicy"] is String) {
+            && map["candidateNetworkPolicy"] is String
+        ) {
             val v = map["candidateNetworkPolicy"] as String
-            if (v != null) {
-                when (v) {
-                    "all" -> conf.candidateNetworkPolicy = PeerConnection.CandidateNetworkPolicy.ALL
-                    "low_cost" -> conf.candidateNetworkPolicy = PeerConnection.CandidateNetworkPolicy.LOW_COST
-                }
+            when (v) {
+                "all" -> conf.candidateNetworkPolicy = PeerConnection.CandidateNetworkPolicy.ALL
+                "low_cost" -> conf.candidateNetworkPolicy = PeerConnection.CandidateNetworkPolicy.LOW_COST
             }
         }
 
         // KeyType (private api)
         if (map.containsKey("keyType")
-            && map["keyType"] is String) {
+            && map["keyType"] is String
+        ) {
             val v = map["keyType"] as String
             if (v != null) {
                 when (v) {
@@ -292,20 +292,20 @@ class WebRTCModule private constructor(context: Context){
         // continualGatheringPolicy (private api)
         if (map.containsKey("continualGatheringPolicy")
             //&& map.getType("continualGatheringPolicy") == ReadableType.String
-            && map["continualGatheringPolicy"] is String) {
+            && map["continualGatheringPolicy"] is String
+        ) {
             val v = map["continualGatheringPolicy"] as String
-            if (v != null) {
-                when (v) {
-                    "gather_once" -> conf.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_ONCE
-                    "gather_continually" -> conf.continualGatheringPolicy =
-                            PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
-                }
+            when (v) {
+                "gather_once" -> conf.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_ONCE
+                "gather_continually" -> conf.continualGatheringPolicy =
+                        PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
             }
         }
 
         // audioJitterBufferMaxPackets (private api)
         if (map.containsKey("audioJitterBufferMaxPackets")
-            && map["audioJitterBufferMaxPackets"] is Number) {
+            && map["audioJitterBufferMaxPackets"] is Number
+        ) {
             val v = map["audioJitterBufferMaxPackets"] as Int
             if (v > 0) {
                 conf.audioJitterBufferMaxPackets = v
@@ -314,35 +314,40 @@ class WebRTCModule private constructor(context: Context){
 
         // iceConnectionReceivingTimeout (private api)
         if (map.containsKey("iceConnectionReceivingTimeout")
-            && map["iceConnectionReceivingTimeout"] is Number) {
+            && map["iceConnectionReceivingTimeout"] is Number
+        ) {
             val v = map["iceConnectionReceivingTimeout"] as Int
             conf.iceConnectionReceivingTimeout = v
         }
 
         // iceBackupCandidatePairPingInterval (private api)
         if (map.containsKey("iceBackupCandidatePairPingInterval")
-            && map["iceBackupCandidatePairPingInterval"] is Number) {
+            && map["iceBackupCandidatePairPingInterval"] is Number
+        ) {
             val v = map["iceBackupCandidatePairPingInterval"] as Int
             conf.iceBackupCandidatePairPingInterval = v
         }
 
         // audioJitterBufferFastAccelerate (private api)
         if (map.containsKey("audioJitterBufferFastAccelerate")
-            && map["iceBackupCandidatePairPingInterval"] is Boolean) {
+            && map["iceBackupCandidatePairPingInterval"] is Boolean
+        ) {
             val v = map["audioJitterBufferFastAccelerate"] as Boolean
             conf.audioJitterBufferFastAccelerate = v
         }
 
         // pruneTurnPorts (private api)
         if (map.containsKey("pruneTurnPorts")
-            && map["pruneTurnPorts"] is Boolean) {
+            && map["pruneTurnPorts"] is Boolean
+        ) {
             val v = map["pruneTurnPorts"] as Boolean
             conf.pruneTurnPorts = v
         }
 
         // presumeWritableWhenFullyRelayed (private api)
         if (map.containsKey("presumeWritableWhenFullyRelayed")
-            && map["presumeWritableWhenFullyRelayed"] is Boolean) {
+            && map["presumeWritableWhenFullyRelayed"] is Boolean
+        ) {
             val v = map["presumeWritableWhenFullyRelayed"] as Boolean
             conf.presumeWritableWhenFullyRelayed = v
         }
@@ -354,7 +359,8 @@ class WebRTCModule private constructor(context: Context){
         val mediaConstraints = MediaConstraints()
 
         if (constraints.containsKey("mandatory")
-            && constraints["mandatory"] is HashMap<*, *>) {
+            && constraints["mandatory"] is HashMap<*, *>
+        ) {
             parseConstraints(
                 constraints["mandatory"] as HashMap<String, String>,
                 mediaConstraints.mandatory
@@ -364,7 +370,8 @@ class WebRTCModule private constructor(context: Context){
         }
 
         if (constraints.containsKey("optional")
-            && constraints["optional"] is ArrayList<*>){
+            && constraints["optional"] is ArrayList<*>
+        ) {
             val optional = constraints["optional"] as ArrayList<*>
             var i = 0
             val size = optional.size
@@ -378,7 +385,7 @@ class WebRTCModule private constructor(context: Context){
                 i++
             }
         } else {
-            logger.debug( "optional constraints are not an array")
+            logger.debug("optional constraints are not an array")
         }
 
         return mediaConstraints
