@@ -19,6 +19,7 @@ import org.webrtc.MediaStream
 import org.webrtc.MediaStreamTrack
 import org.webrtc.VideoTrack
 
+
 /**
  * @author wolfhan
  */
@@ -103,9 +104,11 @@ class App(val roomId: String, val peerName: String, val context: Context) {
 
         // Handle notifications from server, as there might be important info, that affects stream
         socket.on("mediasoup-notification") {
-            val notification = it[0] as MediasoupNotify
+            val notification = it[0] as org.json.JSONObject
             logger.debug("New notification came from server: $notification")
-            roomObj.receiveNotification(notification)
+            roomObj.receiveNotification(notification).subscribe{
+
+            }
         }
     }
 
@@ -137,9 +140,11 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     isCameraOpen = true
 
                     //Show local stream
-                    val localWebRTCView = (context as MainActivity).webRTCView
-                    localWebRTCView.setVideoTrack(videoTrack)
-
+                    (context as MainActivity).runOnUiThread{
+                        ////UI thread
+                        val localWebRTCView = context.webRTCView
+                        localWebRTCView.setVideoTrack(videoTrack)
+                    }
 
                     // Create Producers for audio and video.
                     val audioProducer = roomObj.createProducer(audioTrack)

@@ -492,18 +492,18 @@ class Room(
      *
      * @param {Object} notification
      */
-    fun receiveNotification(notification: MediasoupNotify): Observable<Unit>{
+    fun receiveNotification(notification: org.json.JSONObject): Observable<Unit>{
         if (this.closed()){
             return  Observable.create {
                 it.onError(InvalidStateError("Room closed"))
             }
-        }else if (!notification.notification){
+        }else if (!notification.getBoolean("notification")){
             return  Observable.create {
                 it.onError(Throwable("not a notification"))
             }
         }
 
-        val method = notification.method
+        val method = notification.getString("method")
 
         logger.debug("receiveNotification() [method:%s, notification:%o]")
 
@@ -511,12 +511,14 @@ class Room(
             .flatMap {
                 when(method){
                     "closed" ->{
-                        val appData = (notification as ClosedNotify).appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ClosedNotify::class.java)
+                        val appData = notificationObj.appData
                         this.remoteClose(appData)
                     }
                     "transportClosed" ->{
-                        val id = (notification as TransportClosedNotify).id
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),TransportClosedNotify::class.java)
+                        val id = notificationObj.id
+                        val appData = notificationObj.appData
                         val transport = this._transports[id]
 
                         if (transport == null)
@@ -525,8 +527,9 @@ class Room(
                         transport.remoteClose(appData,false)
                     }
                     "transportStats" ->{
-                        val id = (notification as TransportStatsNotify).id
-                        val stats = notification.stats
+                        val notificationObj = JSON.parseObject(notification.toString(),TransportStatsNotify::class.java)
+                        val id = notificationObj.id
+                        val stats = notificationObj.stats
                         val transport = this._transports[id]
 
                         if (transport == null)
@@ -535,18 +538,20 @@ class Room(
                         transport.remoteStats(stats)
                     }
                     "newPeer" ->{
-                        val name = (notification as NewPeerNotify).peerData.name
+                        val notificationObj = JSON.parseObject(notification.toString(),NewPeerNotify::class.java)
+                        val name = notificationObj.peerData.name
 
                         if (this._peers.containsKey(name))
                             throw  Error("Peer already exists [name: $name]")
 
-                        val peerData = notification.peerData
+                        val peerData = notificationObj.peerData
 
                         this._handlePeerData(peerData)
                     }
                     "peerClosed" ->{
-                        val peerName = (notification as PeerClosedNotify).name
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),PeerClosedNotify::class.java)
+                        val peerName = notificationObj.name
+                        val appData = notificationObj.appData
                         val peer = this._peers[peerName]
 
                         if (peer == null)
@@ -555,8 +560,9 @@ class Room(
                         peer.remoteClose(appData)
                     }
                     "producerPaused" ->{
-                        val id = (notification as ProducerPausedNotify).id
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ProducerPausedNotify::class.java)
+                        val id = notificationObj.id
+                        val appData = notificationObj.appData
                         val producer = this._producers[id]
 
                         if (producer == null)
@@ -565,8 +571,9 @@ class Room(
                         producer.remotePause(appData)
                     }
                     "producerResumed" ->{
-                        val id = (notification as ProducerResumedNotify).id
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ProducerResumedNotify::class.java)
+                        val id = notificationObj.id
+                        val appData = notificationObj.appData
                         val producer = this._producers[id]
 
                         if (producer == null)
@@ -575,8 +582,9 @@ class Room(
                         producer.remoteResume(appData)
                     }
                     "producerClosed" ->{
-                        val id = (notification as ProducerClosedNotify).id
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ProducerClosedNotify::class.java)
+                        val id = notificationObj.id
+                        val appData = notificationObj.appData
                         val producer = this._producers[id]
 
                         if (producer == null)
@@ -585,8 +593,9 @@ class Room(
                         producer.remoteClose(appData)
                     }
                     "producerStats" ->{
-                        val id = (notification as ProducerStatsNotify).id
-                        val stats = notification.stats
+                        val notificationObj = JSON.parseObject(notification.toString(),ProducerStatsNotify::class.java)
+                        val id = notificationObj.id
+                        val stats = notificationObj.stats
                         val producer = this._producers[id]
 
                         if (producer == null)
@@ -595,20 +604,22 @@ class Room(
                         producer.remoteStats(stats)
                     }
                     "newConsumer" ->{
-                        val peerName = (notification as NewConsumerNotify).consumerData.peerName
+                        val notificationObj = JSON.parseObject(notification.toString(),NewConsumerNotify::class.java)
+                        val peerName = notificationObj.consumerData.peerName
                         val peer = this._peers[peerName]
 
                         if (peer == null)
                             throw Error("no Peer found [name $peerName]")
 
-                        val consumerData = notification.consumerData
+                        val consumerData = notificationObj.consumerData
 
                         this._handleConsumerData(consumerData, peer)
                     }
                     "consumerClosed" ->{
-                        val id = (notification as ConsumerClosedNotify).id
-                        val peerName = notification.peerName
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ConsumerClosedNotify::class.java)
+                        val id = notificationObj.id
+                        val peerName = notificationObj.peerName
+                        val appData = notificationObj.appData
                         val peer = this._peers[peerName]
 
                         if (peer == null)
@@ -622,9 +633,10 @@ class Room(
                         consumer.remoteClose(appData)
                     }
                     "consumerPaused" ->{
-                        val id = (notification as ConsumerPausedNotify).id
-                        val peerName = notification.peerName
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ConsumerPausedNotify::class.java)
+                        val id = notificationObj.id
+                        val peerName = notificationObj.peerName
+                        val appData = notificationObj.appData
                         val peer = this._peers[peerName]
 
                         if (peer == null)
@@ -638,9 +650,10 @@ class Room(
                         consumer.remotePause(appData)
                     }
                     "consumerResumed" ->{
-                        val id = (notification as ConsumerResumedNotify).id
-                        val peerName = notification.peerName
-                        val appData = notification.appData
+                        val notificationObj = JSON.parseObject(notification.toString(),ConsumerResumedNotify::class.java)
+                        val id = notificationObj.id
+                        val peerName = notificationObj.peerName
+                        val appData = notificationObj.appData
                         val peer = this._peers[peerName]
 
                         if (peer == null)
@@ -654,9 +667,10 @@ class Room(
                         consumer.remoteResume(appData)
                     }
                     "consumerPreferredProfileSet" ->{
-                        val id = (notification as ConsumerPreferredProfileSetNotify).id
-                        val peerName = notification.peerName
-                        val profile = notification.profile
+                        val notificationObj = JSON.parseObject(notification.toString(),ConsumerPreferredProfileSetNotify::class.java)
+                        val id = notificationObj.id
+                        val peerName = notificationObj.peerName
+                        val profile = notificationObj.profile
                         val peer = this._peers[peerName]
 
                         if (peer == null)
@@ -670,9 +684,10 @@ class Room(
                         consumer.remoteSetPreferredProfile(profile)
                     }
                     "consumerEffectiveProfileChanged" ->{
-                        val id = (notification as ConsumerEffectiveProfileChangedNotify).id
-                        val peerName = notification.peerName
-                        val profile = notification.profile
+                        val notificationObj = JSON.parseObject(notification.toString(),ConsumerEffectiveProfileChangedNotify::class.java)
+                        val id = notificationObj.id
+                        val peerName = notificationObj.peerName
+                        val profile = notificationObj.profile
                         val peer = this._peers[peerName]
 
                         if (peer == null)
@@ -686,9 +701,10 @@ class Room(
                         consumer.remoteEffectiveProfileChanged(profile)
                     }
                     "consumerStats" ->{
-                        val id = (notification as ConsumerStatsNotify).id
-                        val peerName = notification.peerName
-                        val stats = notification.stats
+                        val notificationObj = JSON.parseObject(notification.toString(),ConsumerStatsNotify::class.java)
+                        val id = notificationObj.id
+                        val peerName = notificationObj.peerName
+                        val stats = notificationObj.stats
                         val peer = this._peers[peerName]
 
                         if (peer == null)
