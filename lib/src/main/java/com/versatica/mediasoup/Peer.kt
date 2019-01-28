@@ -51,7 +51,11 @@ class Peer(var name: String, var appData: Any?, private var logger: Logger = Log
         this.closed = true
 
         this.emit("@close")
-        this.safeEmit("close", "remote", appData!!)
+        if (appData == null){
+            this.safeEmit("close", "remote")
+        }else{
+            this.safeEmit("close", "remote", appData)
+        }
 
         // Close all the Consumers.
         for (consumer in this._consumers.values) {
