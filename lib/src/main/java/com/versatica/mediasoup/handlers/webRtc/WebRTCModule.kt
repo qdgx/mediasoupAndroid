@@ -185,7 +185,7 @@ class WebRTCModule private constructor(context: Context) {
 
     fun parseRTCConfiguration(map: HashMap<*, *>?): PeerConnection.RTCConfiguration {
         var iceServersArray: ArrayList<*>? = null
-        if (map != null) {
+        if (map != null && map["iceServers"] != null) {
             iceServersArray = map["iceServers"] as ArrayList<*>
         }
         val iceServers = createIceServers(iceServersArray)

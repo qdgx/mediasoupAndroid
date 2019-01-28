@@ -251,7 +251,7 @@ class Room(
 
                         Observable.create(ObservableOnSubscribe<ArrayList<PeerData>> {
                             //next
-                            it.onNext(joinResponse.peers)
+                            it.onNext(joinResponse.peers!!)
                         })
                     }
             }.flatMap { peers ->

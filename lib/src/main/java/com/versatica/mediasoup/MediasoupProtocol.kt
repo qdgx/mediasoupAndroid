@@ -58,7 +58,7 @@ class JoinRequest : MediasoupRequest(
 }
 
 class JoinResponse {
-    var peers: ArrayList<PeerData> = ArrayList()
+    var peers: ArrayList<PeerData>? = ArrayList()
 }
 
 class PeerData {
