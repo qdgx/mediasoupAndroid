@@ -147,8 +147,8 @@ object UnifiedPlanUtils {
                 val encoding = RtpEncoding(ssrc = ssrc)
 
                 if (rtxSsrc > 0) {
-                    val rtx = hashMapOf<Int, Int>()
-                    rtx[ssrc] = rtxSsrc
+                    val rtx = hashMapOf<String, Int>()
+                    rtx["ssrc"] = rtxSsrc
                     encoding.rtx = rtx
                 }
 
@@ -368,5 +368,5 @@ data class RtpEncoding(
     var encodingId: String? = null,
     var profile: String? = null,
     var ssrc: Int? = null,
-    var rtx: MutableMap<Int, Int>? = null
+    var rtx: MutableMap<String, Int>? = null
 )
