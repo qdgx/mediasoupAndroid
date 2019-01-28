@@ -303,15 +303,14 @@ class RTCRtpHeaderExtension {
 }
 
 data class RTCRtpHeaderExtensionCapability(
-    var uri: String? = null
+    var uri: String? = null,
+    var kind: String? = null,
+    var preferredId: Int? = null,
+    var preferredEncrypt: Boolean? = null
 ) {
-    var kind: String? = null
-    var preferredId: Int? = null
 
-    constructor(uri: String?, kind: String?, preferredId: Int?) : this(uri) {
-        this.kind = kind
-        this.preferredId = preferredId
-    }
+    constructor(uri: String?) : this(uri, null, null, null)
+
 }
 
 class RTCRtpHeaderExtensionParameters(
