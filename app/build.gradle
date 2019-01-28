@@ -46,6 +46,7 @@ dependencies {
     implementation 'io.socket:socket.io-client:1.0.0'
     implementation 'org.webrtc:google-webrtc:1.0.26131'
     implementation 'com.yanzhenjie:permission:2.0.0-rc12'
+    implementation 'com.alibaba:fastjson:1.1.70.android'
     implementation project(':lib')
 
     testImplementation 'junit:junit:4.12'

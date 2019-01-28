@@ -43,7 +43,7 @@ class QueryRoomRequest : MediasoupRequest(
 
 class QueryRoomResponse {
     var rtpCapabilities: RTCRtpCapabilities? = null
-    var mandatoryCodecPayloadTypes: MutableList<Int> = mutableListOf()
+    var mandatoryCodecPayloadTypes: MutableList<Int>? = null
 }
 
 //join [request]

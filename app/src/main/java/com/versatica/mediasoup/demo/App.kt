@@ -3,6 +3,7 @@ package com.versatica.mediasoup.demo
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
+import com.alibaba.fastjson.JSON
 import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.BaseApplication
 import com.versatica.mediasoup.handlers.webRtc.WebRTCModule
@@ -51,103 +52,107 @@ class App(val roomId: String, val peerName: String, val context: Context) {
     // Transport for receiving media from remote Peers.
     var recvTransport: Transport? = null
 
-    // Create a local Room instance associated to the remote Room.
-    var roomObj: Room? = null
+    // Create a local Room instance associated to the remote roomObj.
+    val roomObj: Room = Room()
 
-    @Suppress("UNCHECKED_CAST")
-    fun joinRoom(){
-        roomObj = Room().also { room ->
-            room.join(peerName)
-                .flatMap {
-                    // Create the Transport for sending our media.
-                    sendTransport = room.createTransport("send")
-                    // Create the Transport for receiving media from remote Peers.
-                    recvTransport = room.createTransport("recv")
+    init {
+        // Event fired by local room when a new remote Peer joins the Room
+        roomObj.on("newpeer") {
+            val peer = it[0] as Peer
+            logger.debug("A new Peer joined the Room: ${peer.name}")
 
-                    val peers = it as MutableList<Peer>
-                    peers.forEach { peer ->
-                        handlePeer(peer)
-                    }
-                    Observable.create(ObservableOnSubscribe<Unit> { observableEmitter ->
-                        observableEmitter.onNext(Unit)
-                    })
-                }.flatMap {
-                    // Get our mic and camera
-                    openCameraRx()
-                }.subscribe(
-                    { mediaStream ->
-                        val audioTrack = mediaStream.audioTracks[0]
-                        val videoTrack = mediaStream.videoTracks[0]
-
-                        trackId = videoTrack.id()
-                        isCameraOpen = true
-
-                        //Show local stream
-                        val localWebRTCView = (context as MainActivity).webRTCView
-                        localWebRTCView.setVideoTrack(videoTrack)
-
-
-                        // Create Producers for audio and video.
-                        val audioProducer = room.createProducer(audioTrack)
-                        val videoProducer = room.createProducer(videoTrack)
-
-                        // Send our audio.
-                        audioProducer.send(sendTransport!!)
-                        // Send our video.
-                        videoProducer.send(sendTransport!!)
-                    },
-                    { throwable ->
-                        Toast.makeText(context, throwable.cause.toString(), Toast.LENGTH_SHORT).show()
-                    })
-
-            // Event fired by local room when a new remote Peer joins the Room
-            room.on("newpeer") {
-                val peer = it[0] as Peer
-                logger.debug("A new Peer joined the Room: ${peer.name}")
-
-                // Handle the Peer.
-                handlePeer(peer)
-            }
-
-            // Event fired by local room
-            room.on("request") {
-                val size = it.size
-                val request = it[0]
-                val ack: Ack?
-                if (size == 3) {
-                    val callback = it[1] as Function1<Any, *>
-                    val errCallback = it[2] as Function1<Any, *>
-                    ack = Ack { subArgs ->
-                        val err = subArgs[0]
-                        val response = subArgs[1]
-                        if (err == null || err == false) {
-                            // Success response, so pass the mediasoup response to the local Room.
-                            callback(response)
-                        } else {
-                            errCallback(err)
-                        }
-                    }
-                } else {
-                    ack = null
-                }
-                logger.debug("REQUEST: $request")
-                socket.emit("mediasoup-request", request, ack)
-            }
-
-            // Be ready to send mediaSoup client notifications to our remote mediaSoup Peer
-            room.on("notify") { args ->
-                val notification = args[0]
-                logger.debug("New notification from local room: $notification")
-                socket.emit("mediasoup-notification", notification)
-            }
-
-            // Handle notifications from server, as there might be important info, that affects stream
-            socket.on("mediasoup-notification") {
-                val notification = it[0] as MediasoupNotify
-                logger.debug("New notification came from server: $notification")
-                room.receiveNotification(notification)
-            }
+            // Handle the Peer.
+            handlePeer(peer)
         }
+
+        // Event fired by local room
+        roomObj.on("request") {
+            val size = it.size
+            val request = it[0]
+            val ack: Ack?
+            if (size == 3) {
+                val callback = it[1] as Function1<Any, *>
+                val errCallback = it[2] as Function1<Any, *>
+                ack = Ack { subArgs ->
+                    val err = subArgs[0]
+                    val response = subArgs[1]
+
+                    val responseSt = (response as org.json.JSONObject).toString()
+                    if (err == null || err == false) {
+                        // Success response, so pass the mediasoup response to the local roomObj.
+                        callback(responseSt)
+                    } else {
+                        errCallback(err)
+                    }
+                }
+            } else {
+                ack = null
+            }
+            var requestJson = org.json.JSONObject(JSON.toJSONString(request))
+            logger.debug("REQUEST: $requestJson")
+            socket.emit("mediasoup-request", requestJson, ack)
+        }
+
+        // Be ready to send mediaSoup client notifications to our remote mediaSoup Peer
+        roomObj.on("notify") { args ->
+            val notification = args[0]
+            var notificationJson =  org.json.JSONObject(JSON.toJSONString(notification))
+            logger.debug("New notification from local room: $notificationJson")
+            socket.emit("mediasoup-notification", notificationJson)
+        }
+
+        // Handle notifications from server, as there might be important info, that affects stream
+        socket.on("mediasoup-notification") {
+            val notification = it[0] as MediasoupNotify
+            logger.debug("New notification came from server: $notification")
+            roomObj.receiveNotification(notification)
+        }
+    }
+
+    @SuppressLint("CheckResult")
+    fun joinRoom() {
+        roomObj.join(peerName)
+            .flatMap {
+                // Create the Transport for sending our media.
+                sendTransport = roomObj.createTransport("send")
+                // Create the Transport for receiving media from remote Peers.
+                recvTransport = roomObj.createTransport("recv")
+
+                val peers = it as MutableList<Peer>
+                peers.forEach { peer ->
+                    handlePeer(peer)
+                }
+                Observable.create(ObservableOnSubscribe<Unit> { observableEmitter ->
+                    observableEmitter.onNext(Unit)
+                })
+            }.flatMap {
+                // Get our mic and camera
+                openCameraRx()
+            }.subscribe(
+                { mediaStream ->
+                    val audioTrack = mediaStream.audioTracks[0]
+                    val videoTrack = mediaStream.videoTracks[0]
+
+                    trackId = videoTrack.id()
+                    isCameraOpen = true
+
+                    //Show local stream
+                    val localWebRTCView = (context as MainActivity).webRTCView
+                    localWebRTCView.setVideoTrack(videoTrack)
+
+
+                    // Create Producers for audio and video.
+                    val audioProducer = roomObj.createProducer(audioTrack)
+                    val videoProducer = roomObj.createProducer(videoTrack)
+
+                    // Send our audio.
+                    audioProducer.send(sendTransport!!)
+                    // Send our video.
+                    videoProducer.send(sendTransport!!)
+                },
+                { throwable ->
+                    Toast.makeText(context, throwable.cause.toString(), Toast.LENGTH_SHORT).show()
+                })
     }
 
     fun closeCamera() {
@@ -162,7 +167,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
 
     }
 
-    fun switchCamera(){
+    fun switchCamera() {
         if (trackId.isNotEmpty()) {
             if (faceMode == ENVIRONMENT_FACINGMODE) {
                 faceMode = USER_FACINGMODE
