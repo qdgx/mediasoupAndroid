@@ -23,7 +23,7 @@ object Ortc {
         // Match media codecs and keep the order preferred by remoteCaps.
         for (remoteCodec in remoteCaps.codecs) {
             // TODO: Ignore pseudo-codecs and feature codecs.
-            if (remoteCodec.name === "rtx")
+            if (remoteCodec.name == "rtx")
                 continue
 
             val matchingLocalCodec = localCaps.codecs.find {
@@ -54,11 +54,11 @@ object Ortc {
         if (extendedCapsCodecs != null) {
             for (extendedCodec in extendedCapsCodecs) {
                 val matchingLocalRtxCodec = localCaps.codecs.find {
-                    it.name === "rtx" && it.parameters?.get("apt") === extendedCodec.sendPayloadType
+                    it.name.equals("rtx") && it.parameters?.get("apt") == extendedCodec.sendPayloadType
                 }
 
                 val matchingRemoteRtxCodec = remoteCaps.codecs.find {
-                    it.name === "rtx" && it.parameters?.get("apt") === extendedCodec.recvPayloadType
+                    it.name.equals("rtx") && it.parameters?.get("apt") == extendedCodec.recvPayloadType
                 }
 
                 if (matchingLocalRtxCodec != null && matchingRemoteRtxCodec != null) {
@@ -200,7 +200,7 @@ object Ortc {
      */
     fun canSend(kind: String, extendedRtpCapabilities: RTCExtendedRtpCapabilities): Boolean {
         return extendedRtpCapabilities.codecs?.any {
-            it.kind === kind
+            it.kind == kind
         } ?: false
     }
 
@@ -246,7 +246,7 @@ object Ortc {
         val extendedRtpCapabilitiesCodecs = extendedRtpCapabilities.codecs
         if (extendedRtpCapabilitiesCodecs != null) {
             for (capCodec in extendedRtpCapabilitiesCodecs) {
-                if (capCodec.kind !== kind)
+                if (capCodec.kind != kind)
                     continue
 
                 val codec = RTCRtpCodecParameters(
@@ -282,7 +282,7 @@ object Ortc {
         val extendedRtpCapabilitiesHeaderExtensions = extendedRtpCapabilities.headerExtensions
         if (extendedRtpCapabilitiesHeaderExtensions != null) {
             for (capExt in extendedRtpCapabilitiesHeaderExtensions) {
-                if (capExt.kind != null && capExt.kind !== kind)
+                if (capExt.kind != null && capExt.kind != kind)
                     continue
 
                 val ext = RTCRtpHeaderExtensionParameters(
@@ -323,7 +323,7 @@ object Ortc {
         val extendedRtpCapabilitiesCodecs = extendedRtpCapabilities.codecs
         if (extendedRtpCapabilitiesCodecs != null) {
             for (capCodec in extendedRtpCapabilitiesCodecs) {
-                if (capCodec.kind !== kind)
+                if (capCodec.kind != kind)
                     continue
 
                 val codec =
@@ -359,7 +359,7 @@ object Ortc {
         val extendedRtpCapabilitiesHeaderExtensions = extendedRtpCapabilities.headerExtensions
         if (extendedRtpCapabilitiesHeaderExtensions != null) {
             for (capExt in extendedRtpCapabilitiesHeaderExtensions) {
-                if (capExt.kind != null && capExt.kind !== kind)
+                if (capExt.kind != null && capExt.kind != kind)
                     continue
 
                 val ext =
@@ -379,21 +379,21 @@ object Ortc {
         val aMimeType = aCodec.mimeType.toLowerCase()
         val bMimeType = bCodec.mimeType.toLowerCase()
 
-        if (aMimeType !== bMimeType)
+        if (aMimeType != bMimeType)
             return false
 
-        if (aCodec.clockRate !== bCodec.clockRate)
+        if (aCodec.clockRate != bCodec.clockRate)
             return false
 
-        if (aCodec.channels !== bCodec.channels)
+        if (aCodec.channels != bCodec.channels)
             return false
 
         // Match H264 parameters.
-        if (aMimeType === "video/h264") {
+        if (aMimeType == "video/h264") {
             val aPacketizationMode = aCodec.parameters?.get("packetization-mode") ?: 0
             val bPacketizationMode = bCodec.parameters?.get("packetization-mode") ?: 0
 
-            if (aPacketizationMode !== bPacketizationMode)
+            if (aPacketizationMode != bPacketizationMode)
                 return false
         }
 
@@ -404,10 +404,10 @@ object Ortc {
         aExt: RTCRtpHeaderExtensionCapability,
         bExt: RTCRtpHeaderExtensionCapability
     ): Boolean {
-        if (aExt.kind != null && bExt.kind != null && aExt.kind !== bExt.kind)
+        if (aExt.kind != null && bExt.kind != null && aExt.kind != bExt.kind)
             return false
 
-        if (aExt.uri !== bExt.uri)
+        if (aExt.uri != bExt.uri)
             return false
 
         return true
@@ -420,7 +420,7 @@ object Ortc {
         if (rtcpFeedback != null) {
             for (aFb in rtcpFeedback) {
                 val matchingBFb = codecB.rtcpFeedback?.find {
-                    it.type === aFb.type && it.parameter === aFb.parameter
+                    it.type == aFb.type && it.parameter == aFb.parameter
                 }
 
                 if (matchingBFb != null)
@@ -433,9 +433,9 @@ object Ortc {
 }
 
 data class RTCExtendedRtpCapabilities(
-    var codecs: MutableList<RTCExtendedRtpCodecCapability>? = null,
-    var headerExtensions: MutableList<RTCExtendedRtpHeaderExtensionCapability>? = null,
-    var fecMechanisms: MutableList<Any>? = null
+    var codecs: MutableList<RTCExtendedRtpCodecCapability>? = mutableListOf(),
+    var headerExtensions: MutableList<RTCExtendedRtpHeaderExtensionCapability>? = mutableListOf(),
+    var fecMechanisms: MutableList<Any>? = mutableListOf()
 )
 
 data class RTCExtendedRtpCodecCapability(
