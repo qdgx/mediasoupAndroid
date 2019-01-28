@@ -109,8 +109,8 @@ object PlanBUtils {
             val encoding = RtpEncoding(ssrc = ssrc)
 
             if (rtxSsrc > 0) {
-                val rtx = hashMapOf<Int, Int>()
-                rtx[ssrc] = rtxSsrc
+                val rtx = hashMapOf<String, Int>()
+                rtx["ssrc"] = rtxSsrc
                 encoding.rtx = rtx
             }
 
