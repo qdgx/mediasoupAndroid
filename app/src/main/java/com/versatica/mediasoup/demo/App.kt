@@ -106,9 +106,14 @@ class App(val roomId: String, val peerName: String, val context: Context) {
         socket.on("mediasoup-notification") {
             val notification = it[0] as org.json.JSONObject
             logger.debug("New notification came from server: $notification")
-            roomObj.receiveNotification(notification).subscribe{
+            roomObj.receiveNotification(notification).subscribe(
+                {
 
-            }
+                },
+                {
+                    Toast.makeText(context,it.message,Toast.LENGTH_SHORT).show()
+                }
+            )
         }
     }
 
