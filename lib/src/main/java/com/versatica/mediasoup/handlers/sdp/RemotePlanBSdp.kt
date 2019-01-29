@@ -79,10 +79,10 @@ object RemotePlanBSdp {
             sdpObj.name = "-"
             sdpObj.timing = SessionDescription.Timing(start = 0, stop = 0)
             sdpObj.icelite = if (remoteIceParameters?.iceLite != null) "ice-lite" else null
-//            sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
-//                semantic = "WMS",
-//                token = "*"
-//            )
+            sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
+                semantic = "WMS",
+                token = "*"
+            )
             if (mids.isNotEmpty()) {
                 sdpObj.groups = arrayListOf(
                     SessionAttributes.Group(
@@ -274,10 +274,10 @@ object RemotePlanBSdp {
             sdpObj.name = "-"
             sdpObj.timing = SessionDescription.Timing(start = 0, stop = 0)
             sdpObj.icelite = if (remoteIceParameters?.iceLite != null) "ice-lite" else null
-//            sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
-//                semantic = "WMS",
-//                token = "*"
-//            )
+            sdpObj.msidSemantic = SessionAttributes.MsidSemantic(
+                semantic = "WMS",
+                token = "*"
+            )
 
             if (mids.isNotEmpty()) {
                 sdpObj.groups = arrayListOf(
