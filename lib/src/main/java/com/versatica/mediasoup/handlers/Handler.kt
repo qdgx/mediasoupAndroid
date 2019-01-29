@@ -349,7 +349,7 @@ class SendHandler(
                 val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
 
                 // Let's decide that we'll be DTLS server (because we can).
-                dtlsParameters.role = RTCDtlsRole.server
+                dtlsParameters.role = RTCDtlsRole.SERVER
 
                 transportLocalParameters.dtlsParameters = dtlsParameters
 
