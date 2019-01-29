@@ -143,8 +143,8 @@ object RemotePlanBSdp {
                 remoteMediaObj.iceOptions = "renomination"
 
                 when (remoteDtlsParameters?.role) {
-                    RTCDtlsRole.client -> remoteMediaObj.setup = "active"
-                    RTCDtlsRole.server -> remoteMediaObj.setup = "passive"
+                    RTCDtlsRole.CLIENT -> remoteMediaObj.setup = "active"
+                    RTCDtlsRole.SERVER -> remoteMediaObj.setup = "passive"
                 }
 
                 when (localMediaObj.direction) {

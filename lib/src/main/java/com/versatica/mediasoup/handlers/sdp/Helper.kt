@@ -429,26 +429,42 @@ open class EventInit {
 enum class RTCBundlePolicy(val v: String) {
     BALANCED("balanced"),
     MAX_COMPAT("max-compat"),
-    MAX_BUNDLE("max-bundle")
+    MAX_BUNDLE("max-bundle");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCDataChannelState(val v: String) {
     CONNECTING("connecting"),
     OPEN("open"),
     CLOSING("closing"),
-    CLOSED("closed")
+    CLOSED("closed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCDegradationPreference(val v: String) {
     MAINTAIN_FRAMERATE("maintain-framerate"),
     MAINTAIN_RESOLUTION("maintain-resolution"),
-    BALANCED("balanced")
+    BALANCED("balanced");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCDtlsRole(val v: String) {
-    auto("auto"),
-    client("client"),
-    server("server")
+    AUTO("auto"),
+    CLIENT("client"),
+    SERVER("server");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCDtlsTransportState(val v: String) {
@@ -456,12 +472,20 @@ enum class RTCDtlsTransportState(val v: String) {
     CONNECTING("connecting"),
     CONNECTED("connected"),
     CLOSED("closed"),
-    FAILED("failed")
+    FAILED("failed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCDtxStatus(val v: String) {
     DISABLED("disabled"),
-    ENABLED("enabled")
+    ENABLED("enabled");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCErrorDetailType(val v: String) {
@@ -479,19 +503,31 @@ enum class RTCErrorDetailType(val v: String) {
     SCTP_FAILURE("sctp-failure"),
     SDP_SYNTAX_ERROR("sdp-syntax-error"),
     HARDWARE_ENCODER_NOT_AVAILABLE("hardware-encoder-not-available"),
-    HARDWARE_ENCODER_ERROR("hardware-encoder-error")
+    HARDWARE_ENCODER_ERROR("hardware-encoder-error");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceCandidateType(val v: String) {
     HOST("host"),
     SRFLX("srflx"),
     PRFLX("prflx"),
-    RELAY("relay")
+    RELAY("relay");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceComponent(val v: String) {
     RTP("rtp"),
-    RTCP("rtcp")
+    RTCP("rtcp");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceConnectionState(val v: String) {
@@ -501,51 +537,87 @@ enum class RTCIceConnectionState(val v: String) {
     COMPLETED("completed"),
     DISCONNECTED("disconnected"),
     FAILED("failed"),
-    CLOSED("closed")
+    CLOSED("closed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceCredentialType(val v: String) {
     PASSWORD("password"),
-    OAUTH("oauth")
+    OAUTH("oauth");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceGatherPolicy(val v: String) {
     ALL("all"),
     NOHOST("nohost"),
-    RELAY("relay")
+    RELAY("relay");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceGathererState(val v: String) {
     NEW("new"),
     GATHERING("gathering"),
-    COMPLETE("complete")
+    COMPLETE("complete");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceGatheringState(val v: String) {
     NEW("new"),
     GATHERING("gathering"),
-    COMPLETE("complete")
+    COMPLETE("complete");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceProtocol(val v: String) {
     UDP("udp"),
-    TCP("tcp")
+    TCP("tcp");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceRole(val v: String) {
     CONTROLLING("controlling"),
-    CONTROLLED("controlled")
+    CONTROLLED("controlled");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceTcpCandidateType(val v: String) {
     ACTIVE("active"),
     PASSIVE("passive"),
-    SO("so")
+    SO("so");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceTransportPolicy(val v: String) {
     RELAY("relay"),
-    ALL("all")
+    ALL("all");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCIceTransportState(val v: String) {
@@ -555,7 +627,11 @@ enum class RTCIceTransportState(val v: String) {
     COMPLETED("completed"),
     DISCONNECTED("disconnected"),
     FAILED("failed"),
-    CLOSED("closed")
+    CLOSED("closed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCPeerConnectionState(val v: String) {
@@ -564,39 +640,63 @@ enum class RTCPeerConnectionState(val v: String) {
     CONNECTED("connected"),
     DISCONNECTED("disconnected"),
     FAILED("failed"),
-    CLOSED("closed")
+    CLOSED("closed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCPriorityType(val v: String) {
     VERY_LOW("very-low"),
     LOW("low"),
     MEDIUM("medium"),
-    HIGH("high")
+    HIGH("high");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCRtcpMuxPolicy(val v: String) {
     NEGOTIATE("negotiate"),
-    REQUIRE("require")
+    REQUIRE("require");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCRtpTransceiverDirection(val v: String) {
     SENDRECV("sendrecv"),
     SENDONLY("sendonly"),
     RECVONLY("recvonly"),
-    INACTIVE("inactive")
+    INACTIVE("inactive");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCSctpTransportState(val v: String) {
     CONNECTING("connecting"),
     CONNECTED("connected"),
-    CLOSED("closed")
+    CLOSED("closed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCSdpType(val v: String) {
     OFFER("offer"),
     PRANSWER("pranswer"),
     ANSWER("answer"),
-    ROLLBACK("rollback")
+    ROLLBACK("rollback");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCSignalingState(val v: String) {
@@ -605,7 +705,11 @@ enum class RTCSignalingState(val v: String) {
     HAVE_REMOTE_OFFER("have-remote-offer"),
     HAVE_LOCAL_PRANSWER("have-local-pranswer"),
     HAVE_REMOTE_PRANSWER("have-remote-pranswer"),
-    CLOSED("closed")
+    CLOSED("closed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCStatsIceCandidatePairState(val v: String) {
@@ -614,14 +718,22 @@ enum class RTCStatsIceCandidatePairState(val v: String) {
     INPROGRESS("inprogress"),
     FAILED("failed"),
     SUCCEEDED("succeeded"),
-    CANCELLED("cancelled")
+    CANCELLED("cancelled");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCStatsIceCandidateType(val v: String) {
     HOST("host"),
     SERVERREFLEXIVE("serverreflexive"),
     PEERREFLEXIVE("peerreflexive"),
-    RELAYED("relayed")
+    RELAYED("relayed");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class RTCStatsType(val v: String) {
@@ -633,16 +745,28 @@ enum class RTCStatsType(val v: String) {
     TRANSPORT("transport"),
     CANDIDATEPAIR("candidatepair"),
     LOCALCANDIDATE("localcandidate"),
-    REMOTECANDIDATE("remotecandidate")
+    REMOTECANDIDATE("remotecandidate");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class WorkerType(val v: String) {
     CLASSIC("classic"),
-    MODULE("module")
+    MODULE("module");
+
+    override fun toString(): String {
+        return v
+    }
 }
 
 enum class ServiceWorkerUpdateViaCache(val v: String) {
     IMPORTS("imports"),
     ALL("all"),
-    NONE("none")
+    NONE("none");
+
+    override fun toString(): String {
+        return v
+    }
 }
