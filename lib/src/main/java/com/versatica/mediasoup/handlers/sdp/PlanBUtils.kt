@@ -34,10 +34,10 @@ object PlanBUtils {
         } ?: throw Exception("m=$kind section not found")
 
         // First media SSRC (or the only one).
-        var firstSsrc: Int? = null
+        var firstSsrc: Long? = null
 
         // Get all the SSRCs.
-        val ssrcs = mutableSetOf<Int>()
+        val ssrcs = mutableSetOf<Long>()
         val ssrcList = section.ssrcs
         if (ssrcList != null) {
             for (line in ssrcList) {
@@ -59,7 +59,7 @@ object PlanBUtils {
             throw Exception("a=ssrc line not found for local track [track.id:${track.id()}]")
 
         // Get media and RTX SSRCs.
-        val ssrcToRtxSsrc = mutableMapOf<Int, Int>()
+        val ssrcToRtxSsrc = mutableMapOf<Long, Long>()
         // First assume RTX is used.
         val ssrcGroups = section.ssrcGroups
         if (ssrcGroups != null) {
@@ -69,8 +69,8 @@ object PlanBUtils {
 
                 val splitList = line.ssrcs.split(Regex("\\s+"))
                 if (splitList.size == 2) {
-                    val ssrc = splitList[0].toIntOrNull()
-                    val rtxSsrc = splitList[1].toIntOrNull()
+                    val ssrc = splitList[0].toLongOrNull()
+                    val rtxSsrc = splitList[1].toLongOrNull()
                     if (ssrc != null && rtxSsrc != null && ssrcs.contains(ssrc)) {
                         // Remove both the SSRC and RTX SSRC from the Set so later we know that they
                         // are already handled.
@@ -109,7 +109,7 @@ object PlanBUtils {
             val encoding = RtpEncoding(ssrc = ssrc)
 
             if (rtxSsrc > 0) {
-                val rtx = hashMapOf<String, Int>()
+                val rtx = hashMapOf<String, Long>()
                 rtx["ssrc"] = rtxSsrc
                 encoding.rtx = rtx
             }
@@ -133,8 +133,8 @@ object PlanBUtils {
             it.type === kind
         } ?: throw Exception("m=$kind section not found")
 
-        var ssrc = 0
-        var rtxSsrc: Int? = null
+        var ssrc: Long = 0
+        var rtxSsrc: Long? = null
         var msid = ""
 
         // Get the SSRC.
@@ -162,8 +162,8 @@ object PlanBUtils {
             val ssrcs = it.ssrcs.split(Regex("\\s+"))
             if (ssrcs.size == 2) {
                 try {
-                    if (ssrcs[0].toInt() == ssrc) {
-                        rtxSsrc = ssrcs[1].toInt()
+                    if (ssrcs[0].toLong() == ssrc) {
+                        rtxSsrc = ssrcs[1].toLong()
                         return@any true
                     }
                 } catch (e: NumberFormatException) {

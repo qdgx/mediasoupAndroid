@@ -528,9 +528,9 @@ data class ConsumerInfo(
     var kind: String,
     var streamId: String,
     var trackId: String,
-    var ssrc: Int,
+    var ssrc: Long,
     var cname: String,
     var mid: String = "",
     var closed: Boolean = false,
-    var rtxSsrc: Int? = 0
+    var rtxSsrc: Long? = 0
 )

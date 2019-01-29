@@ -83,10 +83,10 @@ object UnifiedPlanUtils {
         // Simulcast based on PlanB.
         else {
             // First media SSRC (or the only one).
-            var firstSsrc: Int? = null
+            var firstSsrc: Long? = null
 
             // Get all the SSRCs.
-            val ssrcs = arrayListOf<Int>().toMutableSet()
+            val ssrcs = arrayListOf<Long>().toMutableSet()
             val ssrcList = section.ssrcs
             if (ssrcList != null && ssrcList.isNotEmpty()) {
                 for (line in ssrcList) {
@@ -105,7 +105,7 @@ object UnifiedPlanUtils {
             }
 
             // Get media and RTX SSRCs.
-            val ssrcToRtxSsrc = hashMapOf<Int, Int>()
+            val ssrcToRtxSsrc = hashMapOf<Long, Long>()
             // First assume RTX is used.
             val ssrcGroups = section.ssrcGroups
             if (ssrcGroups != null && ssrcGroups.isNotEmpty()) {
@@ -116,8 +116,8 @@ object UnifiedPlanUtils {
                     val splitList = line.ssrcs.split(Regex("\\s+"))
 
                     if (splitList.size == 2) {
-                        val ssrc = splitList[0].toIntOrNull()
-                        val rtxSsrc = splitList[1].toIntOrNull()
+                        val ssrc = splitList[0].toLongOrNull()
+                        val rtxSsrc = splitList[1].toLongOrNull()
                         if (ssrc != null && rtxSsrc != null && ssrcs.contains(ssrc)) {
                             // Remove both the SSRC and RTX SSRC from the Set so later we know that they
                             // are already handled.
@@ -147,7 +147,7 @@ object UnifiedPlanUtils {
                 val encoding = RtpEncoding(ssrc = ssrc)
 
                 if (rtxSsrc > 0) {
-                    val rtx = hashMapOf<String, Int>()
+                    val rtx = hashMapOf<String, Long>()
                     rtx["ssrc"] = rtxSsrc
                     encoding.rtx = rtx
                 }
@@ -179,7 +179,7 @@ object UnifiedPlanUtils {
 
         val ssrc = ssrcMsidLine.id
         val msid = ssrcMsidLine.value?.split(' ')?.get(0)
-        var rtxSsrc: Int = 0
+        var rtxSsrc: Long = 0
 
         // Get the SSRC for RTX.
         section.ssrcGroups?.any {
@@ -187,8 +187,8 @@ object UnifiedPlanUtils {
             val ssrcs = it.ssrcs.split(Regex("\\s+"))
             if (ssrcs.size == 2) {
                 try {
-                    if (ssrcs[0].toInt() == ssrc) {
-                        rtxSsrc = ssrcs[1].toInt()
+                    if (ssrcs[0].toLong() == ssrc) {
+                        rtxSsrc = ssrcs[1].toLong()
                         return@any true
                     }
                 } catch (e: NumberFormatException) {
@@ -367,6 +367,6 @@ data class SimulcastStream(
 data class RtpEncoding(
     var encodingId: String? = null,
     var profile: String? = null,
-    var ssrc: Int? = null,
-    var rtx: MutableMap<String, Int>? = null
+    var ssrc: Long? = null,
+    var rtx: MutableMap<String, Long>? = null
 )
