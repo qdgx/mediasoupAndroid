@@ -144,7 +144,7 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
         callback: Callback
     ) {
         ThreadUtil.runOnExecutor(Runnable {
-            peerConnectionSetLocalDescription(sdp, callback)
+            peerConnectionSetLocalDescriptionAsync(sdp, callback)
         })
     }
 

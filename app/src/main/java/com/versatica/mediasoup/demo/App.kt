@@ -156,9 +156,9 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     val videoProducer = roomObj.createProducer(videoTrack)
 
                     // Send our audio.
-                    audioProducer.send(sendTransport!!)
+                    //audioProducer.send(sendTransport!!).subscribe()
                     // Send our video.
-                    videoProducer.send(sendTransport!!)
+                    videoProducer.send(sendTransport!!).subscribe()
                 },
                 { throwable ->
                     Toast.makeText(context, throwable.cause.toString(), Toast.LENGTH_SHORT).show()

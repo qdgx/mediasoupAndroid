@@ -99,7 +99,7 @@ open class Handler(
         _remoteSdp = RemotePlanBSdp.newInstance(direction, rtpParametersByKind)
 
         //Handle RTCPeerConnection connection status.
-        this._pc.on("iceconnectionstatechange") {
+        this._pc.on("onIceConnectionChange") {
             when (this._pc.iceConnectionState) {
                 PeerConnection.IceConnectionState.CHECKING -> this.emit("@connectionstatechange", "connecting")
                 PeerConnection.IceConnectionState.CONNECTED -> this.emit("@connectionstatechange", "connected")
@@ -422,8 +422,8 @@ class RecvHandler(
         )
 
         //csb mybe wrong
-        if (encoding.rtx != null && encoding.rtx!![encoding.ssrc!!] != null)
-            consumerInfo.rtxSsrc = encoding.rtx!![encoding.ssrc!!]
+        if (encoding.rtx != null && encoding.rtx!!["ssrc"] != null)
+            consumerInfo.rtxSsrc = encoding.rtx!!["ssrc"]
 
         this._consumerInfos[consumer.id] = consumerInfo
         this._kinds.add(consumer.kind)

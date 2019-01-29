@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         //create app
-        app = App("room1","csb",this)
+        app = App("room1","wjr",this)
 
         openCamera.setOnClickListener {
 //            if (isCameraOpen) {
