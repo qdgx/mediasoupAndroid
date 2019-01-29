@@ -364,8 +364,8 @@ class SendHandler(
             }
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
-                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportLocalParameters =
-                        (transportRemoteParameters as TransportRemoteIceParameters)
+                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters =
+                        JSON.parseObject(transportRemoteParameters as String ,TransportRemoteIceParameters::class.java)
 
                 this._transportReady = true
 
@@ -569,7 +569,7 @@ class RecvHandler(
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
                 (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters =
-                        (transportRemoteParameters as TransportRemoteIceParameters)
+                        JSON.parseObject(transportRemoteParameters as String ,TransportRemoteIceParameters::class.java)
 
                 this._transportCreated = true
 
