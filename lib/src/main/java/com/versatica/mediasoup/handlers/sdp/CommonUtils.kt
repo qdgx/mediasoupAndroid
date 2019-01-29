@@ -113,10 +113,10 @@ object CommonUtils {
         val fingerprint = media?.fingerprint ?: sdpObj.fingerprint
 
         val role = when (media?.setup) {
-            "active" -> RTCDtlsRole.CLIENT
-            "passive" -> RTCDtlsRole.SERVER
-            "actpass" -> RTCDtlsRole.AUTO
-            else -> RTCDtlsRole.AUTO
+            "active" -> RTCDtlsRole.client
+            "passive" -> RTCDtlsRole.server
+            "actpass" -> RTCDtlsRole.auto
+            else -> RTCDtlsRole.auto
         }
 
         val dtlsParameters = RTCDtlsParameters(role = role)

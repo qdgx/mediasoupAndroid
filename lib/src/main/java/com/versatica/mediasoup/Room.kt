@@ -787,7 +787,7 @@ class Room(
             }
 
             //error callback
-            val errback = errback@{ error: Error ->
+            val errback = errback@{ error: Throwable ->
                 if (done)
                     return@errback
 

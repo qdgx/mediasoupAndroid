@@ -76,20 +76,21 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                 val errCallback = it[2] as Function1<Any, *>
                 ack = Ack { subArgs ->
                     val err = subArgs[0]
-                    val response = subArgs[1]
-
-                    val responseSt = (response as org.json.JSONObject).toString()
                     if (err == null || err == false) {
+                        val response = subArgs[1]
+
+                        val responseSt = (response as org.json.JSONObject).toString()
                         // Success response, so pass the mediasoup response to the local roomObj.
                         callback(responseSt)
                     } else {
-                        errCallback(err)
+                        errCallback(Throwable(err as String))
                     }
                 }
             } else {
                 ack = null
             }
-            var requestJson = org.json.JSONObject(JSON.toJSONString(request))
+            val requestSt = JSON.toJSONString(request)
+            val requestJson = org.json.JSONObject(requestSt)
             logger.debug("REQUEST: $requestJson")
             socket.emit("mediasoup-request", requestJson, ack)
         }
@@ -156,9 +157,23 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     val videoProducer = roomObj.createProducer(videoTrack)
 
                     // Send our audio.
-                    //audioProducer.send(sendTransport!!).subscribe()
+                    audioProducer.send(sendTransport!!).subscribe(
+                        {
+
+                        },
+                        {
+                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                        }
+                    )
                     // Send our video.
-                    videoProducer.send(sendTransport!!).subscribe()
+                    videoProducer.send(sendTransport!!).subscribe(
+                        {
+
+                        },
+                        {
+                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 },
                 { throwable ->
                     Toast.makeText(context, throwable.cause.toString(), Toast.LENGTH_SHORT).show()

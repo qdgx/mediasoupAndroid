@@ -609,7 +609,14 @@ class Transport(
 
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it, "@request", "createProducer", data).subscribe()
+                    this.safeEmitAsPromise(it, "@request", "createProducer", data).subscribe(
+                        {
+
+                        },
+                        {
+
+                        }
+                    )
                 })
             }.flatMap {
                 //producer.setRtpParameters(producerRtpParameters)

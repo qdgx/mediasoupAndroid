@@ -32,9 +32,9 @@ open class EnhancedEventEmitter(logger: Logger) : EventEmitter() {
                 observableEmitter.onNext(result)
             }
             //error callback
-            val errback = { error: String ->
-                _logger.error(error)
-                observableEmitter.onError(Throwable(error))
+            val errback = { error: Throwable ->
+                _logger.error(error.message!!)
+                observableEmitter.onError(error)
             }
             safeEmit(event, *args, callback, errback)
         }

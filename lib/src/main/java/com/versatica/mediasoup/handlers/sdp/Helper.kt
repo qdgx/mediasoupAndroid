@@ -446,9 +446,9 @@ enum class RTCDegradationPreference(val v: String) {
 }
 
 enum class RTCDtlsRole(val v: String) {
-    AUTO("auto"),
-    CLIENT("client"),
-    SERVER("server")
+    auto("auto"),
+    client("client"),
+    server("server")
 }
 
 enum class RTCDtlsTransportState(val v: String) {

@@ -140,8 +140,8 @@ object RemoteUnifiedPlanSdp {
                 remoteMediaObj.iceOptions = "renomination"
 
                 when (remoteDtlsParameters?.role) {
-                    RTCDtlsRole.CLIENT -> remoteMediaObj.setup = "active"
-                    RTCDtlsRole.SERVER -> remoteMediaObj.setup = "passive"
+                    RTCDtlsRole.client -> remoteMediaObj.setup = "active"
+                    RTCDtlsRole.server -> remoteMediaObj.setup = "passive"
                 }
 
                 when (localMediaObj.direction) {
