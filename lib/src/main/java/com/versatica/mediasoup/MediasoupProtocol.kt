@@ -73,8 +73,8 @@ class ConsumerData {
     var peerName: String = ""
     var rtpParameters: RTCRtpParameters = RTCRtpParameters()
     var paused: Boolean = false
-    var preferredProfile: String = ""
-    var effectiveProfile: String = "default"
+    var preferredProfile: String? = ""
+    var effectiveProfile: String? = "default"
     var appData: Any? = null
 }
 

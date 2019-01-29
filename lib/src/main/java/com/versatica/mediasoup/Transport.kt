@@ -265,7 +265,7 @@ class Transport(
                 //next
                 it.onError(InvalidStateError("Transport closed"))
             }
-        } else if (this._connectionState === "new") {
+        } else if (this._direction !== "send") {
             return Observable.create {
                 //next
                 it.onError(Throwable("not a sending Transport"))

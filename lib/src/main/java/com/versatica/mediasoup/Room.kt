@@ -296,7 +296,11 @@ class Room(
         // notification won"t be sent).
         this._state = RoomState.CLOSED
 
-        this.safeEmit("close", "local", appData!!)
+        if (appData == null){
+            this.safeEmit("close", "local")
+        }else{
+            this.safeEmit("close", "local", appData)
+        }
 
         // Close all the Transports.
         for (transport in ArrayList(this._transports.values)){
@@ -329,7 +333,11 @@ class Room(
 
         this._state = RoomState.CLOSED
 
-        this.safeEmit("close", "remote", appData!!)
+        if (appData == null){
+            this.safeEmit("close", "remote")
+        }else{
+            this.safeEmit("close", "remote", appData)
+        }
 
         // Close all the Transports.
         for (transport in ArrayList(this._transports.values)){
