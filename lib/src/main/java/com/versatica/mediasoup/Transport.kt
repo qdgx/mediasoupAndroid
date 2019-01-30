@@ -595,7 +595,7 @@ class Transport(
         // Call the handler.
         return Observable.just(Unit)
             .flatMap {
-                (_handler as SendHandler).addProducer(producer)
+                (_handler as SendHandler). addProducer(producer)
             }.flatMap {
                 producerRtpParameters = it
 
