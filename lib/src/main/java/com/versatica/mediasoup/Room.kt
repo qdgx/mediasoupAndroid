@@ -79,7 +79,7 @@ class Room(
      * @return {Boolean}
      */
     fun joined(): Boolean{
-        return this._state === RoomState.JOINED
+        return this._state == RoomState.JOINED
     }
 
     /**
@@ -88,7 +88,7 @@ class Room(
      * @return {Boolean}
      */
     fun closed(): Boolean{
-        return this._state === RoomState.CLOSED
+        return this._state == RoomState.CLOSED
     }
 
     /**
@@ -364,7 +364,7 @@ class Room(
      */
     @Throws(Exception::class)
     fun canSend(kind: String): Boolean{
-        if (kind !== "audio" && kind !== "video")
+        if (kind != "audio" && kind != "video")
             throw Exception("invalid kind $kind")
 
         if (!this.joined() || this._settings.spy)
@@ -399,9 +399,9 @@ class Room(
 
         if (!this.joined()){
             throw InvalidStateError("invalid state ${this._state.v}")
-        }else if (direction !== "send" && direction !== "recv"){
+        }else if (direction != "send" && direction != "recv"){
             throw Exception("invalid direction $direction")
-        }else if(direction === "send" && this._settings.spy){
+        }else if(direction == "send" && this._settings.spy){
             throw Exception("a spy peer cannot send media to the room")
         }
 
@@ -464,7 +464,7 @@ class Room(
             throw Error("a spy peer cannot send media to the room")
         }else if (track == null){
             throw Error("no track given")
-        }else if (track.state() === MediaStreamTrack.State.ENDED){
+        }else if (track.state() == MediaStreamTrack.State.ENDED){
             throw Error("track.readyState is ended")
         }
 

@@ -21,7 +21,7 @@ function getFirstActiveMediaSection(sdpObj)
     描述：获取sdp对象中第一个激活的媒体片段，返回找到的Json对象
     参数：sdpObj   json类型
     返回值：首个激活媒体片段Json对象   json类型
-    关键代码：(sdpObj.media || []).find((m) => m.iceUfrag && m.port !== 0)
+    关键代码：(sdpObj.media || []).find((m) => m.iceUfrag && m.port != 0)
     调用点：commonUtils类extractDtlsParameters()方法
 
 

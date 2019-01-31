@@ -158,7 +158,7 @@ class Consumer(
                     track?.setEnabled(false)
 
                 transport.once("@close") {
-                    if (this.closed || this.transport !== transport)
+                    if (this.closed || this.transport != transport)
                         return@once
 
                     this.transport = null
@@ -305,7 +305,7 @@ class Consumer(
             logger.error("setPreferredProfile() | Consumer closed")
 
             return
-        } else if (profile === this._preferredProfile) {
+        } else if (profile == this._preferredProfile) {
             return
         } else if (!PROFILES.contains(profile)) {
             logger.error("setPreferredProfile() | invalid profile $profile")
@@ -327,7 +327,7 @@ class Consumer(
     fun remoteSetPreferredProfile(profile: String) {
         logger.debug("remoteSetPreferredProfile() [profile:$profile]")
 
-        if (this.closed || profile === this._preferredProfile)
+        if (this.closed || profile == this._preferredProfile)
             return
 
         this._preferredProfile = profile
@@ -341,7 +341,7 @@ class Consumer(
     fun remoteEffectiveProfileChanged(profile: String) {
         logger.debug("remoteEffectiveProfileChanged() [profile:$profile]")
 
-        if (this.closed || profile === this.effectiveProfile)
+        if (this.closed || profile == this.effectiveProfile)
             return
 
         this.effectiveProfile = profile

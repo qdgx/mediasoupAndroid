@@ -130,7 +130,7 @@ object PlanBUtils {
     fun addSimulcastForTrack(sdpObj: SessionDescription, track: MediaStreamTrack) {
         val kind = track.kind()
         val section = sdpObj.media.find {
-            it.type === kind
+            it.type == kind
         } ?: throw Exception("m=$kind section not found")
 
         var ssrc: Long = 0
@@ -139,12 +139,12 @@ object PlanBUtils {
 
         // Get the SSRC.
         val ssrcMsidLine = section.ssrcs?.find {
-            if (it.attribute !== "msid")
+            if (it.attribute != "msid")
                 return@find false
 
             val trackId = it.value?.split(" ")?.get(1)
 
-            if (trackId === track.id()) {
+            if (trackId == track.id()) {
                 ssrc = it.id
                 msid = it.value?.split(" ")?.get(0).toString()
 
@@ -156,7 +156,7 @@ object PlanBUtils {
 
         // Get the SSRC for RTX.
         section.ssrcGroups?.any {
-            if (it.semantics !== "FID")
+            if (it.semantics != "FID")
                 return@any false
 
             val ssrcs = it.ssrcs.split(Regex("\\s+"))
@@ -174,7 +174,7 @@ object PlanBUtils {
         }
 
         val ssrcCnameLine = section.ssrcs?.find {
-            it.attribute === "cname" && it.id == ssrc
+            it.attribute == "cname" && it.id == ssrc
         } ?: throw Exception("CNAME line not found for local track [track.id:${track.id()}]")
 
         val cname = ssrcCnameLine.value

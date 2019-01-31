@@ -28,6 +28,6 @@ class RoomOptions {
     //Array of TURN servers.
     var turnServers: List<RTCIceServer> = ArrayList()
     //The ICE transport policy.
-    var iceTransportPolicy: String = RTCIceTransportPolicy.ALL.v
+    var iceTransportPolicy: String = RTCIceTransportPolicy.all.name
     var spy: Boolean = false
 }

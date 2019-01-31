@@ -1,6 +1,5 @@
 package com.versatica.mediasoup
 
-import com.alibaba.fastjson.JSON
 import com.versatica.mediasoup.handlers.Handler
 import com.versatica.mediasoup.handlers.RecvHandler
 import com.versatica.mediasoup.handlers.SendHandler
@@ -213,7 +212,9 @@ class Transport(
                     this.safeEmitAsPromise(it, "@request", "restartTransport", data).subscribe()
                 })
             }.flatMap { response ->
-                val remoteIceParameters = JSON.parseObject(response as String,RTCIceParameters::class.java)
+                //only for test
+                //val remoteIceParameters = response.iceParameters
+                val remoteIceParameters = RTCIceParameters("", "", true)
 
                 this._commandQueue.push("restartIce", remoteIceParameters)
             }
@@ -392,13 +393,12 @@ class Transport(
                 //next
                 it.onError(InvalidStateError("Transport closed"))
             }
+        } else if (this._connectionState === "new") {
+            return Observable.create {
+                //next
+                it.onError(Throwable("not a receiving Transport"))
+            }
         }
-//        else if (this._connectionState === "new") {
-//            return Observable.create {
-//                //next
-//                it.onError(Throwable("not a receiving Transport"))
-//            }
-//        }
 
         // Enqueue command.
         return this._commandQueue.push("addConsumer", consumer)
@@ -515,6 +515,7 @@ class Transport(
         }
 
         _handler?.on("@needcreatetransport") {
+            val transportLocalParameters = it[0] as TransportRemoteIceParameters
             val callback = it[1] as Function1<Any, Unit>
             val errback = it[2] as Function1<Any, Unit>
 
@@ -524,12 +525,8 @@ class Transport(
             data.options = this._settings.transportOptions
             data.appData = this._appData
 
-            if (it[0] is TransportRemoteIceParameters){
-                val transportLocalParameters = it[0] as TransportRemoteIceParameters
-
-                if (transportLocalParameters.dtlsParameters != null)
-                    data.dtlsParameters = transportLocalParameters.dtlsParameters
-            }
+            if (transportLocalParameters.dtlsParameters != null)
+                data.dtlsParameters = transportLocalParameters.dtlsParameters
 
             this.safeEmit("@request", "createTransport", data, callback, errback)
         }
@@ -593,7 +590,7 @@ class Transport(
     private fun _execAddProducer(producer: Producer): Observable<Any>? {
         logger.debug("_execAddProducer()")
 
-        var producerRtpParameters: RTCRtpParameters? = null
+        var producerRtpParameters: RTCRtpParameters
 
         // Call the handler.
         return Observable.just(Unit)
@@ -622,7 +619,7 @@ class Transport(
                     )
                 })
             }.flatMap {
-                producer.rtpParameters = producerRtpParameters
+                //producer.setRtpParameters(producerRtpParameters)
                 Observable.create(ObservableOnSubscribe<Unit> {
                     it.onNext(Unit)
                 })
@@ -678,7 +675,7 @@ class Transport(
                     this.safeEmitAsPromise(it, "@request", "enableConsumer", data).subscribe()
                 })
             }.flatMap { response ->
-                val enableConsumerResponse = JSON.parseObject(response as String,EnableConsumerResponse::class.java)
+                val enableConsumerResponse = response as EnableConsumerResponse
 
                 if (enableConsumerResponse.paused) {
                     consumer.remotePause()
@@ -688,10 +685,8 @@ class Transport(
                     consumer.remoteSetPreferredProfile(enableConsumerResponse.preferredProfile)
                 }
 
-                if(enableConsumerResponse.effectiveProfile != null){
-                    if (enableConsumerResponse.effectiveProfile!!.isNotEmpty()) {
-                        consumer.remoteEffectiveProfileChanged(enableConsumerResponse.effectiveProfile!!)
-                    }
+                if (enableConsumerResponse.effectiveProfile.isNotEmpty()) {
+                    consumer.remoteEffectiveProfileChanged(enableConsumerResponse.effectiveProfile)
                 }
 
                 Observable.create(ObservableOnSubscribe<Any> {

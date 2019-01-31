@@ -411,7 +411,7 @@ class WebRTCView : ViewGroup{
     fun setVideoTrack(videoTrack: VideoTrack?) {
         val oldVideoTrack = this.videoTrack
 
-        if (oldVideoTrack !== videoTrack) {
+        if (oldVideoTrack != videoTrack) {
             if (oldVideoTrack != null) {
                 if (videoTrack == null) {
                     // If we are not going to render any stream, clean the
