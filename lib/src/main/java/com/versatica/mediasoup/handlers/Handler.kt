@@ -202,33 +202,7 @@ class SendHandler(
 
                 val remoteSdp = (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
 
-                var sdp = """
-                    v=0
-                    o=mediasoup-client 23943292 1 IN IP4 0.0.0.0
-                    s=-
-                    t=0 0
-                    a=ice-lite
-                    a=fingerprint:sha-512 9A:4F:21:BA:08:BD:BF:63:54:1B:D9:D5:5E:B7:22:1F:65:D9:F3:9B:88:A3:6E:A1:F2:76:E7:00:FE:E8:6E:D4:05:61:39:3D:ED:28:CF:7D:7A:6F:7F:85:1C:1B:8C:F0:EE:71:EC:5D:F1:B7:3A:E1:11:86:CD:92:0E:A9:25:85
-                    a=msid-semantic: WMS *
-                    a=group:BUNDLE audio
-                    m=audio 7 RTP/SAVPF 111
-                    c=IN IP4 127.0.0.1
-                    a=mid:audio
-                    a=recvonly
-                    a=ice-ufrag:s3v7ykbmk5nxfizc
-                    a=ice-pwd:5s80fhwvt28q03c9ehdxsap82ztj5w5q
-                    a=candidate:udpcandidate 1 udp 1078862079 172.16.70.213 43304 typ host
-                    a=candidate:tcpcandidate 1 tcp 1078862079 172.16.70.213 47751 typ host tcptype passive
-                    a=end-of-candidates
-                    a=ice-options:renomination
-                    a=rtcp-mux
-                    a=rtcp-rsize
-
-                    """.trimIndent()
-
-                sdp = sdp.replace("\n","\r\n")
-
-                val answer = SessionDescription(SessionDescription.Type.fromCanonicalForm("answer"), sdp)
+                val answer = SessionDescription(SessionDescription.Type.fromCanonicalForm("answer"), remoteSdp)
 
                 logger.debug("addProducer() | calling pc.setRemoteDescription() [answer:${answer.toString()}]")
 
@@ -278,7 +252,7 @@ class SendHandler(
 
                 this._pc.setLocalDescription(offer)
             }.flatMap {
-                if (this._pc.signalingState === RTCSignalingState.STABLE) {
+                if (this._pc.signalingState == RTCSignalingState.stable) {
                     Observable.create {
                         it.onNext(Unit)
                     }
@@ -375,7 +349,7 @@ class SendHandler(
                 val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
 
                 // Let's decide that we'll be DTLS server (because we can).
-                dtlsParameters.role = RTCDtlsRole.SERVER
+                dtlsParameters.role = RTCDtlsRole.server
 
                 transportLocalParameters.dtlsParameters = dtlsParameters
 
@@ -501,7 +475,9 @@ class RecvHandler(
                     if (track == null) {
                         false
                     } else {
-                        track.id() === consumerInfo.trackId
+                        var trackId = track.id()
+                        var consumerInfoTrackId = consumerInfo.trackId
+                        track.id() == consumerInfo.trackId
                     }
                 }
 
@@ -589,12 +565,12 @@ class RecvHandler(
                 // We need transport remote parameters
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it, "@needcreatetransport").subscribe()
+                    this.safeEmitAsPromise(it, "@needcreatetransport",Unit).subscribe()
                 })
             }
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
-                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters =
+                (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).transportRemoteParameters =
                         JSON.parseObject(transportRemoteParameters as String ,TransportRemoteIceParameters::class.java)
 
                 this._transportCreated = true
@@ -609,12 +585,12 @@ class RecvHandler(
     private fun _updateTransport(): Observable<Unit> {
         logger.debug("_updateTransport()")
         // Get our local DTLS parameters.
-        // const transportLocalParameters = {}
+        val transportLocalParameters = TransportRemoteIceParameters()
+
         val sdp = this._pc.localDescription.description
         val sdpObj = SdpTransform().parse(sdp)
         val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
-        //val transportLocalParameters = { dtlsParameters }
-        val transportLocalParameters = JSON.toJSONString(dtlsParameters)
+        transportLocalParameters.dtlsParameters = dtlsParameters
 
         // We need to provide transport local parameters.
         this.safeEmit("@needupdatetransport", transportLocalParameters)

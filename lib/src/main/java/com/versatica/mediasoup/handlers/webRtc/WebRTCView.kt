@@ -425,11 +425,11 @@ class WebRTCView : ViewGroup{
 
             if (videoTrack != null) {
                 tryAddRendererToVideoTrack()
-                if (oldVideoTrack == null) {
-                    // If there was no old track, clean the surface so we start
-                    // with black.
-                    cleanSurfaceViewRenderer()
-                }
+//                if (oldVideoTrack == null) {
+//                    // If there was no old track, clean the surface so we start
+//                    // with black.
+//                    cleanSurfaceViewRenderer()
+//                }
             }
         }
     }
