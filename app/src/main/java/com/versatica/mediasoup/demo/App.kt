@@ -150,7 +150,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                 openCameraRx()
             }.subscribe(
                 { mediaStream ->
-                    //val audioTrack = mediaStream.audioTracks[0]
+                    val audioTrack = mediaStream.audioTracks[0]
                     val videoTrack = mediaStream.videoTracks[0]
 
                     trackId = videoTrack.id()
@@ -164,18 +164,18 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     }
 
                     // Create Producers for audio and video.
-                    //val audioProducer = roomObj.createProducer(audioTrack)
+                    val audioProducer = roomObj.createProducer(audioTrack)
                     val videoProducer = roomObj.createProducer(videoTrack)
 
                     // Send our audio.
-//                    audioProducer.send(sendTransport!!).subscribe(
-//                        {
-//
-//                        },
-//                        {
-//                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
-//                        }
-//                    )
+                    audioProducer.send(sendTransport!!).subscribe(
+                        {
+
+                        },
+                        {
+                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                        }
+                    )
                     // Send our video.
                     videoProducer.send(sendTransport!!).subscribe(
                         {
@@ -303,12 +303,12 @@ class App(val roomId: String, val peerName: String, val context: Context) {
     private fun openCameraRx(): Observable<MediaStream> {
         return Observable.create(ObservableOnSubscribe<Unit> {
             //request permission
-            if (AndPermission.hasPermissions(context, Permission.Group.CAMERA)) {
+            if (AndPermission.hasPermissions(context, Permission.Group.CAMERA, Permission.Group.MICROPHONE)) {
                 it.onNext(Unit)
             } else {
                 AndPermission.with(context)
                     .runtime()
-                    .permission(Permission.Group.CAMERA)
+                    .permission(Permission.Group.CAMERA, Permission.Group.MICROPHONE)
                     .onGranted { permissions ->
                         it.onNext(Unit)
                     }
