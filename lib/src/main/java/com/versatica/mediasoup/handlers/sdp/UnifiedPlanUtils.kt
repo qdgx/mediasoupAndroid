@@ -25,7 +25,7 @@ object UnifiedPlanUtils {
     ) {
         val section = findMediaSection(sdpObj, track, mid)
 
-        if (mid !== null)
+        if (mid != null)
             rtpParameters.muxId = mid
 
         val rtcpParameters = RTCRtcpParameters(
@@ -37,7 +37,7 @@ object UnifiedPlanUtils {
 
         // Get the SSRC and CNAME.
         val ssrcCnameLine = section?.ssrcs?.find {
-            it.attribute === "cname"
+            it.attribute == "cname"
         } ?: throw Exception("CNAME value not found")
         rtpParameters.rtcp?.cname = ssrcCnameLine.value
 
@@ -52,7 +52,7 @@ object UnifiedPlanUtils {
             val rids = section.rids
             if (rids != null && rids.isNotEmpty()) {
                 for (rid in rids) {
-                    if (rid.direction !== "send")
+                    if (rid.direction != "send")
                         continue
 
                     if (Regex("^low").containsMatchIn(rid.id))
@@ -90,7 +90,7 @@ object UnifiedPlanUtils {
             val ssrcList = section.ssrcs
             if (ssrcList != null && ssrcList.isNotEmpty()) {
                 for (line in ssrcList) {
-                    if (line.attribute !== "msid")
+                    if (line.attribute != "msid")
                         continue
 
                     val ssrc = line.id
@@ -110,7 +110,7 @@ object UnifiedPlanUtils {
             val ssrcGroups = section.ssrcGroups
             if (ssrcGroups != null && ssrcGroups.isNotEmpty()) {
                 for (line in ssrcGroups) {
-                    if (line.semantics !== "FID")
+                    if (line.semantics != "FID")
                         continue
 
                     val splitList = line.ssrcs.split(Regex("\\s+"))
@@ -132,7 +132,7 @@ object UnifiedPlanUtils {
                 // If the Set of SSRCs is not empty it means that RTX is not being used, so take
                 // media SSRCs from there.
                 for (ssrc in ssrcs) {
-                    ssrcToRtxSsrc.remove(ssrc)
+                    ssrcToRtxSsrc[ssrc] = 0
                 }
             }
 
@@ -174,7 +174,7 @@ object UnifiedPlanUtils {
 
         // Get the SSRC.
         val ssrcMsidLine = section?.ssrcs?.find {
-            it.attribute === "msid"
+            it.attribute == "msid"
         } ?: throw Exception("a=ssrc line with msid information not found")
 
         val ssrc = ssrcMsidLine.id
@@ -183,7 +183,7 @@ object UnifiedPlanUtils {
 
         // Get the SSRC for RTX.
         section.ssrcGroups?.any {
-            if (it.semantics !== "FID") return@any false
+            if (it.semantics != "FID") return@any false
             val ssrcs = it.ssrcs.split(Regex("\\s+"))
             if (ssrcs.size == 2) {
                 try {
@@ -199,7 +199,7 @@ object UnifiedPlanUtils {
         }
 
         val ssrcCnameLine = section.ssrcs?.find {
-            it.attribute === "cname" && it.id == ssrc
+            it.attribute == "cname" && it.id == ssrc
         } ?: throw Exception("CNAME line not found")
 
         val cname = ssrcCnameLine.value
@@ -338,7 +338,7 @@ object UnifiedPlanUtils {
         val mediaList = sdpObj.media
         if (mediaList.isNotEmpty()) {
             val section: SessionDescription.Media?
-            if (mid !== null) {
+            if (mid != null) {
                 section = mediaList.find {
                     it.mid == mid
                 }
@@ -347,7 +347,7 @@ object UnifiedPlanUtils {
             } else {
                 section = mediaList.find {
                     val msidList = it.msid?.split(' ')
-                    it.type === track.kind() && msidList != null && msidList[1] === track.id()
+                    it.type == track.kind() && msidList != null && msidList[1] == track.id()
                 }
                 if (section == null)
                     throw  Exception("SDP section with a=msid containing track.id=${track.id()} not found")

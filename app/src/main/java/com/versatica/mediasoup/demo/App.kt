@@ -242,12 +242,12 @@ class App(val roomId: String, val peerName: String, val context: Context) {
 
                     val track = it as MediaStreamTrack
                     // Attach the track to a MediaStream and play it.
-                    if (consumer.kind === "video") {
+                    if (consumer.kind == "video") {
                         val videoTrack = track as VideoTrack
                         //todo add video to ui view
 
                     }
-                    if (consumer.kind === "audio") {
+                    if (consumer.kind == "audio") {
                         val audioTrack = track as AudioTrack
                         //todo add audio to ui view
 

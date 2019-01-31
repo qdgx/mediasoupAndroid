@@ -126,7 +126,7 @@ open class EventEmitter : EventEmitterInterface {
         if (events.containsKey(eventName)) {
             var removeListeners: LinkedList<Listener> = LinkedList()
             for (eventListener in events.get(eventName)!!) {
-                if (eventListener.listener === listener) {
+                if (eventListener.listener == listener) {
                     removeListeners.add(eventListener)
                 }
             }

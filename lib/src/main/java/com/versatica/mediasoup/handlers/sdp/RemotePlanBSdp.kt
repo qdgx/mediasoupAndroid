@@ -84,7 +84,7 @@ object RemotePlanBSdp {
                 token = "*"
             )
             if (mids.isNotEmpty()) {
-                sdpObj.groups = arrayListOf(
+                sdpObj.groups = mutableListOf(
                     SessionAttributes.Group(
                         type = "BUNDLE",
                         mids = mids.joinToString(" ")
@@ -128,9 +128,9 @@ object RemotePlanBSdp {
                             ip = candidate.ip ?: "",
                             port = candidate.port ?: 0,
                             priority = candidate.priority ?: 0,
-                            transport = candidate.protocol?.v ?: "",
-                            type = candidate.type?.v ?: "",
-                            tcptype = candidate.tcpType?.v ?: ""
+                            transport = candidate.protocol?.name ?: "",
+                            type = candidate.type?.name ?: "",
+                            tcptype = candidate.tcpType?.name ?: ""
                         )
                         remoteMediaObj.candidates.add(candidateObj)
                     }
@@ -143,8 +143,8 @@ object RemotePlanBSdp {
                 remoteMediaObj.iceOptions = "renomination"
 
                 when (remoteDtlsParameters?.role) {
-                    RTCDtlsRole.CLIENT -> remoteMediaObj.setup = "active"
-                    RTCDtlsRole.SERVER -> remoteMediaObj.setup = "passive"
+                    RTCDtlsRole.client -> remoteMediaObj.setup = "active"
+                    RTCDtlsRole.server -> remoteMediaObj.setup = "passive"
                 }
 
                 when (localMediaObj.direction) {
@@ -153,7 +153,7 @@ object RemotePlanBSdp {
                 }
 
                 // If video, be ready for simulcast.
-                if (kind === "video")
+                if (kind == "video")
                     remoteMediaObj.xGoogleFlag = "conference"
 
                 remoteMediaObj.rtp = arrayListOf()
@@ -218,7 +218,7 @@ object RemotePlanBSdp {
                     for (ext in headerExtensions) {
                         // Don't add a header extension if not present in the offer.
                         val matchedLocalExt = localMediaObj.ext?.find {
-                            it.uri === ext.uri
+                            it.uri == ext.uri
                         } ?: continue
 
                         remoteMediaObj.ext?.add(
@@ -321,9 +321,9 @@ object RemotePlanBSdp {
                             ip = candidate.ip ?: "",
                             port = candidate.port ?: 0,
                             priority = candidate.priority ?: 0,
-                            transport = candidate.protocol?.v ?: "",
-                            type = candidate.type?.v ?: "",
-                            tcptype = candidate.tcpType?.v ?: ""
+                            transport = candidate.protocol?.name ?: "",
+                            type = candidate.type?.name ?: "",
+                            tcptype = candidate.tcpType?.name ?: ""
                         )
                         remoteMediaObj.candidates.add(candidateObj)
                     }
@@ -337,7 +337,7 @@ object RemotePlanBSdp {
                 remoteMediaObj.setup = "actpass"
 
                 if (consumerInfos.any {
-                        it.kind === kind
+                        it.kind == kind
                     })
                     remoteMediaObj.direction = "sendonly"
                 else
@@ -403,7 +403,7 @@ object RemotePlanBSdp {
                 if (headerExtensions != null) {
                     for (ext in headerExtensions) {
                         // Ignore MID RTP extension for receiving media.
-                        if (ext.uri === "urn:ietf:params:rtp-hdrext:sdes:mid")
+                        if (ext.uri == "urn:ietf:params:rtp-hdrext:sdes:mid")
                             continue
 
                         remoteMediaObj.ext?.add(
@@ -422,7 +422,7 @@ object RemotePlanBSdp {
                 remoteMediaObj.ssrcGroups = arrayListOf()
 
                 for (info in consumerInfos) {
-                    if (info.kind !== kind)
+                    if (info.kind != kind)
                         continue
 
                     remoteMediaObj.ssrcs?.add(

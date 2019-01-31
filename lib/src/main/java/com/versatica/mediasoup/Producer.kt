@@ -180,7 +180,7 @@ class Producer(
         return transport.addProducer(this)
             .flatMap {
                 transport.once("@close") {
-                    if (this.closed || this.transport !== transport)
+                    if (this.closed || this.transport != transport)
                         return@once
 
                     this.transport?.removeProducer(this, "local")
@@ -320,8 +320,8 @@ class Producer(
             return Observable.create {
                 it.onError(InvalidStateError("Producer closed"))
             }
-//        else if (track.readyState === "ended")
-        else if (track.state() === MediaStreamTrack.State.ENDED)
+//        else if (track.readyState == "ended")
+        else if (track.state() == MediaStreamTrack.State.ENDED)
             return Observable.create {
                 it.onError(Exception("track.readyState is \"ended\""))
             }

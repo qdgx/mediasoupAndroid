@@ -195,7 +195,7 @@ class Transport(
                 //next
                 it.onNext(Unit)
             }
-        } else if (this._connectionState === "new") {
+        } else if (this._connectionState == "new") {
             return Observable.create {
                 //next
                 it.onNext(Unit)
@@ -265,7 +265,7 @@ class Transport(
                 //next
                 it.onError(InvalidStateError("Transport closed"))
             }
-        } else if (this._direction !== "send") {
+        } else if (this._direction != "send") {
             return Observable.create {
                 //next
                 it.onError(Throwable("not a sending Transport"))
@@ -291,7 +291,7 @@ class Transport(
             this._commandQueue.push("removeProducer", producer)
         }
 
-        if (originator === "local") {
+        if (originator == "local") {
             val data = CloseProducerNotify()
             data.id = producer.id
             data.appData = appData
@@ -393,7 +393,7 @@ class Transport(
                 //next
                 it.onError(InvalidStateError("Transport closed"))
             }
-        } else if (this._connectionState === "new") {
+        } else if (this._connectionState == "new") {
             return Observable.create {
                 //next
                 it.onError(Throwable("not a receiving Transport"))

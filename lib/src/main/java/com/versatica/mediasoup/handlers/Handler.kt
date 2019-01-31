@@ -260,7 +260,7 @@ class SendHandler(
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
-                    it.track() === track
+                    it.track() == track
                 }
 
                 if (rtpSender == null)
@@ -278,7 +278,7 @@ class SendHandler(
 
                 this._pc.setLocalDescription(offer)
             }.flatMap {
-                if (this._pc.signalingState === RTCSignalingState.STABLE) {
+                if (this._pc.signalingState == RTCSignalingState.stable) {
                     Observable.create {
                         it.onNext(Unit)
                     }
@@ -306,7 +306,7 @@ class SendHandler(
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
-                    it.track() === oldTrack
+                    it.track() == oldTrack
                 }
 
                 if (rtpSender == null)
@@ -375,7 +375,7 @@ class SendHandler(
                 val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
 
                 // Let's decide that we'll be DTLS server (because we can).
-                dtlsParameters.role = RTCDtlsRole.SERVER
+                dtlsParameters.role = RTCDtlsRole.server
 
                 transportLocalParameters.dtlsParameters = dtlsParameters
 
@@ -501,7 +501,7 @@ class RecvHandler(
                     if (track == null) {
                         false
                     } else {
-                        track.id() === consumerInfo.trackId
+                        track.id() == consumerInfo.trackId
                     }
                 }
 
