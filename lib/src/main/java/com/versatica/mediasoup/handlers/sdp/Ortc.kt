@@ -385,8 +385,9 @@ object Ortc {
         if (aCodec.clockRate != bCodec.clockRate)
             return false
 
-        if (aCodec.channels != bCodec.channels)
-            return false
+        //csb
+//        if (aCodec.channels != bCodec.channels)
+//            return false
 
         // Match H264 parameters.
         if (aMimeType == "video/h264") {

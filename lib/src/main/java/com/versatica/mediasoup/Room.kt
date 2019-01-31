@@ -249,7 +249,7 @@ class Room(
                     .flatMap { response ->
                         val joinResponse = JSON.parseObject(response,JoinResponse::class.java)
 
-                        Observable.create(ObservableOnSubscribe<ArrayList<PeerData>> {
+                        Observable.create(ObservableOnSubscribe<ArrayList<NewPeerNotify>> {
                             //next
                             it.onNext(joinResponse.peers!!)
                         })
@@ -547,14 +547,12 @@ class Room(
                     }
                     "newPeer" ->{
                         val notificationObj = JSON.parseObject(notification.toString(),NewPeerNotify::class.java)
-                        val name = notificationObj.peerData.name
+                        val name = notificationObj.name
 
                         if (this._peers.containsKey(name))
                             throw  Error("Peer already exists [name: $name]")
 
-                        val peerData = notificationObj.peerData
-
-                        this._handlePeerData(peerData)
+                        this._handlePeerData(notificationObj)
                     }
                     "peerClosed" ->{
                         val notificationObj = JSON.parseObject(notification.toString(),PeerClosedNotify::class.java)
@@ -613,15 +611,13 @@ class Room(
                     }
                     "newConsumer" ->{
                         val notificationObj = JSON.parseObject(notification.toString(),NewConsumerNotify::class.java)
-                        val peerName = notificationObj.consumerData.peerName
+                        val peerName = notificationObj.peerName
                         val peer = this._peers[peerName]
 
                         if (peer == null)
                             throw Error("no Peer found [name $peerName]")
 
-                        val consumerData = notificationObj.consumerData
-
-                        this._handleConsumerData(consumerData, peer)
+                        this._handleConsumerData(notificationObj, peer)
                     }
                     "consumerClosed" ->{
                         val notificationObj = JSON.parseObject(notification.toString(),ConsumerClosedNotify::class.java)
@@ -827,7 +823,7 @@ class Room(
         this.safeEmit("notify", notification)
     }
 
-    fun _handlePeerData(peerData: PeerData){
+    fun _handlePeerData(peerData: NewPeerNotify){
         val peer = Peer(peerData.name, peerData.appData)
 
         // Store it.
@@ -852,7 +848,7 @@ class Room(
             this.safeEmit("newpeer", peer)
     }
 
-    fun _handleConsumerData(consumerData: ConsumerData, peer: Peer) {
+    fun _handleConsumerData(consumerData: NewConsumerNotify, peer: Peer) {
         val consumer =
             Consumer(consumerData.id, consumerData.kind, consumerData.rtpParameters, peer, consumerData.appData)
         val supported = Ortc.canReceive(consumerData.rtpParameters, this._extendedRtpCapabilities)

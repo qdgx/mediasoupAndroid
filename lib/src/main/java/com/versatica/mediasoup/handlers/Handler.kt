@@ -204,21 +204,24 @@ class SendHandler(
 
                 var sdp = """
                     v=0
-                    o=mediasoup-client 23943292 1 IN IP4 0.0.0.0
+                    o=mediasoup-client 26364475 1 IN IP4 0.0.0.0
                     s=-
                     t=0 0
                     a=ice-lite
-                    a=fingerprint:sha-512 9A:4F:21:BA:08:BD:BF:63:54:1B:D9:D5:5E:B7:22:1F:65:D9:F3:9B:88:A3:6E:A1:F2:76:E7:00:FE:E8:6E:D4:05:61:39:3D:ED:28:CF:7D:7A:6F:7F:85:1C:1B:8C:F0:EE:71:EC:5D:F1:B7:3A:E1:11:86:CD:92:0E:A9:25:85
+                    a=fingerprint:sha-512 46:4F:BB:CE:98:5A:A6:33:FD:B9:2E:85:23:D4:29:18:B3:23:49:EB:3D:F4:DF:BB:61:F9:6C:38:93:2A:82:93:7C:04:9A:84:9F:9B:24:24:27:10:4F:C7:DE:86:AC:69:96:17:DF:24:87:C0:CF:1D:BE:AD:2C:B2:BB:63:44:76
                     a=msid-semantic: WMS *
-                    a=group:BUNDLE audio
-                    m=audio 7 RTP/SAVPF 111
+                    a=group:BUNDLE video
+                    m=video 7 RTP/SAVPF 96 97
                     c=IN IP4 127.0.0.1
-                    a=mid:audio
+                    a=rtpmap:96 VP8/90000
+                    a=rtpmap:97 rtx/90000
+                    a=fmtp:97 apt=96
+                    a=mid:video
                     a=recvonly
-                    a=ice-ufrag:s3v7ykbmk5nxfizc
-                    a=ice-pwd:5s80fhwvt28q03c9ehdxsap82ztj5w5q
-                    a=candidate:udpcandidate 1 udp 1078862079 172.16.70.213 43304 typ host
-                    a=candidate:tcpcandidate 1 tcp 1078862079 172.16.70.213 47751 typ host tcptype passive
+                    a=ice-ufrag:w7852pxts65giztj
+                    a=ice-pwd:l41e3iyulj29rkas6te3wb3r6gv2cd3p
+                    a=candidate:udpcandidate 1 udp 1078862079 172.16.70.213 49468 typ host
+                    a=candidate:tcpcandidate 1 tcp 1078862079 172.16.70.213 49739 typ host tcptype passive
                     a=end-of-candidates
                     a=ice-options:renomination
                     a=rtcp-mux
@@ -260,7 +263,7 @@ class SendHandler(
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
-                    it.track() === track
+                    it.track() == track
                 }
 
                 if (rtpSender == null)
@@ -278,7 +281,7 @@ class SendHandler(
 
                 this._pc.setLocalDescription(offer)
             }.flatMap {
-                if (this._pc.signalingState === RTCSignalingState.STABLE) {
+                if (this._pc.signalingState == RTCSignalingState.STABLE) {
                     Observable.create {
                         it.onNext(Unit)
                     }
@@ -306,7 +309,7 @@ class SendHandler(
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
-                    it.track() === oldTrack
+                    it.track() == oldTrack
                 }
 
                 if (rtpSender == null)
@@ -470,7 +473,50 @@ class RecvHandler(
                     ArrayList<String>(_kinds),
                     ArrayList(_consumerInfos.values)
                 )
-                val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
+
+                var sdp = """
+                    v=0
+                    o=mediasoup-client 29566704 1 IN IP4 0.0.0.0
+                    s=-
+                    t=0 0
+                    a=ice-lite
+                    a=fingerprint:sha-512 2A:07:E7:CF:60:95:24:70:56:B8:A8:0A:B0:D2:6E:7A:F7:73:87:3F:0C:44:BC:03:CE:24:AF:CA:D3:FF:94:A1:95:EC:11:09:94:20:3F:13:30:CF:A9:E4:FF:8B:CF:54:54:28:D9:10:FA:75:E7:FF:A5:0C:D7:A1:0B:0D:AF:77
+                    a=msid-semantic: WMS *
+                    a=group:BUNDLE video
+                    m=video 7 RTP/SAVPF 101 102
+                    c=IN IP4 127.0.0.1
+                    a=rtpmap:101 VP8/90000
+                    a=rtpmap:102 rtx/90000
+                    a=fmtp:102 apt=101
+                    a=extmap:2 urn:ietf:params:rtp-hdrext:toffset
+                    a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time
+                    a=extmap:4 urn:3gpp:video-orientation
+                    a=setup:actpass
+                    a=mid:video
+                    a=sendonly
+                    a=ice-ufrag:x44wbpc7lqgeg3sl
+                    a=ice-pwd:eppdcm5kar97505qn2y2lnat7gq4a1qr
+                    a=candidate:udpcandidate 1 udp 1078862079 172.16.70.213 46381 typ host
+                    a=candidate:tcpcandidate 1 tcp 1078862079 172.16.70.213 49752 typ host tcptype passive
+                    a=end-of-candidates
+                    a=ice-options:renomination
+                    a=ssrc:30142699 msid:recv-stream-98239991 consumer-video-98239991
+                    a=ssrc:30142699 mslabel:recv-stream-98239991
+                    a=ssrc:30142699 label:consumer-video-98239991
+                    a=ssrc:30142699 cname:yD7rwAax10Z5XLtP
+                    a=ssrc:55512637 msid:recv-stream-98239991 consumer-video-98239991
+                    a=ssrc:55512637 mslabel:recv-stream-98239991
+                    a=ssrc:55512637 label:consumer-video-98239991
+                    a=ssrc:55512637 cname:yD7rwAax10Z5XLtP
+                    a=ssrc-group:FID 30142699 55512637
+                    a=rtcp-mux
+                    a=rtcp-rsize
+
+                    """.trimIndent()
+
+                sdp = sdp.replace("\n","\r\n")
+
+                val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), sdp)
 
                 logger.debug(
                     "addConsumer() | calling pc.setRemoteDescription() [offer:${offer.description}]"
@@ -501,7 +547,10 @@ class RecvHandler(
                     if (track == null) {
                         false
                     } else {
-                        track.id() === consumerInfo.trackId
+                        true
+//                        var trackId = track.id()
+//                        var consumerInfoTrackId = consumerInfo.trackId
+//                        track.id() == consumerInfo.trackId
                     }
                 }
 
@@ -589,12 +638,12 @@ class RecvHandler(
                 // We need transport remote parameters
                 Observable.create(ObservableOnSubscribe<Any> {
                     //next
-                    this.safeEmitAsPromise(it, "@needcreatetransport").subscribe()
+                    this.safeEmitAsPromise(it, "@needcreatetransport",Unit).subscribe()
                 })
             }
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
-                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters =
+                (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).transportRemoteParameters =
                         JSON.parseObject(transportRemoteParameters as String ,TransportRemoteIceParameters::class.java)
 
                 this._transportCreated = true
@@ -609,12 +658,12 @@ class RecvHandler(
     private fun _updateTransport(): Observable<Unit> {
         logger.debug("_updateTransport()")
         // Get our local DTLS parameters.
-        // const transportLocalParameters = {}
+        val transportLocalParameters = TransportRemoteIceParameters()
+
         val sdp = this._pc.localDescription.description
         val sdpObj = SdpTransform().parse(sdp)
         val dtlsParameters = CommonUtils.extractDtlsParameters(sdpObj)
-        //val transportLocalParameters = { dtlsParameters }
-        val transportLocalParameters = JSON.toJSONString(dtlsParameters)
+        transportLocalParameters.dtlsParameters = dtlsParameters
 
         // We need to provide transport local parameters.
         this.safeEmit("@needupdatetransport", transportLocalParameters)

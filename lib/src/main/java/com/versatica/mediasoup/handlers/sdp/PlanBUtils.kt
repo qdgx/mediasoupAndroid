@@ -30,7 +30,7 @@ object PlanBUtils {
         )
 
         val section = sdpObj.media.find {
-            it.type === kind
+            it.type == kind
         } ?: throw Exception("m=$kind section not found")
 
         // First media SSRC (or the only one).
@@ -41,11 +41,11 @@ object PlanBUtils {
         val ssrcList = section.ssrcs
         if (ssrcList != null) {
             for (line in ssrcList) {
-                if (line.attribute !== "msid")
+                if (line.attribute != "msid")
                     continue
 
                 val trackId = line.value?.split(" ")?.get(1)
-                if (trackId === track.id()) {
+                if (trackId == track.id()) {
                     val ssrc = line.id
                     ssrcs.add(ssrc)
 
@@ -64,7 +64,7 @@ object PlanBUtils {
         val ssrcGroups = section.ssrcGroups
         if (ssrcGroups != null) {
             for (line in ssrcGroups) {
-                if (line.semantics !== "FID")
+                if (line.semantics != "FID")
                     continue
 
                 val splitList = line.ssrcs.split(Regex("\\s+"))
@@ -88,12 +88,12 @@ object PlanBUtils {
         // media SSRCs from there.
         for (ssrc in ssrcs) {
             // Add to the map.
-            ssrcToRtxSsrc.remove(ssrc)
+            ssrcToRtxSsrc[ssrc] = 0
         }
 
         // Get RTCP info.
         val ssrcCnameLine = section.ssrcs?.find {
-            it.attribute === "cname" && it.id == firstSsrc
+            it.attribute == "cname" && it.id == firstSsrc
         }
         if (ssrcCnameLine != null)
             rtcp.cname = ssrcCnameLine.value

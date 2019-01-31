@@ -1,12 +1,15 @@
 package com.versatica.mediasoup.demo
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.widget.LinearLayout
 import android.widget.Toast
 import com.alibaba.fastjson.JSON
 import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.BaseApplication
 import com.versatica.mediasoup.handlers.webRtc.WebRTCModule
+import com.versatica.mediasoup.handlers.webRtc.WebRTCView
 import com.yanzhenjie.permission.AndPermission
 import com.yanzhenjie.permission.Permission
 import io.reactivex.Observable
@@ -78,10 +81,15 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     val err = subArgs[0]
                     if (err == null || err == false) {
                         val response = subArgs[1]
+                        if (response != null){
+                            val responseSt = (response as org.json.JSONObject).toString()
+                            logger.error(responseSt)
+                            // Success response, so pass the mediasoup response to the local roomObj.
+                            callback(responseSt)
+                        }else{
+                            callback("")
+                        }
 
-                        val responseSt = (response as org.json.JSONObject).toString()
-                        // Success response, so pass the mediasoup response to the local roomObj.
-                        callback(responseSt)
                     } else {
                         errCallback(Throwable(err as String))
                     }
@@ -112,7 +120,10 @@ class App(val roomId: String, val peerName: String, val context: Context) {
 
                 },
                 {
-                    Toast.makeText(context,it.message,Toast.LENGTH_SHORT).show()
+                    (context as Activity).runOnUiThread{
+                        ////UI thread
+                        Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                    }
                 }
             )
         }
@@ -139,7 +150,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                 openCameraRx()
             }.subscribe(
                 { mediaStream ->
-                    val audioTrack = mediaStream.audioTracks[0]
+                    //val audioTrack = mediaStream.audioTracks[0]
                     val videoTrack = mediaStream.videoTracks[0]
 
                     trackId = videoTrack.id()
@@ -153,30 +164,36 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     }
 
                     // Create Producers for audio and video.
-                    val audioProducer = roomObj.createProducer(audioTrack)
+                    //val audioProducer = roomObj.createProducer(audioTrack)
                     val videoProducer = roomObj.createProducer(videoTrack)
 
                     // Send our audio.
-                    audioProducer.send(sendTransport!!).subscribe(
-                        {
-
-                        },
-                        {
-                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
-                        }
-                    )
+//                    audioProducer.send(sendTransport!!).subscribe(
+//                        {
+//
+//                        },
+//                        {
+//                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+//                        }
+//                    )
                     // Send our video.
                     videoProducer.send(sendTransport!!).subscribe(
                         {
 
                         },
                         {
-                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                            context.runOnUiThread{
+                                ////UI thread
+                                Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                            }
                         }
                     )
                 },
                 { throwable ->
-                    Toast.makeText(context, throwable.cause.toString(), Toast.LENGTH_SHORT).show()
+                    (context as Activity).runOnUiThread{
+                        ////UI thread
+                        Toast.makeText(context, throwable.cause.toString(), Toast.LENGTH_SHORT).show()
+                    }
                 })
     }
 
@@ -242,12 +259,21 @@ class App(val roomId: String, val peerName: String, val context: Context) {
 
                     val track = it as MediaStreamTrack
                     // Attach the track to a MediaStream and play it.
-                    if (consumer.kind === "video") {
+                    if (consumer.kind == "video") {
                         val videoTrack = track as VideoTrack
                         //todo add video to ui view
+                        //Show local stream
+                        (context as MainActivity).runOnUiThread{
+                            ////UI thread
+                            val webRTCView = WebRTCView(context)
+                            val layoutParams = LinearLayout.LayoutParams(360, 360)
+                            layoutParams.topMargin = 20
+                            context.remoteVideoLl.addView(webRTCView,layoutParams)
 
+                            webRTCView.setVideoTrack(videoTrack)
+                        }
                     }
-                    if (consumer.kind === "audio") {
+                    if (consumer.kind == "audio") {
                         val audioTrack = track as AudioTrack
                         //todo add audio to ui view
 
@@ -255,7 +281,17 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     Observable.create(ObservableOnSubscribe<Unit> { observableEmitter ->
                         observableEmitter.onNext(Unit)
                     })
-                }
+                }.subscribe (
+                    {
+
+                    },
+                    {
+                        (context as Activity).runOnUiThread{
+                            ////UI thread
+                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
         }
 
         // Event fired when the Consumer is closed.

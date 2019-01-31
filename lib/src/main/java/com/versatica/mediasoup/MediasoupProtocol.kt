@@ -58,25 +58,25 @@ class JoinRequest : MediasoupRequest(
 }
 
 class JoinResponse {
-    var peers: ArrayList<PeerData>? = ArrayList()
+    var peers: ArrayList<NewPeerNotify>? = ArrayList()
 }
 
-class PeerData {
-    var name: String = ""
-    var consumers: ArrayList<ConsumerData> = ArrayList()
-    var appData: Any? = null
-}
+//class PeerData {
+//    var name: String = ""
+//    var consumers: ArrayList<NewConsumerNotify> = ArrayList()
+//    var appData: Any? = null
+//}
 
-class ConsumerData {
-    var id: Int = 0
-    var kind: String = ""
-    var peerName: String = ""
-    var rtpParameters: RTCRtpParameters = RTCRtpParameters()
-    var paused: Boolean = false
-    var preferredProfile: String? = ""
-    var effectiveProfile: String? = "default"
-    var appData: Any? = null
-}
+//class ConsumerData {
+//    var id: Int = 0
+//    var kind: String = ""
+//    var peerName: String = ""
+//    var rtpParameters: RTCRtpParameters = RTCRtpParameters()
+//    var paused: Boolean = false
+//    var preferredProfile: String? = ""
+//    var effectiveProfile: String? = "default"
+//    var appData: Any? = null
+//}
 
 //leave [notification]
 class LeaveNotification : MediasoupNotify(
@@ -230,7 +230,7 @@ class EnableConsumerRequest : MediasoupRequest(
 class EnableConsumerResponse {
     var paused: Boolean = false
     var preferredProfile: String = ""
-    var effectiveProfile: String = "default"
+    var effectiveProfile: String? = "default"
 }
 
 //pauseConsumer [notification]
@@ -271,7 +271,7 @@ class EnableConsumerStatsNotify : MediasoupNotify(
 
 //disableConsumerStats [notification]
 class DisableConsumerStatsNotify : MediasoupNotify(
-    "enableConsumerStats",
+    "disableConsumerStats",
     "peer"
 ) {
     var id: Int = 0
@@ -349,7 +349,9 @@ class NewPeerNotify : MediasoupNotify(
     "newPeer",
     "peer"
 ) {
-    var peerData: PeerData = PeerData()
+    var name: String = ""
+    var consumers: ArrayList<NewConsumerNotify> = ArrayList()
+    var appData: Any? = null
 }
 
 //peerClosed [notification]
@@ -366,7 +368,15 @@ class NewConsumerNotify : MediasoupNotify(
     "newConsumer",
     "peer"
 ) {
-    var consumerData: ConsumerData = ConsumerData()
+    var id: Int = 0
+    var kind: String = ""
+    var peerName: String = ""
+    var rtpParameters: RTCRtpParameters = RTCRtpParameters()
+    var paused: Boolean = false
+    var preferredProfile: String? = ""
+    var effectiveProfile: String? = "default"
+    var appData: Any? = null
+
 }
 
 //consumerClosed [notification]
