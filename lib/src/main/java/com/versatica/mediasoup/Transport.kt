@@ -537,7 +537,8 @@ class Transport(
         _handler?.on("@needupdatetransport") {
             val transportLocalParameters = it[0] as TransportRemoteIceParameters
 
-            val data = UpdateTransportNotify()
+            val data = UpdateTransportNotification()
+            data.id = _id
 
             if (transportLocalParameters.dtlsParameters != null)
                 data.dtlsParameters = transportLocalParameters.dtlsParameters
@@ -730,13 +731,6 @@ class Transport(
         }
     }
 
-}
-
-class UpdateTransportNotify {
-    val method: String = "updateTransport"
-    val target: String = "peer"
-    var id: Int? = 0
-    var dtlsParameters: RTCDtlsParameters? = null
 }
 
 data class ReplaceProducerTrackInfo(
