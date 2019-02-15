@@ -385,7 +385,7 @@ class ConsumerClosedNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
-    val peerName: String = ""
+    var peerName: String = ""
     var appData: Any? = null
 }
 
@@ -395,7 +395,7 @@ class ConsumerPausedNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
-    val peerName: String = ""
+    var peerName: String = ""
     var appData: Any? = null
 }
 
@@ -405,7 +405,7 @@ class ConsumerResumedNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
-    val peerName: String = ""
+    var peerName: String = ""
     var appData: Any? = null
 }
 
@@ -415,7 +415,7 @@ class ConsumerPreferredProfileSetNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
-    val peerName: String = ""
+    var peerName: String = ""
     var profile: String = ""
 }
 
@@ -425,7 +425,7 @@ class ConsumerEffectiveProfileChangedNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
-    val peerName: String = ""
+    var peerName: String = ""
     var profile: String = ""
 }
 
@@ -435,8 +435,8 @@ class ConsumerStatsNotify : MediasoupNotify(
     "peer"
 ) {
     var id: Int = 0
-    val peerName: String = ""
-    val stats: ArrayList<RTCTransportStats> = ArrayList()
+    var peerName: String = ""
+    var stats: ArrayList<RTCTransportStats> = ArrayList()
 }
 
 class SimulcastOptions {
