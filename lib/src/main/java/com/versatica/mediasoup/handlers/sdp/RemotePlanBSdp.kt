@@ -457,7 +457,7 @@ object RemotePlanBSdp {
                         )
                     )
 
-                    if (info.rtxSsrc != null) {
+                    if (info.rtxSsrc != null && info.rtxSsrc!! > 0L) {
                         remoteMediaObj.ssrcs?.add(
                             MediaAttributes.Ssrc(
                                 id = info.rtxSsrc ?: 0,
