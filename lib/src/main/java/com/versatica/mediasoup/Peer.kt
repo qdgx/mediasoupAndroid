@@ -9,7 +9,6 @@ class Peer(var name: String, var appData: Any?, private var logger: Logger = Log
 
     var closed = false
     private var _consumers = mutableMapOf<Int, Consumer>()
-    var consumers: MutableList<Consumer> = _consumers.values.toMutableList()
 
     /**
      * Closes the Peer.
@@ -93,5 +92,14 @@ class Peer(var name: String, var appData: Any?, private var logger: Logger = Log
 
         // Emit event.
         this.safeEmit("newconsumer", consumer)
+    }
+
+    /**
+     * The list of Consumers.
+     *
+     * @return {Array<Consumer>}
+     */
+    fun consumers(): MutableList<Consumer>{
+        return _consumers.values.toMutableList()
     }
 }

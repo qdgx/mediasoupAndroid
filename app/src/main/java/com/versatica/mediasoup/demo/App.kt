@@ -225,7 +225,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
      */
     private fun handlePeer(peer: Peer) {
         // Handle all the Consumers in the Peer.
-        peer.consumers.forEach {
+        peer.consumers().forEach {
             handleConsumer(it)
         }
 
@@ -262,31 +262,27 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                         //Show local stream
                         (context as MainActivity).runOnUiThread{
                             val videoTrack = track as VideoTrack
-//                            //UI thread
-//                            val webRTCView = WebRTCView(context)
-//                            val layoutParams = LinearLayout.LayoutParams(360, 360)
-//                            layoutParams.topMargin = 20
-//                            context.remoteVideoLl.addView(webRTCView,layoutParams)
-//
-//                            webRTCView.setVideoTrack(videoTrack)
 
-
-                            //构建远端view
-                            val remoteView = SurfaceViewRenderer(context)
-                            //初始化渲染源
-                            remoteView.init(EglUtil.rootEglBaseContext, null)
-                            //填充模式
-                            remoteView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
-                            remoteView.setZOrderMediaOverlay(true)
-                            remoteView.setEnableHardwareScaler(false)
-                            remoteView.setMirror(true)
-                            //控件布局
+                            //UI thread
+                            val webRTCView = WebRTCView(context)
                             val layoutParams = LinearLayout.LayoutParams(360, 360)
                             layoutParams.topMargin = 20
-                            context.remoteVideoLl.addView(remoteView, layoutParams)
+                            context.remoteVideoLl.addView(webRTCView,layoutParams)
 
-                            //添加数据
-                            videoTrack.addSink(remoteView)
+                            webRTCView.setVideoTrack(videoTrack)
+
+//                            val remoteView = SurfaceViewRenderer(context)
+//                            remoteView.init(EglUtil.rootEglBaseContext, null)
+//                            remoteView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+//                            remoteView.setZOrderMediaOverlay(true)
+//                            remoteView.setEnableHardwareScaler(false)
+//                            remoteView.setMirror(true)
+//
+//                            val layoutParams = LinearLayout.LayoutParams(360, 360)
+//                            layoutParams.topMargin = 20
+//                            context.remoteVideoLl.addView(remoteView, layoutParams)
+//
+//                            videoTrack.addSink(remoteView)
                         }
                     }
                     if (consumer.kind == "audio") {
