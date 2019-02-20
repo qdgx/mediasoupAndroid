@@ -473,7 +473,7 @@ object RemoteUnifiedPlanSdp {
                             )
                         )
 
-                        if (info.rtxSsrc != null) {
+                        if (info.rtxSsrc != null && info.rtxSsrc!! > 0) {
                             remoteMediaObj.ssrcs?.add(
                                 MediaAttributes.Ssrc(
                                     id = info.rtxSsrc!!,
@@ -494,11 +494,11 @@ object RemoteUnifiedPlanSdp {
                 } else {
                     remoteMediaObj.payloads = "5000"
                     remoteMediaObj.sctpmap =
-                            MediaAttributes.Sctpmap(
-                                app = "webrtc-datachannel",
-                                maxMessageSize = 256,
-                                sctpmapNumber = 5000
-                            )
+                        MediaAttributes.Sctpmap(
+                            app = "webrtc-datachannel",
+                            maxMessageSize = 256,
+                            sctpmapNumber = 5000
+                        )
                 }
 
                 // Push it.

@@ -426,7 +426,7 @@ class RecvHandler(
     // - rtxSsrc {Number}
     // - cname {String}
     // @type {Map<Number, Object>}
-    private val _consumerInfos: HashMap<Int, ConsumerInfo> = HashMap()
+    private val _consumerInfos: MutableMap<Int, ConsumerInfo> = mutableMapOf()
 
     init {
         // Got transport remote parameters.
