@@ -3,7 +3,6 @@ package com.versatica.mediasoup.handlers.webRtc
 import com.versatica.eventemitter.EventEmitter
 import com.versatica.mediasoup.Logger
 import com.versatica.mediasoup.handlers.BaseApplication
-import com.versatica.mediasoup.webrtc.Callback
 import io.reactivex.Observable
 import org.webrtc.*
 
