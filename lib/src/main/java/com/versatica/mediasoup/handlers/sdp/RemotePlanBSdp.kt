@@ -92,7 +92,7 @@ object RemotePlanBSdp {
                 )
             }
 
-            sdpObj.media = arrayListOf()
+            sdpObj.media = mutableListOf()
 
             // NOTE: We take the latest fingerprint.
             val numFingerprints = remoteDtlsParameters?.fingerprints?.size
