@@ -246,10 +246,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
     }
 
     fun getSenders():List<RtpSender>{
-        return peerConnectionGetSenders()
-    }
-
-    private fun peerConnectionGetSenders(): List<RtpSender> {
         logger.debug("peerConnectionGetSenders() start")
         if (pc != null) {
             logger.debug("peerConnectionGetSenders() end")
@@ -261,10 +257,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
     }
 
     fun getReceivers():List<RtpReceiver>{
-        return peerConnectionGetReceivers()
-    }
-
-    fun peerConnectionGetReceivers(): List<RtpReceiver> {
         logger.debug("peerConnectionGetReceivers() start")
         if (pc != null) {
             logger.debug("peerConnectionGetReceivers() end")
@@ -277,13 +269,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
 
     fun addTrack(mediaStreamTrack:MediaStreamTrack,
                  streamIds: List<String> = emptyList()):RtpSender?{
-        return peerConnectionAddTrack(mediaStreamTrack,streamIds)
-    }
-
-    private fun peerConnectionAddTrack(
-        mediaStreamTrack: MediaStreamTrack,
-        streamIds: List<String>
-    ): RtpSender? {
         logger.debug("peerConnectionAddTrack() start")
         if (pc != null) {
             logger.debug("peerConnectionAddTrack() end")
@@ -295,12 +280,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
     }
 
     fun removeTrack(sender:RtpSender):Boolean{
-        return peerConnectionRemoveTrack(sender)
-    }
-
-    private fun peerConnectionRemoveTrack(
-        sender: RtpSender
-    ): Boolean {
         logger.debug("peerConnectionRemoveTrack() start")
         if (pc != null) {
             logger.debug( "peerConnectionRemoveTrack() end")
@@ -312,10 +291,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
     }
 
     fun getTransceivers():List<RtpTransceiver>{
-        return peerConnectionGetTransceivers()
-    }
-
-    private fun peerConnectionGetTransceivers(): List<RtpTransceiver> {
         logger.debug("getTransceivers() start")
         if (pc != null) {
             logger.debug("getTransceivers() end")
@@ -329,13 +304,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
     fun addTransceiver(track: MediaStreamTrack,
                        init: RtpTransceiver.RtpTransceiverInit = RtpTransceiver.RtpTransceiverInit()
     ): RtpTransceiver?{
-        return peerConnectionAddTransceiver(track,init)
-    }
-
-    private fun peerConnectionAddTransceiver(
-        track: MediaStreamTrack,
-        init: RtpTransceiver.RtpTransceiverInit?
-    ): RtpTransceiver? {
         logger.debug("addTransceiver() start")
         if (pc != null) {
             logger.debug("addTransceiver() end")
@@ -349,13 +317,6 @@ class RTCPeerConnection (configuration: HashMap<String,Any>): EventEmitter(), Pe
     fun addTransceiver(mediaType: MediaStreamTrack.MediaType,
                        init: RtpTransceiver.RtpTransceiverInit = RtpTransceiver.RtpTransceiverInit()
     ): RtpTransceiver?{
-        return peerConnectionAddTransceiver(mediaType,init)
-    }
-
-    private fun peerConnectionAddTransceiver(
-        mediaType: MediaStreamTrack.MediaType,
-        init: RtpTransceiver.RtpTransceiverInit?
-    ): RtpTransceiver? {
         logger.debug("addTransceiver() start")
         if (pc != null) {
             logger.debug("addTransceiver() end")

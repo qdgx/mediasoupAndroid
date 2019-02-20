@@ -29,7 +29,7 @@ open class Handler(
             config["iceTransportPolicy"] = "all"
             config["bundlePolicy"] = "max-bundle"
             config["rtcpMuxPolicy"] = "require"
-            config["sdpSemantics"] = "plan-b"
+            config["sdpSemantics"] = "unified_plan"
             val pc = RTCPeerConnection(config)
             val mediaConstraints = MediaConstraints()
             mediaConstraints.mandatory.add(
@@ -40,9 +40,14 @@ open class Handler(
                     "OfferToReceiveVideo", "true"
                 )
             )
+
+            pc.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO)
+            pc.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO)
             return pc.createOffer(mediaConstraints).flatMap { offer ->
                 Observable.create(ObservableOnSubscribe<RTCRtpCapabilities> {
                     try {
+                        pc.close()
+
                         val sdpObj = SdpTransform().parse(offer.description)
                         val nativeRtpCapabilities = CommonUtils.extractRtpCapabilities(sdpObj)
                         it.onNext(nativeRtpCapabilities)
@@ -77,7 +82,7 @@ open class Handler(
 
     protected var _pc: RTCPeerConnection
     protected var _rtpParametersByKind: HashMap<String, RTCRtpParameters>
-    protected var _remoteSdp: RemotePlanBSdp.RemoteSdp?
+    protected var _remoteSdp: RemoteUnifiedPlanSdp.RemoteSdp?
     protected var _transportReady: Boolean = false
     protected var _transportUpdated: Boolean = false
     protected var _transportCreated: Boolean = false
@@ -89,14 +94,14 @@ open class Handler(
         config["iceTransportPolicy"] = settings.iceTransportPolicy
         config["bundlePolicy"] = "max-bundle"
         config["rtcpMuxPolicy"] = "require"
-        config["sdpSemantics"] = "plan-b"
+        config["sdpSemantics"] = "unified_plan"
         _pc = RTCPeerConnection(config)
 
         // Generic sending RTP parameters for audio and video.
         _rtpParametersByKind = rtpParametersByKind
 
         // Remote SDP handler.
-        _remoteSdp = RemotePlanBSdp.newInstance(direction, rtpParametersByKind)
+        _remoteSdp = RemoteUnifiedPlanSdp.newInstance(direction, rtpParametersByKind)
 
         //Handle RTCPeerConnection connection status.
         this._pc.on("onIceConnectionChange") {
@@ -158,16 +163,44 @@ class SendHandler(
 
         logger.debug("addProducer() [id:${producer.id}, kind:${producer.kind()}, trackId:${track.id()}]")
 
+        if(this._trackIds.contains(track.id()))
+            return Observable.create {
+                //next
+                it.onError(Throwable("track already added"))
+            }
+
         // Add the track id to the Set.
         this._trackIds.add(track.id())
 
         var rtpSender: RtpSender?
+        var transceiver: RtpTransceiver? = null
         var localSdpObj: com.dingsoft.sdptransform.SessionDescription = com.dingsoft.sdptransform.SessionDescription()
 
         return Observable.just(Unit)
             .flatMap {
-                // Add the stream to the PeerConnection.
-                rtpSender = this._pc.addTrack(track, _mediaStreamLabels)
+                // Let's check if there is any inactive transceiver for same kind and
+                // reuse it if so.
+                transceiver = this._pc.getTransceivers().find {
+                    it.receiver.track()!!.kind() == track.kind() && it.direction == RtpTransceiver.RtpTransceiverDirection.INACTIVE
+                }
+
+                if (transceiver != null){
+                    logger.debug("addProducer() | reusing an inactive transceiver")
+
+                    transceiver!!.direction = RtpTransceiver.RtpTransceiverDirection.SEND_ONLY
+
+                    transceiver!!.sender.setTrack(track,true)
+                } else {
+                    transceiver = this._pc.addTransceiver(track, RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY))
+                }
+
+                Observable.create(ObservableOnSubscribe<Unit> {
+                    it.onNext(Unit)
+                })
+            }
+            .flatMap {
+//                // Add the stream to the PeerConnection.
+//                rtpSender = this._pc.addTrack(track, _mediaStreamLabels)
 
                 this._pc.createOffer(MediaConstraints())
             }.flatMap { offer ->
@@ -180,7 +213,7 @@ class SendHandler(
 
                     val sdpObject = SdpTransform().parse(cloneOffer.description)
 
-                    UnifiedPlanUtils.addPlanBSimulcast(sdpObject, track)
+                    UnifiedPlanUtils.addPlanBSimulcast(sdpObject, track, transceiver!!.mid)
 
                     val offerSdp = SdpTransform().write(sdpObject)
 
@@ -200,7 +233,7 @@ class SendHandler(
             }.flatMap {
                 localSdpObj = SdpTransform().parse(this._pc.localDescription.description)
 
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
+                val remoteSdp = (this._remoteSdp as RemoteUnifiedPlanSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
 
                 val answer = SessionDescription(SessionDescription.Type.fromCanonicalForm("answer"), remoteSdp)
 
@@ -211,7 +244,7 @@ class SendHandler(
                 val rtpParameters = this._rtpParametersByKind[producer.kind()]
 
                 // Fill the RTP parameters for this track.
-                PlanBUtils.fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track)
+                UnifiedPlanUtils.fillRtpParametersForTrack(rtpParameters!!, localSdpObj, track, transceiver!!.mid, true)
 
                 Observable.create(ObservableOnSubscribe<RTCRtpParameters> {
                     //next
@@ -234,7 +267,7 @@ class SendHandler(
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
-                    it.track() === track
+                    it.track() == track
                 }
 
                 if (rtpSender == null)
@@ -258,7 +291,7 @@ class SendHandler(
                     }
                 } else {
                     val localSdpObj = SdpTransform().parse(this._pc.localDescription.description)
-                    val remoteSdp = (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
+                    val remoteSdp = (this._remoteSdp as RemoteUnifiedPlanSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
                     val answer = SessionDescription(SessionDescription.Type.fromCanonicalForm("answer"), remoteSdp)
 
                     logger.debug("removeProducer() | calling pc.setRemoteDescription() [answer:$answer]")
@@ -280,7 +313,7 @@ class SendHandler(
             .flatMap {
                 // Get the associated RTCRtpSender.
                 val rtpSender = this._pc.getSenders().find {
-                    it.track() === oldTrack
+                    it.track() == oldTrack
                 }
 
                 if (rtpSender == null)
@@ -329,7 +362,7 @@ class SendHandler(
             }
             .flatMap {
                 val localSdpObj = SdpTransform().parse(this._pc.localDescription.description)
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
+                val remoteSdp = (this._remoteSdp as RemoteUnifiedPlanSdp.SendRemoteSdp).createAnswerSdp(localSdpObj)
                 val answer = SessionDescription(SessionDescription.Type.fromCanonicalForm("answer"), remoteSdp)
 
                 logger.debug("restartIce() | calling pc.setRemoteDescription() [answer${answer.toString()}]")
@@ -354,7 +387,7 @@ class SendHandler(
                 transportLocalParameters.dtlsParameters = dtlsParameters
 
                 // Provide the remote SDP handler with transport local parameters.
-                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportLocalParameters = transportLocalParameters
+                (this._remoteSdp as RemoteUnifiedPlanSdp.SendRemoteSdp).transportLocalParameters = transportLocalParameters
 
                 // We need transport remote parameters
                 Observable.create(ObservableOnSubscribe<Any> {
@@ -364,7 +397,7 @@ class SendHandler(
             }
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
-                (this._remoteSdp as RemotePlanBSdp.SendRemoteSdp).transportRemoteParameters =
+                (this._remoteSdp as RemoteUnifiedPlanSdp.SendRemoteSdp).transportRemoteParameters =
                         JSON.parseObject(transportRemoteParameters as String ,TransportRemoteIceParameters::class.java)
 
                 this._transportReady = true
@@ -418,7 +451,9 @@ class RecvHandler(
             "recv-stream-${consumer.id}",
             "consumer-${consumer.kind}-${consumer.id}",
             encoding?.ssrc!!,
-            cname!!
+            cname!!,
+            "${consumer.kind.get(0)}${consumer.id}",
+            consumer.closed
         )
 
         //csb mybe wrong
@@ -440,8 +475,7 @@ class RecvHandler(
                 }
             }
             .flatMap {
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(
-                    ArrayList<String>(_kinds),
+                val remoteSdp = (this._remoteSdp as RemoteUnifiedPlanSdp.RecvRemoteSdp).createOfferSdp(
                     ArrayList(_consumerInfos.values)
                 )
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
@@ -470,23 +504,17 @@ class RecvHandler(
                     }
                 }
             }.flatMap {
-                val newRtpReceiver = this._pc.getReceivers().find {
-                    val track = it.track()
-                    if (track == null) {
-                        false
-                    } else {
-                        var trackId = track.id()
-                        var consumerInfoTrackId = consumerInfo.trackId
-                        track.id() == consumerInfo.trackId
-                    }
+                val transceiver = this._pc.getTransceivers().find{
+                    it.mid == consumerInfo.mid
                 }
 
-                if (newRtpReceiver == null)
-                    throw Throwable("RTCRtpSender not found")
+                if (transceiver == null)
+                    throw Throwable("remote track not found")
+
 
                 Observable.create(ObservableOnSubscribe<MediaStreamTrack> {
                     //next
-                    it.onNext(newRtpReceiver.track()!!)
+                    it.onNext(transceiver.receiver.track()!!)
                 })
             }
     }
@@ -501,8 +529,7 @@ class RecvHandler(
 
         return Observable.just(Unit)
             .flatMap {
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(
-                    ArrayList<String>(_kinds),
+                val remoteSdp = (this._remoteSdp as RemoteUnifiedPlanSdp.RecvRemoteSdp).createOfferSdp(
                     ArrayList(_consumerInfos.values)
                 )
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
@@ -528,12 +555,11 @@ class RecvHandler(
         logger.debug("restartIce()")
 
         // Provide the remote SDP handler with new remote ICE parameters.
-        (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).updateTransportRemoteIceParameters(remoteIceParameters)
+        (this._remoteSdp as RemoteUnifiedPlanSdp.RecvRemoteSdp).updateTransportRemoteIceParameters(remoteIceParameters)
 
         return Observable.just(Unit)
             .flatMap {
-                val remoteSdp = (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).createOfferSdp(
-                    ArrayList<String>(_kinds),
+                val remoteSdp = (this._remoteSdp as RemoteUnifiedPlanSdp.RecvRemoteSdp).createOfferSdp(
                     ArrayList(_consumerInfos.values)
                 )
                 val offer = SessionDescription(SessionDescription.Type.fromCanonicalForm("offer"), remoteSdp)
@@ -570,7 +596,7 @@ class RecvHandler(
             }
             .flatMap { transportRemoteParameters ->
                 // Provide the remote SDP handler with transport remote parameters.
-                (this._remoteSdp as RemotePlanBSdp.RecvRemoteSdp).transportRemoteParameters =
+                (this._remoteSdp as RemoteUnifiedPlanSdp.RecvRemoteSdp).transportRemoteParameters =
                         JSON.parseObject(transportRemoteParameters as String ,TransportRemoteIceParameters::class.java)
 
                 this._transportCreated = true

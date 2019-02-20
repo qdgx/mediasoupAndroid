@@ -194,6 +194,19 @@ class WebRTCModule private constructor(context: Context) {
             return conf
         }
 
+        //sdpSemantics [planb,unified_plan]
+        if (map.containsKey("sdpSemantics")
+            && map["sdpSemantics"] is String
+        ) {
+            val v = map["sdpSemantics"] as String
+            when (v) {
+                "plan-b" // plan-b
+                -> conf.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B
+                "unified_plan" // unified_plan
+                -> conf.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+            }
+        }
+
         // iceTransportPolicy (public api)
         if (map.containsKey("iceTransportPolicy")
             && map["iceTransportPolicy"] is String

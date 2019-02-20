@@ -15,7 +15,7 @@ object CommonUtils {
      * @return {RTCRtpCapabilities}
      */
     fun extractRtpCapabilities(sdpObj: SessionDescription): RTCRtpCapabilities {
-        val codecsMap = HashMap<Any?, RTCRtpCodecCapability>()
+        val codecsMap = HashMap<String, RTCRtpCodecCapability>()
         val headerExtensions = arrayListOf<RTCRtpHeaderExtensionCapability>()
         var gotAudio = false
         var gotVideo = false
@@ -57,7 +57,7 @@ object CommonUtils {
                     else if (codec.channels == null)
                         codec.channels = 1
 
-                    codecsMap[codec.preferredPayloadType] = codec
+                    codecsMap["${codec.preferredPayloadType}"] = codec
                 }
             }
 
@@ -66,7 +66,7 @@ object CommonUtils {
             if (fmtpList != null && fmtpList.isNotEmpty()) {
                 for (fmtp in fmtpList) {
                     val parameters = SdpTransform().parseParams(fmtp.config)
-                    val codec = codecsMap[fmtp.payload] ?: continue
+                    val codec = codecsMap["${fmtp.payload}"] ?: continue
                     codec.parameters = parameters
                 }
             }

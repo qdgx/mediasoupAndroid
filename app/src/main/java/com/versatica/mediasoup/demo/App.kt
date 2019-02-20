@@ -148,7 +148,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                 openCameraRx()
             }.subscribe(
                 { mediaStream ->
-                    val audioTrack = mediaStream.audioTracks[0]
+                    //val audioTrack = mediaStream.audioTracks[0]
                     val videoTrack = mediaStream.videoTracks[0]
 
                     trackId = videoTrack.id()
@@ -161,11 +161,11 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                         localWebRTCView.setVideoTrack(videoTrack)
                     }
 
-//                    // Create Producers for audio and video.
-//                    val audioProducer = roomObj.createProducer(audioTrack)
+                    // Create Producers for audio and video.
+                    //val audioProducer = roomObj.createProducer(audioTrack)
                       val videoProducer = roomObj.createProducer(videoTrack)
-//
-//                    // Send our audio.
+
+                    // Send our audio.
 //                    audioProducer.send(sendTransport!!).subscribe(
 //                        {
 //
@@ -263,26 +263,26 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                         (context as MainActivity).runOnUiThread{
                             val videoTrack = track as VideoTrack
 
-                            //UI thread
-                            val webRTCView = WebRTCView(context)
-                            val layoutParams = LinearLayout.LayoutParams(360, 360)
-                            layoutParams.topMargin = 20
-                            context.remoteVideoLl.addView(webRTCView,layoutParams)
-
-                            webRTCView.setVideoTrack(videoTrack)
-
-//                            val remoteView = SurfaceViewRenderer(context)
-//                            remoteView.init(EglUtil.rootEglBaseContext, null)
-//                            remoteView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
-//                            remoteView.setZOrderMediaOverlay(true)
-//                            remoteView.setEnableHardwareScaler(false)
-//                            remoteView.setMirror(true)
-//
+//                            //UI thread
+//                            val webRTCView = WebRTCView(context)
 //                            val layoutParams = LinearLayout.LayoutParams(360, 360)
 //                            layoutParams.topMargin = 20
-//                            context.remoteVideoLl.addView(remoteView, layoutParams)
+//                            context.remoteVideoLl.addView(webRTCView,layoutParams)
 //
-//                            videoTrack.addSink(remoteView)
+//                            webRTCView.setVideoTrack(videoTrack)
+
+                            val remoteView = SurfaceViewRenderer(context)
+                            remoteView.init(EglUtil.rootEglBaseContext, null)
+                            remoteView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
+                            remoteView.setZOrderMediaOverlay(true)
+                            remoteView.setEnableHardwareScaler(false)
+                            remoteView.setMirror(true)
+
+                            val layoutParams = LinearLayout.LayoutParams(360, 360)
+                            layoutParams.topMargin = 20
+                            context.remoteVideoLl.addView(remoteView, layoutParams)
+
+                            videoTrack.addSink(remoteView)
                         }
                     }
                     if (consumer.kind == "audio") {

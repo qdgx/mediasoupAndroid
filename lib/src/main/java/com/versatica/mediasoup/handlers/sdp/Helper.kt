@@ -252,8 +252,8 @@ open class RTCRtpCodecCapability(
     var name: String? = null,
     var kind: String? = null,
     var preferredPayloadType: Int? = null,
-    var parameters: Map<String, Any>? = null,
-    var rtcpFeedback: MutableCollection<RtcpFeedback>? = null
+    var parameters: Map<String, Any>? = mutableMapOf(),
+    var rtcpFeedback: MutableCollection<RtcpFeedback>? = mutableListOf()
 )
 
 class RTCRtpCodecParameters(
