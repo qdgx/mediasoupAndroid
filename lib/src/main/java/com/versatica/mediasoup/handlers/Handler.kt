@@ -5,7 +5,7 @@ import com.dingsoft.sdptransform.SdpTransform
 import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.sdp.*
 import com.versatica.mediasoup.handlers.webRtc.RTCPeerConnection
-import com.versatica.mediasoup.webrtc.WebRTCModule
+import com.versatica.mediasoup.handlers.webRtc.WebRTCModule
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import org.webrtc.*

@@ -2,7 +2,6 @@ package com.versatica.mediasoup.handlers.webRtc
 
 import android.content.Context
 import com.versatica.mediasoup.Logger
-import com.versatica.mediasoup.webrtc.Callback
 import org.webrtc.*
 import io.reactivex.Observable
 import java.util.*

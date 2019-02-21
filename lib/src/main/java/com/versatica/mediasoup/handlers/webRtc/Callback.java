@@ -1,4 +1,4 @@
-package com.versatica.mediasoup.webrtc;
+package com.versatica.mediasoup.handlers.webRtc;
 
 public interface Callback {
 
