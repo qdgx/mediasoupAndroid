@@ -48,7 +48,7 @@ object UnifiedPlanUtils {
 
             // Get a=rid lines.
             // Array of Objects with rid and profile keys.
-            val simulcastStreams = arrayListOf<SimulcastStream>()
+            val simulcastStreams = mutableListOf<SimulcastStream>()
             val rids = section.rids
             if (rids != null && rids.isNotEmpty()) {
                 for (rid in rids) {
@@ -65,7 +65,7 @@ object UnifiedPlanUtils {
             }
 
             // Fill RTP parameters.
-            rtpParameters.encodings = arrayListOf()
+            rtpParameters.encodings = mutableListOf()
 
             if (simulcastStreams.size == 0) {
                 val encoding = RtpEncoding(ssrc = ssrc)
@@ -86,7 +86,7 @@ object UnifiedPlanUtils {
             var firstSsrc: Long? = null
 
             // Get all the SSRCs.
-            val ssrcs = arrayListOf<Long>().toMutableSet()
+            val ssrcs = mutableSetOf<Long>()
             val ssrcList = section.ssrcs
             if (ssrcList != null && ssrcList.isNotEmpty()) {
                 for (line in ssrcList) {
@@ -105,7 +105,7 @@ object UnifiedPlanUtils {
             }
 
             // Get media and RTX SSRCs.
-            val ssrcToRtxSsrc = hashMapOf<Long, Long>()
+            val ssrcToRtxSsrc = mutableMapOf<Long, Long?>()
             // First assume RTX is used.
             val ssrcGroups = section.ssrcGroups
             if (ssrcGroups != null && ssrcGroups.isNotEmpty()) {
@@ -129,25 +129,25 @@ object UnifiedPlanUtils {
                         }
                     }
                 }
-                // If the Set of SSRCs is not empty it means that RTX is not being used, so take
-                // media SSRCs from there.
-                for (ssrc in ssrcs) {
-                    ssrcToRtxSsrc[ssrc] = 0
-                }
+            }
+            // If the Set of SSRCs is not empty it means that RTX is not being used, so take
+            // media SSRCs from there.
+            for (ssrc in ssrcs) {
+                ssrcToRtxSsrc[ssrc] = null
             }
 
 
             // Fill RTP parameters.
-            rtpParameters.encodings = arrayListOf()
+            rtpParameters.encodings = mutableListOf()
 
             val simulcast = ssrcToRtxSsrc.size > 1
-            val simulcastProfiles = arrayListOf("low", "medium", "high")
+            val simulcastProfiles = mutableListOf("low", "medium", "high")
 
             for ((ssrc, rtxSsrc) in ssrcToRtxSsrc) {
                 val encoding = RtpEncoding(ssrc = ssrc)
 
-                if (rtxSsrc > 0) {
-                    val rtx = hashMapOf<String, Long>()
+                if (rtxSsrc != null) {
+                    val rtx = mutableMapOf<String, Long>()
                     rtx["ssrc"] = rtxSsrc
                     encoding.rtx = rtx
                 }
