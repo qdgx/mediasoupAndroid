@@ -8,6 +8,7 @@ import android.widget.Toast
 import com.alibaba.fastjson.JSON
 import com.versatica.mediasoup.*
 import com.versatica.mediasoup.handlers.BaseApplication
+import com.versatica.mediasoup.handlers.TransceiversMediaTrack
 import com.versatica.mediasoup.handlers.webRtc.EglUtil
 import com.versatica.mediasoup.handlers.webRtc.WebRTCModule
 import com.versatica.mediasoup.handlers.webRtc.WebRTCView
@@ -44,6 +45,8 @@ class App(val roomId: String, val peerName: String, val context: Context) {
     private var trackId = ""
     private var faceMode = USER_FACINGMODE
     private val webRTCModule = _getWebRTCModule()
+
+    private val remoteViews = HashMap<String,WebRTCView>()
 
     val socket = IO.socket("http://172.16.70.213:8080", IO.Options().also {
         it.query = "roomId=$roomId&peerName=$peerName"
@@ -148,7 +151,7 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                 openCameraRx()
             }.subscribe(
                 { mediaStream ->
-                    //val audioTrack = mediaStream.audioTracks[0]
+                    val audioTrack = mediaStream.audioTracks[0]
                     val videoTrack = mediaStream.videoTracks[0]
 
                     trackId = videoTrack.id()
@@ -162,18 +165,18 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                     }
 
                     // Create Producers for audio and video.
-                    //val audioProducer = roomObj.createProducer(audioTrack)
-                      val videoProducer = roomObj.createProducer(videoTrack)
+                    val audioProducer = roomObj.createProducer(audioTrack)
+                    val videoProducer = roomObj.createProducer(videoTrack)
 
                     // Send our audio.
-//                    audioProducer.send(sendTransport!!).subscribe(
-//                        {
-//
-//                        },
-//                        {
-//                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
-//                        }
-//                    )
+                    audioProducer.send(sendTransport!!).subscribe(
+                        {
+
+                        },
+                        {
+                            Toast.makeText(context, it.cause.toString(), Toast.LENGTH_SHORT).show()
+                        }
+                    )
                     // Send our video.
                     videoProducer.send(sendTransport!!).subscribe(
                         {
@@ -255,44 +258,69 @@ class App(val roomId: String, val peerName: String, val context: Context) {
                 .flatMap {
                     logger.debug("Receiving a new remote MediaStreamTrack: ${consumer.kind}")
 
-                    val track = it as MediaStreamTrack
-                    // Attach the track to a MediaStream and play it.
-                    if (consumer.kind == "video") {
-                        //todo add video to ui view
-                        //Show local stream
-                        (context as MainActivity).runOnUiThread{
-                            val videoTrack = track as VideoTrack
+                    val transceiversMediaTrack = it as TransceiversMediaTrack
+                    (context as MainActivity).runOnUiThread{
+                        for (track in transceiversMediaTrack.tracks){
+                            // Attach the track to a MediaStream and play it.
+                            try {
+                                if (track.kind() == MediaStreamTrack.VIDEO_TRACK_KIND) {
+                                    //todo add video to ui view
+                                    //Show local stream
+                                    val videoTrack = track as VideoTrack
+                                    val trackId = videoTrack.id()
+                                    if(remoteViews.containsKey(trackId)){
+                                        val webRTCView = remoteViews[trackId]
+                                        webRTCView!!.setVideoTrack(videoTrack)
+                                    }else{
+                                        val webRTCView = WebRTCView(context)
+                                        val layoutParams = LinearLayout.LayoutParams(360, 360)
+                                        layoutParams.topMargin = 20
+                                        context.remoteVideoLl.addView(webRTCView,layoutParams)
 
-//                            //UI thread
-//                            val webRTCView = WebRTCView(context)
-//                            val layoutParams = LinearLayout.LayoutParams(360, 360)
-//                            layoutParams.topMargin = 20
-//                            context.remoteVideoLl.addView(webRTCView,layoutParams)
-//
-//                            webRTCView.setVideoTrack(videoTrack)
+                                        webRTCView.setVideoTrack(videoTrack)
+                                        remoteViews[trackId] = webRTCView
+                                    }
+                                }else if (consumer.kind == MediaStreamTrack.AUDIO_TRACK_KIND) {
+                                    val audioTrack = track as AudioTrack
+                                    //todo add audio to ui view
 
-                            val remoteView = SurfaceViewRenderer(context)
-                            remoteView.init(EglUtil.rootEglBaseContext, null)
-                            remoteView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
-                            remoteView.setZOrderMediaOverlay(true)
-                            remoteView.setEnableHardwareScaler(false)
-                            remoteView.setMirror(true)
-
-                            val layoutParams = LinearLayout.LayoutParams(360, 360)
-                            layoutParams.topMargin = 20
-                            context.remoteVideoLl.addView(remoteView, layoutParams)
-
-                            videoTrack.addSink(remoteView)
+                                }
+                            }catch (e: Exception){
+                                logger.error(e.message!!)
+                            }
                         }
-                    }
-                    if (consumer.kind == "audio") {
-                        val audioTrack = track as AudioTrack
-                        //todo add audio to ui view
 
+//                        context.remoteVideoLl.removeAllViews()
+//
+//                        for (track in transceiversMediaTrack.tracks){
+//                            // Attach the track to a MediaStream and play it.
+//                            if (track.kind() == MediaStreamTrack.VIDEO_TRACK_KIND) {
+//                                //todo add video to ui view
+//                                //Show local stream
+//                                val videoTrack = track as VideoTrack
+//                                //UI thread
+//                                val webRTCView = WebRTCView(context)
+//                                val layoutParams = LinearLayout.LayoutParams(360, 360)
+//                                layoutParams.topMargin = 20
+//                                context.remoteVideoLl.addView(webRTCView,layoutParams)
+//
+//                                webRTCView.setVideoTrack(videoTrack)
+//                            }else if (consumer.kind == MediaStreamTrack.AUDIO_TRACK_KIND) {
+//                                val audioTrack = track as AudioTrack
+//                                //todo add audio to ui view
+//
+//                            }
+//                        }
                     }
+
                     Observable.create(ObservableOnSubscribe<Unit> { observableEmitter ->
                         observableEmitter.onNext(Unit)
                     })
+
+
+
+
+
                 }.subscribe (
                     {
 

@@ -436,7 +436,7 @@ class RecvHandler(
         this._transportUpdated = false
     }
 
-    fun addConsumer(consumer: Consumer): Observable<MediaStreamTrack> {
+    fun addConsumer(consumer: Consumer): Observable<TransceiversMediaTrack> {
         logger.debug("addConsumer() [id:${consumer.id}, kind:${consumer.kind}]")
 
         if (this._consumerInfos.containsKey(consumer.id))
@@ -504,17 +504,22 @@ class RecvHandler(
                     }
                 }
             }.flatMap {
+                val tracks: ArrayList<MediaStreamTrack> = ArrayList()
                 val transceiver = this._pc.getTransceivers().find{
+                    tracks.add(it.receiver.track()!!)
                     it.mid == consumerInfo.mid
                 }
 
                 if (transceiver == null)
                     throw Throwable("remote track not found")
 
+                val newTrack = transceiver.receiver.track()!!
 
-                Observable.create(ObservableOnSubscribe<MediaStreamTrack> {
+                val transceiverMediaTrack:TransceiversMediaTrack = TransceiversMediaTrack(newTrack, tracks)
+
+                Observable.create(ObservableOnSubscribe<TransceiversMediaTrack> {
                     //next
-                    it.onNext(transceiver.receiver.track()!!)
+                    it.onNext(transceiverMediaTrack)
                 })
             }
     }
@@ -628,4 +633,13 @@ class RecvHandler(
             it.onNext(Unit)
         }
     }
+}
+
+//TransceiversMediaTrack
+class TransceiversMediaTrack(
+    newTrack: MediaStreamTrack,
+    tracks: ArrayList<MediaStreamTrack>
+) {
+    val newTrack: MediaStreamTrack = newTrack
+    val tracks:  ArrayList<MediaStreamTrack> = tracks
 }

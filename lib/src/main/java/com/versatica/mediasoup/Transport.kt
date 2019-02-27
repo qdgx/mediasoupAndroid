@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON
 import com.versatica.mediasoup.handlers.Handler
 import com.versatica.mediasoup.handlers.RecvHandler
 import com.versatica.mediasoup.handlers.SendHandler
+import com.versatica.mediasoup.handlers.TransceiversMediaTrack
 import com.versatica.mediasoup.handlers.sdp.*
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
@@ -659,7 +660,8 @@ class Transport(
     private fun _execAddConsumer(consumer: Consumer): Observable<Any>? {
         logger.debug("_execAddConsumer()")
 
-        var consumerTrack: MediaStreamTrack? = null
+        //var consumerTrack: MediaStreamTrack? = null
+        var consumerTrack: TransceiversMediaTrack? = null
 
         // Call the handler.
         return Observable.just(Unit)

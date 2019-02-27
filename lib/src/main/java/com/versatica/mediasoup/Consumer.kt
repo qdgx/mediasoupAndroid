@@ -1,5 +1,6 @@
 package com.versatica.mediasoup
 
+import com.versatica.mediasoup.handlers.TransceiversMediaTrack
 import com.versatica.mediasoup.handlers.sdp.RTCRtpParameters
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
@@ -150,8 +151,8 @@ class Consumer(
         this.transport = transport
 
         return transport.addConsumer(this)
-            .flatMap {
-                this.track = it as MediaStreamTrack
+            .flatMap { transceiversMediaTrack ->
+                this.track = (transceiversMediaTrack as TransceiversMediaTrack).newTrack
 
                 // If we were paused, disable the track.
                 if (this.paused())
@@ -179,8 +180,8 @@ class Consumer(
                 if (this.statsEnabled)
                     transport.enableConsumerStats(this, this.statsInterval)
 
-                Observable.create(ObservableOnSubscribe<MediaStreamTrack> {
-                    it.onNext(track as MediaStreamTrack)
+                Observable.create(ObservableOnSubscribe<TransceiversMediaTrack> {
+                    it.onNext(transceiversMediaTrack)
                 })
             }
     }

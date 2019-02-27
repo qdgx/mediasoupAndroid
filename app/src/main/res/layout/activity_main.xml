@@ -47,58 +47,6 @@
                     android:layout_margin="2dp"
                     android:text="switchCamera" />
 
-            <Button
-                    android:id="@+id/test"
-                    android:text="test"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
-
-            <Button
-                    android:id="@+id/safeEmit"
-                    android:text="safeEmit"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
-            <Button
-                    android:id="@+id/safeEmitAsPromiseTimmer"
-                    android:text="safeEmitAsPromiseTimmer"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
-            <Button
-                    android:id="@+id/safeEmitAsPromiseThread"
-                    android:text="safeEmitAsPromiseThread"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
-            <Button
-                    android:id="@+id/safeEmitAsPromiseMultiple"
-                    android:text="safeEmitAsPromiseMultiple"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
-
-            <Button
-                    android:id="@+id/commandQueueTest"
-                    android:text="commandQueueTest"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
-
-            <Button
-                    android:id="@+id/getNativeRtpCapabilitiesTest"
-                    android:text="getNativeRtpCapabilitiesTest"
-                    android:textAllCaps="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="2dp"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
